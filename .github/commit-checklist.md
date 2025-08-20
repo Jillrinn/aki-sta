@@ -18,6 +18,7 @@
 | 開発コマンド変更 | CLAUDE.md, README.md |
 | 環境設定変更 | CLAUDE.md, 関連する技術文書 |
 | 新機能追加 | README.md, 該当する仕様書 |
+| **進捗状況更新** | README.md, CLAUDE.md, mvp-checklist.md確認 |
 
 ## Claudeへの指示
 コミット時は必ず：
