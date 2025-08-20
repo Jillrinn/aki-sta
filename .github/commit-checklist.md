@@ -14,7 +14,7 @@
 | 変更内容 | 更新すべきドキュメント |
 |---------|---------------------|
 | GitHub Actions変更 | docs/GITHUB_ACTIONS.md |
-| API仕様変更 | README.md, unified_development_spec.md |
+| API仕様変更 | README.md, docs/DEVELOPMENT_SPEC.md |
 | 開発コマンド変更 | CLAUDE.md, README.md |
 | 環境設定変更 | CLAUDE.md, 関連する技術文書 |
 | 新機能追加 | README.md, 該当する仕様書 |
