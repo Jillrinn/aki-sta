@@ -1,0 +1,109 @@
+name: Azure Functions Check
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'functions/**'
+      - '.github/workflows/azure-functions-check.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: functions/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ./functions
+    
+    - name: Setup Azure Functions Core Tools
+      run: |
+        wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+        sudo dpkg -i packages-microsoft-prod.deb
+        sudo apt-get update
+        sudo apt-get install -y azure-functions-core-tools-4
+    
+    - name: Validate Azure Functions project
+      run: |
+        echo "Validating Azure Functions project structure..."
+        
+        # Check required files exist
+        if [ ! -f "functions/host.json" ]; then
+          echo "Error: host.json not found"
+          exit 1
+        fi
+        
+        if [ ! -f "functions/availability-api/function.json" ]; then
+          echo "Error: function.json not found in availability-api"
+          exit 1
+        fi
+        
+        echo "✅ Azure Functions project structure is valid"
+    
+    - name: Dry run Azure Functions
+      run: |
+        cd functions
+        # Create a minimal local.settings.json for validation
+        echo '{
+          "IsEncrypted": false,
+          "Values": {
+            "AzureWebJobsStorage": "",
+            "FUNCTIONS_WORKER_RUNTIME": "node"
+          }
+        }' > local.settings.json
+        
+        # Start func in background and check if it starts successfully
+        timeout 30s func start --dry-run &
+        FUNC_PID=$!
+        
+        # Wait for function host to start
+        sleep 10
+        
+        # Check if process is still running
+        if ps -p $FUNC_PID > /dev/null; then
+          echo "✅ Azure Functions host started successfully"
+          kill $FUNC_PID
+        else
+          echo "❌ Azure Functions host failed to start"
+          exit 1
+        fi
+    
+    - name: Validate function bindings
+      run: |
+        cd functions
+        echo "Checking function bindings..."
+        
+        # Validate availability-api function.json
+        node -e "
+          const fs = require('fs');
+          const functionConfig = JSON.parse(fs.readFileSync('availability-api/function.json', 'utf8'));
+          
+          // Check if bindings are properly configured
+          if (!functionConfig.bindings || functionConfig.bindings.length === 0) {
+            console.error('No bindings found in function.json');
+            process.exit(1);
+          }
+          
+          const httpTrigger = functionConfig.bindings.find(b => b.type === 'httpTrigger');
+          if (!httpTrigger) {
+            console.error('HTTP trigger not found');
+            process.exit(1);
+          }
+          
+          const httpOutput = functionConfig.bindings.find(b => b.direction === 'out' && b.name === 'res');
+          if (!httpOutput) {
+            console.error('HTTP output binding not found');
+            process.exit(1);
+          }
+          
+          console.log('✅ Function bindings are valid');
+        "
