@@ -27,7 +27,7 @@
 3. **ドキュメント更新箇所**
    - README.md: 開発状況セクション
    - CLAUDE.md: 現在の状態セクション
-   - unified_development_spec.md: MVP進捗（必要時）
+   - docs/DEVELOPMENT_SPEC.md: MVP進捗（必要時）
 
 ## Claudeへの指示
 進捗を更新する際は：
