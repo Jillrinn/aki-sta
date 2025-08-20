@@ -38,21 +38,25 @@ aki-sta/
 
 ## 🚀 よく使うコマンド（コピペ用）
 
-### 両方起動する場合
+### 開発サーバー起動
 ```bash
-# Terminal 1
-cd functions && npm start
+# 推奨: 一括起動
+npm run dev
 
-# Terminal 2  
-cd frontend && npm start
+# または個別起動
+cd functions && npm start  # Terminal 1
+cd frontend && npm start   # Terminal 2
 ```
 
 ### テスト実行
 ```bash
-# Backend
+# 一括テスト
+npm test
+
+# Backend個別
 cd functions && npm test
 
-# Frontend
+# Frontend個別
 cd frontend && npm test -- --coverage --watchAll=false
 ```
 
