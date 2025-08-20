@@ -1,10 +1,16 @@
-name: CI
+name: Backend CI
 
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'functions/**'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'functions/**'
+      - '.github/workflows/ci.yml'
 
 jobs:
   test:
