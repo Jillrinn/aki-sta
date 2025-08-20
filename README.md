@@ -2,6 +2,8 @@
 
 音楽団体向けのスタジオ予約空き状況一元管理システム
 
+![Main CI](https://github.com/Jillrinn/aki-sta/workflows/Main%20CI%2FCD%20Pipeline/badge.svg)
+
 ## 🎯 概要
 複数のスタジオ・施設の予約空き状況を一画面で確認できるWebアプリケーション。
 20人程度の音楽団体が効率的に練習場所を見つけられるよう支援します。
@@ -131,6 +133,7 @@ aki-sta/
 - [CLAUDE.md](./CLAUDE.md) - Claude AI専用指示書（AIアシスタント用）
 - [統合開発仕様書](./unified_development_spec.md) - 詳細技術仕様
 - [frontend/README.md](./frontend/README.md) - フロントエンド詳細
+- [GitHub Actions](./docs/GITHUB_ACTIONS.md) - CI/CDパイプライン詳細
 
 ## 📡 API仕様
 

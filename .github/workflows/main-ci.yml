@@ -1,0 +1,292 @@
+name: Main CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ============================================
+  # Backend Tests
+  # ============================================
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: functions/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ./functions
+    
+    - name: Run tests
+      run: npm test
+      working-directory: ./functions
+    
+    - name: Run tests with coverage
+      if: matrix.node-version == '20.x'
+      run: npm run test:coverage
+      working-directory: ./functions
+    
+    - name: Check coverage threshold
+      if: matrix.node-version == '20.x'
+      run: |
+        cd functions
+        COVERAGE=$(npx jest --coverage --silent 2>&1 | grep "All files" | awk '{print $10}' | sed 's/%//')
+        echo "Backend test coverage: $COVERAGE%"
+        if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+          echo "❌ Coverage is below 80% threshold"
+          exit 1
+        fi
+        echo "✅ Coverage meets the 80% threshold"
+    
+    - name: Upload backend coverage
+      if: matrix.node-version == '20.x'
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-coverage
+        path: functions/coverage/
+        retention-days: 7
+
+  # ============================================
+  # Frontend Tests
+  # ============================================
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ./frontend
+    
+    - name: Run tests
+      run: npm test -- --watchAll=false --passWithNoTests
+      working-directory: ./frontend
+      env:
+        CI: true
+    
+    - name: Run tests with coverage
+      if: matrix.node-version == '20.x'
+      run: npm test -- --coverage --watchAll=false
+      working-directory: ./frontend
+      env:
+        CI: true
+    
+    - name: Upload frontend coverage
+      if: matrix.node-version == '20.x'
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-coverage
+        path: frontend/coverage/
+        retention-days: 7
+
+  # ============================================
+  # Build
+  # ============================================
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      run: npm ci
+      working-directory: ./frontend
+    
+    - name: Build frontend
+      run: npm run build
+      working-directory: ./frontend
+      env:
+        CI: true
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/build/
+        retention-days: 7
+    
+    - name: Verify build
+      run: |
+        if [ -d "frontend/build/static" ]; then
+          echo "✅ Frontend build successful"
+          ls -la frontend/build/
+        else
+          echo "❌ Frontend build failed"
+          exit 1
+        fi
+
+  # ============================================
+  # Integration Tests
+  # ============================================
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    
+    - name: Install Azure Functions Core Tools
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+        sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+        sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
+        sudo apt-get update
+        sudo apt-get install -y azure-functions-core-tools-4
+    
+    - name: Install all dependencies
+      run: |
+        cd functions && npm ci
+        cd ../frontend && npm ci
+    
+    - name: Setup Azure Functions
+      run: |
+        cd functions
+        echo "module.exports = require('./availability-api/index');" > index.js
+    
+    - name: Start Azure Functions
+      run: |
+        cd functions
+        func start --port 7071 &
+        echo "Waiting for Azure Functions to start..."
+        for i in {1..30}; do
+          if curl -s http://localhost:7071 > /dev/null; then
+            echo "✅ Azure Functions is running"
+            break
+          fi
+          sleep 2
+        done
+    
+    - name: Test API endpoints
+      run: |
+        # Test availability endpoint
+        response=$(curl -s -f http://localhost:7071/api/availability/2025-11-15)
+        echo "API Response: $response"
+        
+        if [[ $response == *"facilities"* ]] && [[ $response == *"date"* ]]; then
+          echo "✅ API returns expected data structure"
+        else
+          echo "❌ API response is invalid"
+          exit 1
+        fi
+        
+        # Test response format
+        if echo "$response" | jq -e '.facilities | length > 0' > /dev/null; then
+          echo "✅ API returns facilities data"
+        else
+          echo "❌ No facilities data in response"
+          exit 1
+        fi
+
+  # ============================================
+  # Deploy (Placeholder for future)
+  # ============================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, integration-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Placeholder for deployment
+      run: |
+        echo "🚀 Deployment step placeholder"
+        echo "This step will deploy to Azure when configured"
+        echo ""
+        echo "Required setup:"
+        echo "1. Azure credentials in GitHub Secrets"
+        echo "2. Resource group and app service created"
+        echo "3. Deployment scripts configured"
+        echo ""
+        echo "Current status: Ready for deployment configuration"
+
+  # ============================================
+  # Summary
+  # ============================================
+  ci-summary:
+    name: CI/CD Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [backend-test, frontend-test, build, integration-test, deploy-staging]
+    
+    steps:
+    - name: Generate Summary
+      run: |
+        echo "# 📊 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Backend Tests | ${{ needs.backend-test.result == 'success' && '✅ Passed' || needs.backend-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Frontend Tests | ${{ needs.frontend-test.result == 'success' && '✅ Passed' || needs.frontend-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Build | ${{ needs.build.result == 'success' && '✅ Passed' || needs.build.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Integration Tests | ${{ needs.integration-test.result == 'success' && '✅ Passed' || needs.integration-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Deploy (Staging) | ${{ needs.deploy-staging.result == 'success' && '✅ Deployed' || needs.deploy-staging.result == 'skipped' && '⏭️ Not deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Overall status
+        if [ "${{ needs.backend-test.result }}" == "success" ] && \
+           [ "${{ needs.frontend-test.result }}" == "success" ] && \
+           [ "${{ needs.build.result }}" == "success" ] && \
+           [ "${{ needs.integration-test.result }}" == "success" ]; then
+          echo "## ✅ All tests passed successfully!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ⚠️ Some tests failed. Please check the logs." >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "*Generated at $(date)*" >> $GITHUB_STEP_SUMMARY
