@@ -1,144 +1,150 @@
-# CLAUDE.md - プロジェクト作業ガイド
+# CLAUDE.md - Claude専用指示書
 
-## 🎯 プロジェクト概要
-**空きスタサーチくん** - 音楽団体向けの複数施設予約状況一元管理システム
+## 🤖 あなたはこのプロジェクトのAIアシスタントです
 
-### 現在の進捗状況
-- 🔄 **MVP v1.0 進行中** (2025-08-20)
-  - ✅ Azure Functions HTTPトリガーAPI実装
-  - ✅ ダミーデータストア実装
-  - ✅ バックエンドテスト実装（カバレッジ100%）
-  - ❌ React フロントエンド未実装
-  - ❌ API-Frontend統合未実装
-  - ❌ UIでのデータ表示確認未実施
+### プロジェクト: 空きスタサーチくん
+音楽団体向けの施設予約空き状況一元管理システム
 
-## 📁 プロジェクト構造
+## ⚠️ 重要な制約とルール
+
+### 絶対に守るべきこと
+1. **既存ファイルの編集を優先** - 新規ファイル作成は最小限に
+2. **テストファースト開発** - 新機能実装時は必ずテストから書く
+3. **不要なファイルを作らない** - 特に`*.md`ファイルは指示された時のみ
+4. **コメントは最小限** - コード自体を読みやすく書く
+5. **コミット時はCLAUDE.mdとREADME.mdを更新** - 会話内容と差分を反映
+
+### してはいけないこと
+- プロアクティブにドキュメント作成しない
+- ユーザーの指示なしにgit pushしない
+- 設定ファイル（.env、local.settings.json）をコミットしない
+- console.logをプロダクションコードに残さない
+- TypeScriptで`any`型を使わない
+
+## 📁 プロジェクト構造と重要ファイル
+
 ```
 aki-sta/
-├── functions/                      # Azure Functions (Node.js)
-│   ├── availability-api/           # 空き状況取得API
-│   ├── shared/                     # 共通ライブラリ
-│   │   └── data-store.js          # データストア (現在: ダミー)
-│   ├── host.json                  # Azure Functions設定
-│   └── package.json               # 依存関係
-├── unified_development_spec.md    # 統合開発仕様書
-└── CLAUDE.md                      # このファイル
+├── functions/          # Azure Functions API
+│   ├── index.js       # ⚠️ 必須：これがないと起動エラー
+│   └── availability-api/
+├── frontend/          # React TypeScript
+│   └── src/
+│       ├── components/  # UIコンポーネント
+│       ├── services/    # API通信
+│       └── types/       # 型定義
+└── CLAUDE.md          # この指示書
 ```
 
-## 🔧 開発環境
-### 必要なツール
-- Node.js v18以上
-- Azure Functions Core Tools v4
-- Git
+## 🚀 よく使うコマンド（コピペ用）
 
-### ローカル開発コマンド
+### 両方起動する場合
 ```bash
-# テスト実行
+# Terminal 1
+cd functions && npm start
+
+# Terminal 2  
+cd frontend && npm start
+```
+
+### テスト実行
+```bash
+# Backend
 cd functions && npm test
 
-# Azure Functions起動（ポート7071）
-cd functions && func start
-
-# Git操作
-git add .
-git commit -m "feat: 機能説明"
-git push origin main
+# Frontend
+cd frontend && npm test -- --coverage --watchAll=false
 ```
 
-## 🚀 次のステップ (MVP v1.0 完了)
-### 残作業（Day 2-4）
-1. **React フロントエンド実装**
-   - `npx create-react-app frontend --template typescript`
-   - AvailabilityTable.tsx コンポーネント作成
-   - APIサービス（api.ts）実装
-   - 固定日付（2025-11-15）の表示
+### プロセス確認
+```bash
+# ポート使用状況
+lsof -i :3000  # React
+lsof -i :7071  # Azure Functions
 
-2. **API-Frontend統合**
-   - Reactプロキシ設定（package.json）
-   - ローカル環境での動作確認
-   - CORS動作確認
-
-3. **UI仕上げ**
-   - ○×表示実装
-   - レスポンシブデザイン
-   - ローディング・エラー状態の表示
-
-### MVP v1.0 完了判定基準
-- [ ] ローカル環境でAPI-Frontend統合動作
-- [ ] ダミーデータが正しく表示
-- [ ] 基本的なエラーハンドリング実装
-- [x] テストカバレッジ80%以上（バックエンド完了）
-- [ ] レスポンシブデザイン確認
-
-## 📝 重要な仕様
-### APIエンドポイント
-- `GET /api/availability/{date}` - 指定日の空き状況取得
-  - 例: `/api/availability/2025-11-15`
-
-### データ構造
-```javascript
-{
-  date: "2025-11-15",
-  facilities: [
-    {
-      facilityName: "Ensemble Studio 本郷",
-      timeSlots: { 
-        "13-17": "available"  // available | booked | lottery | unknown
-      }
-    }
-  ],
-  lastUpdated: "ISO 8601形式",
-  dataSource: "dummy"  // dummy | scraping
-}
+# バックグラウンドbash確認
+# Claudeコマンド: /bashes
 ```
 
-### ステータス値
-- `available`: 空き（○）
-- `booked`: 予約済み（×）
-- `lottery`: 抽選中（△）※v2.0で追加予定
-- `unknown`: 不明（?）※v2.0で追加予定
+## 🐛 既知の問題と解決策
 
-## ⚠️ 注意事項
-1. **local.settings.json**はGitにコミットしない（.gitignore済み）
-2. **テストファースト開発**を徹底する
-3. **CORSは現在すべて許可**（本番環境では要調整）
-4. **無料枠内での運用**を前提とする
+### Azure Functions起動エラー
+**原因**: functions/index.jsが存在しない
+**解決**: 
+```bash
+echo "module.exports = require('./availability-api/index');" > functions/index.js
+```
 
-## 🧪 品質基準
-- テストカバレッジ: 80%以上
-- すべてのAPIにテスト実装
-- エラーハンドリング必須
-- TypeScript型定義（フロントエンド実装時）
+### Jest + axios ESMエラー
+**原因**: axiosのESモジュール問題
+**解決**: setupTests.tsでモック、package.jsonでtransformIgnorePatterns設定
 
-## 📊 MVPロードマップ
-| MVP | 目標 | 期間 | ステータス |
-|-----|------|------|----------|
-| v1.0 | ダミーデータ動作確認（API+React） | 3-4日 | 🔄 進行中 (Day1完了) |
-| v2.0 | 実データスクレイピング | 3-4日 | ⏳ 予定 |
-| v3.0 | Azure本番環境デプロイ | 2-3日 | ⏳ 予定 |
+### React Hook act()警告
+**原因**: 非同期処理が適切にラップされていない
+**解決**:
+```tsx
+await act(async () => {
+  render(<Component />);
+});
+```
 
-### MVP v1.0 詳細進捗
-- **Day 1**: ✅ バックエンドAPI実装完了
-- **Day 2**: ⏳ React基本コンポーネント実装
-- **Day 3**: ⏳ API-Frontend統合
-- **Day 4**: ⏳ UI改善・最終確認
+## 💡 作業時の判断基準
 
-## 🔗 関連ドキュメント
-- [統合開発仕様書](./unified_development_spec.md) - 詳細な技術仕様
-- [Azure Functions ドキュメント](https://docs.microsoft.com/ja-jp/azure/azure-functions/)
-- [Jest テスティング](https://jestjs.io/docs/getting-started)
+### 新機能追加時のフロー
+1. まずテストファイルを作成（`.test.ts`/`.test.tsx`）
+2. テストが失敗することを確認（RED）
+3. 最小限のコードで成功させる（GREEN）
+4. リファクタリング（REFACTOR）
+5. カバレッジ確認（目標: 80%以上）
 
-## 💡 開発のヒント
-1. **困ったら仕様書を確認**: `unified_development_spec.md`に詳細記載
-2. **テストから書く**: TDD実践でバグを防ぐ
-3. **小さくリリース**: MVP段階的に機能追加
-4. **エラーは詳細に**: ログとエラーメッセージは具体的に
+### ファイル変更の優先順位
+1. 既存ファイルの編集 > 新規ファイル作成
+2. 必要最小限の変更 > 大規模リファクタリング
+3. 型安全性の確保 > 実装スピード
 
-## 🎨 空きスタサーチくん - ブランディング
-- **システム名**: 空きスタサーチくん
-- **目的**: 音楽団体の練習場所探しを効率化
-- **ターゲット**: 20人程度の音楽団体
-- **価値提案**: 複数施設の空き状況を一目で確認
+### API変更時の対応
+1. functions/availability-api/index.js を更新
+2. frontend/src/types/availability.ts の型を更新
+3. 両方のテストを更新・実行
+4. 統合動作確認
+
+## 📊 現在の状態（自動更新対象）
+
+### MVP v1.0 - ✅ 完了
+- Backend API: 100% テストカバレッジ
+- Frontend: 73% テストカバレッジ
+- 統合テスト: 動作確認済み
+
+### 次の作業: MVP v2.0
+- 実データスクレイピング実装
+- Puppeteer/Playwright導入
+- データ永続化（Cosmos DB）
+
+## 🔄 コミット時の自動タスク
+
+コミット作成時は以下を実行：
+1. `git status`で変更確認
+2. テスト実行確認
+3. CLAUDE.md更新（現在の状態セクション）
+4. README.md更新（必要に応じて）
+5. コミットメッセージに変更内容を明確に記載
+
+## 🎯 ユーザーとのやり取りで重要なこと
+
+### 確認すべきこと
+- 大きな変更前は必ず確認を取る
+- ファイル削除時は特に慎重に
+- 外部ライブラリ追加時は理由を説明
+
+### 報告すべきこと
+- テストカバレッジの変化
+- パフォーマンスへの影響
+- セキュリティ上の懸念
+
+### 提案すべきこと
+- より良い実装方法がある場合
+- テストが不足している場合
+- 型安全性が損なわれている場合
 
 ---
-*最終更新: 2025-08-20 - MVP v1.0 Day1完了（バックエンドAPI実装済み）*
+*最終更新: 2025-08-20 - Claude向け指示書として最適化*
