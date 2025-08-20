@@ -46,7 +46,17 @@ describe('availabilityApi', () => {
     const originalEnv = process.env.REACT_APP_API_URL;
     process.env.REACT_APP_API_URL = 'http://custom-api.com';
     
+    // モジュールをリセットする前にaxiosモックを保存
+    const mockGet = jest.fn();
+    
     jest.resetModules();
+    jest.doMock('axios', () => ({
+      get: mockGet,
+      default: {
+        get: mockGet,
+      },
+    }));
+    
     const { availabilityApi: customApi } = require('./api');
     
     const mockDate = '2025-11-15';
@@ -59,14 +69,15 @@ describe('availabilityApi', () => {
       },
     };
 
-    (axios.get as jest.Mock).mockResolvedValue(mockResponse);
+    mockGet.mockResolvedValue(mockResponse);
     
     await customApi.getAvailability(mockDate);
     
-    expect(axios.get).toHaveBeenCalledWith(
+    expect(mockGet).toHaveBeenCalledWith(
       `http://custom-api.com/availability/${mockDate}`
     );
     
     process.env.REACT_APP_API_URL = originalEnv;
+    jest.dontMock('axios');
   });
 });
