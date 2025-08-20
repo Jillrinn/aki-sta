@@ -191,6 +191,9 @@ jobs:
         echo "module.exports = require('./availability-api/index');" > index.js
     
     - name: Start Azure Functions
+      env:
+        FUNCTIONS_WORKER_RUNTIME: node
+        AzureWebJobsStorage: ""
       run: |
         cd functions
         func start --port 7071 &
