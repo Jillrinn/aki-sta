@@ -64,6 +64,9 @@ CI Summary Report
 - Azure Functions実際に起動
 - APIエンドポイントの動作確認
 - データ構造の検証
+- **環境変数設定**:
+  - `FUNCTIONS_WORKER_RUNTIME: node` - ランタイム自動設定
+  - `AzureWebJobsStorage: ""` - ローカルストレージ使用
 
 ### 4. アーティファクト保存
 - カバレッジレポート（7日間）
