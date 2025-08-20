@@ -125,9 +125,8 @@ await act(async () => {
 - Puppeteer/Playwright導入
 - データ永続化（Cosmos DB）
 
-### GitHub Actions
-- **main-ci.yml**: push/PR時の自動テスト（変更部分のみ）
-- **full-test.yml**: 手動/定期実行の完全テスト
+### GitHub Actions  
+- **main-ci.yml**: push/PR時の全テスト実行
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
 
 ## 🔄 コミット時の自動タスク

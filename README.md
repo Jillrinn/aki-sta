@@ -126,9 +126,11 @@ aki-sta/
 │   ├── public/                    # 静的ファイル
 │   ├── package.json               # 依存関係・プロキシ設定
 │   └── tsconfig.json              # TypeScript設定
+├── docs/                          # ドキュメント
+│   ├── DEVELOPMENT_SPEC.md       # 開発仕様書
+│   └── GITHUB_ACTIONS.md         # CI/CDパイプライン詳細
 ├── .github/                       # GitHub Actions CI/CD
 │   └── workflows/
-├── unified_development_spec.md    # 統合開発仕様書
 ├── README.md                      # プロジェクト概要（このファイル）
 └── CLAUDE.md                      # Claude専用指示書
 ```
@@ -150,7 +152,7 @@ aki-sta/
 
 ## 📚 ドキュメント
 - [CLAUDE.md](./CLAUDE.md) - Claude AI専用指示書（AIアシスタント用）
-- [統合開発仕様書](./unified_development_spec.md) - 詳細技術仕様
+- [開発仕様書](./docs/DEVELOPMENT_SPEC.md) - 詳細技術仕様
 - [frontend/README.md](./frontend/README.md) - フロントエンド詳細
 - [GitHub Actions](./docs/GITHUB_ACTIONS.md) - CI/CDパイプライン詳細
 
