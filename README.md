@@ -168,7 +168,6 @@ GET /api/availability/{date}
 interface AvailabilityResponse {
   date: string;                    // 日付 (YYYY-MM-DD)
   facilities: Facility[];          // 施設リスト
-  lastUpdated: string;             // 最終更新日時 (ISO 8601)
   dataSource: 'dummy' | 'scraping'; // データソース
 }
 
@@ -177,6 +176,7 @@ interface Facility {
   timeSlots: {                    // 時間枠ごとの状態
     [timeSlot: string]: 'available' | 'booked' | 'lottery' | 'unknown';
   };
+  lastUpdated: string;             // 施設ごとの最終更新日時 (ISO 8601)
 }
 ```
 

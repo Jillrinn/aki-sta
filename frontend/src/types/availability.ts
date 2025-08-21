@@ -5,11 +5,11 @@ export interface TimeSlotStatus {
 export interface Facility {
   facilityName: string;
   timeSlots: TimeSlotStatus;
+  lastUpdated: string;
 }
 
 export interface AvailabilityResponse {
   date: string;
   facilities: Facility[];
-  lastUpdated: string;
   dataSource: 'dummy' | 'scraping';
 }

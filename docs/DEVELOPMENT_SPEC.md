@@ -214,7 +214,6 @@ module.exports = async function (context, req) {
     body: {
       date: date,
       facilities: data,
-      lastUpdated: new Date().toISOString(),
       dataSource: "dummy"
     }
   };
@@ -245,12 +244,12 @@ interface TimeSlots {
 interface FacilityData {
   facilityName: string;
   timeSlots: TimeSlots;
+  lastUpdated: string;
 }
 
 interface AvailabilityResponse {
   date: string;
   facilities: FacilityData[];
-  lastUpdated: string;
   dataSource: string;
 }
 
@@ -258,7 +257,6 @@ export const AvailabilityTable: React.FC = () => {
   const [data, setData] = useState<FacilityData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
     fetchData();
@@ -277,7 +275,6 @@ export const AvailabilityTable: React.FC = () => {
       
       const result: AvailabilityResponse = await response.json();
       setData(result.facilities);
-      setLastUpdated(result.lastUpdated);
     } catch (err) {
       setError(err instanceof Error ? err.message : '不明なエラー');
     } finally {
@@ -328,9 +325,6 @@ export const AvailabilityTable: React.FC = () => {
         🎵 2025-11-15 スタジオ空き状況
       </h1>
       
-      <div className="mb-4 text-sm text-gray-600">
-        最終更新: {new Date(lastUpdated).toLocaleString('ja-JP')}
-      </div>
       
       <div className="overflow-x-auto">
         <table className="w-full border-collapse border border-gray-300 bg-white shadow-sm">

@@ -17,9 +17,9 @@ describe('availabilityApi', () => {
           {
             facilityName: 'Test Facility',
             timeSlots: { '13-17': 'available' },
+            lastUpdated: '2025-08-20T10:00:00Z',
           },
         ],
-        lastUpdated: '2025-08-20T10:00:00Z',
         dataSource: 'dummy' as const,
       },
     };
@@ -64,7 +64,6 @@ describe('availabilityApi', () => {
       data: {
         date: mockDate,
         facilities: [],
-        lastUpdated: '2025-08-20T10:00:00Z',
         dataSource: 'dummy' as const,
       },
     };

@@ -101,9 +101,6 @@ const AvailabilityTable: React.FC = () => {
         </span>
       </div>
       
-      <div className="last-updated">
-        最終更新: {data.lastUpdated ? new Date(data.lastUpdated).toLocaleString('ja-JP') : '不明'}
-      </div>
     </div>
   );
 };

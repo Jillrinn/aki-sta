@@ -27,13 +27,14 @@ describe('AvailabilityTable', () => {
         {
           facilityName: 'Ensemble Studio 本郷',
           timeSlots: { '13-17': 'available' },
+          lastUpdated: '2025-08-20T10:00:00Z',
         },
         {
           facilityName: '音楽スタジオ 渋谷',
           timeSlots: { '13-17': 'booked' },
+          lastUpdated: '2025-08-20T10:15:00Z',
         },
       ],
-      lastUpdated: '2025-08-20T10:00:00Z',
       dataSource: 'dummy' as const,
     };
 
@@ -80,7 +81,6 @@ describe('AvailabilityTable', () => {
     const mockData = {
       date: '2025-11-15',
       facilities: [],
-      lastUpdated: '2025-08-20T10:00:00Z',
       dataSource: 'dummy' as const,
     };
 
@@ -102,13 +102,14 @@ describe('AvailabilityTable', () => {
         {
           facilityName: 'Test Facility 1',
           timeSlots: { '13-17': 'available' },
+          lastUpdated: '2025-08-20T10:00:00Z',
         },
         {
           facilityName: 'Test Facility 2',
           timeSlots: { '13-17': 'booked' },
+          lastUpdated: '2025-08-20T10:30:00Z',
         },
       ],
-      lastUpdated: '2025-08-20T10:00:00Z',
       dataSource: 'dummy' as const,
     };
 

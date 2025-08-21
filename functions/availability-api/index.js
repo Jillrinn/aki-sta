@@ -24,7 +24,6 @@ module.exports = async function (context, req) {
     body: {
       date: date,
       facilities: data,
-      lastUpdated: new Date().toISOString(),
       dataSource: "dummy"
     }
   };
