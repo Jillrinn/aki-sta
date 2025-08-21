@@ -36,17 +36,17 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: [
+  webServer: process.env.CI ? undefined : [
     {
       command: 'cd ../functions && npm start',
       port: 7071,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120 * 1000,
     },
     {
       command: 'cd ../frontend && npm start',
       port: 3300,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120 * 1000,
     },
   ],
