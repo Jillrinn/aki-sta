@@ -83,8 +83,11 @@ npm start
 
 ### 一括テスト
 ```bash
-# バックエンドとフロントエンドのテストを順次実行
+# バックエンド、フロントエンド、Pythonスクレイパーのテストを順次実行
 npm test
+
+# 並列実行（高速）
+npm run test:all
 ```
 
 ### 個別テスト
@@ -101,6 +104,14 @@ npm run test:watch          # ウォッチモード
 cd frontend
 npm test                    # テスト実行（ウォッチモード）
 npm test -- --coverage --watchAll=false  # カバレッジ付きテスト
+```
+
+#### Pythonスクレイパーテスト
+```bash
+cd scraper
+./test.sh                   # テスト実行スクリプト
+# または
+python -m pytest tests/ -v  # 直接pytest実行
 ```
 
 ## 📁 プロジェクト構造
