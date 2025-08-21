@@ -8,7 +8,7 @@ black==23.11.0
 flake8==6.1.0
 isort==5.12.0
 mypy==1.7.0
-safety==2.3.5
+safety==3.6.0
 
 # Additional testing tools
 pytest-mock==3.12.0
