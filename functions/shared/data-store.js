@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const DUMMY_DATA = {
   "2025-11-15": [
     {
@@ -19,6 +22,31 @@ const DUMMY_DATA = {
 
 module.exports = {
   getAvailabilityData: (date) => {
-    return DUMMY_DATA[date] || [];
+    try {
+      // JSONファイルのパスを構築
+      const jsonPath = path.join(__dirname, '../../shared-data/availability.json');
+      
+      // ファイルが存在するか確認
+      if (fs.existsSync(jsonPath)) {
+        // JSONファイルを読み込む
+        const jsonContent = fs.readFileSync(jsonPath, 'utf8');
+        const data = JSON.parse(jsonContent);
+        
+        // 指定された日付のデータを返す
+        if (data.data && data.data[date]) {
+          console.log(`Returning scraped data for ${date}`);
+          return data.data[date];
+        }
+      }
+      
+      // ファイルが存在しないか、該当日付のデータがない場合はダミーデータを返す
+      console.log(`Returning dummy data for ${date}`);
+      return DUMMY_DATA[date] || [];
+      
+    } catch (error) {
+      console.error('Error reading availability JSON:', error);
+      // エラー時はダミーデータを返す
+      return DUMMY_DATA[date] || [];
+    }
   }
 };

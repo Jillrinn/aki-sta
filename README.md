@@ -17,7 +17,13 @@
 - ✅ フロントエンドテスト実装
 - ✅ レスポンシブデザイン実装
 
-**次のステップ**: MVP v2.0 - 実データスクレイピング実装
+**MVP v2.0** 🚀 進行中（2025-08-21）
+- ✅ Pythonスクレイパー実装（Playwright）
+- ✅ JSONファイルベースのデータ共有
+- ✅ 3時間帯表示（9-12, 13-17, 18-21）
+- ⏳ 実サイトからのスクレイピング実装
+
+**次のステップ**: MVP v3.0 - Azure本番環境デプロイ
 
 ## 🔧 技術スタック
 - **バックエンド**: Azure Functions (Node.js)
@@ -106,7 +112,7 @@ aki-sta/
 │   │   ├── index.test.js          # APIテスト
 │   │   └── function.json          # Azure Functions設定
 │   ├── shared/                     # 共通ライブラリ
-│   │   └── data-store.js          # データストア (現在: ダミー)
+│   │   └── data-store.js          # データストア (JSONファイル読み込み)
 │   ├── index.js                   # エントリーポイント（必須）
 │   ├── host.json                  # Azure Functions全体設定
 │   ├── local.settings.json        # ローカル設定（gitignore）
@@ -122,8 +128,20 @@ aki-sta/
 │   │   ├── App.tsx                # メインコンポーネント
 │   │   └── setupTests.ts          # Jest設定
 │   ├── public/                    # 静的ファイル
+│   ├── .env                       # 環境変数（PORT=3300）
 │   ├── package.json               # 依存関係・プロキシ設定
 │   └── tsconfig.json              # TypeScript設定
+├── scraper/                       # Pythonスクレイパー（Playwright）
+│   ├── src/
+│   │   ├── scraper.py            # スクレイピングロジック
+│   │   ├── main.py               # CLIエントリーポイント
+│   │   └── generate_test_data.py # テストデータ生成
+│   ├── tests/
+│   │   └── test_scraper.py       # スクレイパーテスト
+│   ├── requirements.txt          # Python依存関係
+│   └── README.md                 # スクレイパードキュメント
+├── shared-data/                   # データ共有ディレクトリ
+│   └── availability.json         # スクレイピング結果JSON
 ├── docs/                          # ドキュメント
 │   ├── DEVELOPMENT_SPEC.md       # 開発仕様書
 │   └── GITHUB_ACTIONS.md         # CI/CDパイプライン詳細
