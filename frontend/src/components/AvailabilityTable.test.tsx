@@ -77,7 +77,8 @@ describe('AvailabilityTable', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('データの取得に失敗しました')).toBeInTheDocument();
+      // エラーメッセージが表示されることを確認（詳細なエラーメッセージ形式に対応）
+      expect(screen.getByText(/エラー:/)).toBeInTheDocument();
     });
     
     consoleErrorSpy.mockRestore();
