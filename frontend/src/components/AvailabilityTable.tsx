@@ -44,6 +44,7 @@ const AvailabilityTable: React.FC = () => {
     try {
       const date = new Date(dateString);
       return date.toLocaleString('ja-JP', {
+        timeZone: 'Asia/Tokyo',  // 常に日本時間で表示
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
