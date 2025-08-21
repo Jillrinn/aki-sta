@@ -33,6 +33,8 @@ describe('availabilityApi', () => {
   });
 
   it('should handle API errors', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
     const mockDate = '2025-11-15';
     const mockError = new Error('Network error');
 
@@ -40,6 +42,8 @@ describe('availabilityApi', () => {
 
     await expect(availabilityApi.getAvailability(mockDate)).rejects.toThrow('Network error');
     expect(axios.get).toHaveBeenCalledWith(`/api/availability/${mockDate}`);
+    
+    consoleErrorSpy.mockRestore();
   });
 
   it('should use custom API URL from environment variable', async () => {
