@@ -178,3 +178,4 @@ echo "module.exports = require('./availability-api/index');" > index.js
 
 ---
 *最終更新: 2025-08-20 - Claude向け指示書として最適化*
+- testを実行して成功することを確認して初めてcommitするようにしてください
