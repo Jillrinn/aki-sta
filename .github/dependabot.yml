@@ -40,6 +40,20 @@ updates:
       - "scraper"
     open-pull-requests-limit: 5
 
+  # E2E test dependencies
+  - package-ecosystem: "npm"
+    directory: "/e2e"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    assignees:
+      - "Jillrinn"
+    labels:
+      - "dependencies"
+      - "e2e"
+      - "testing"
+    open-pull-requests-limit: 5
+
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

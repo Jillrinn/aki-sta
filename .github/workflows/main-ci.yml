@@ -306,7 +306,6 @@ jobs:
         CI: true
         BROWSER: none
         PORT: 3300
-        HOST: localhost
     
     - name: Run E2E tests
       run: |
