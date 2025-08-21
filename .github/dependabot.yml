@@ -1,0 +1,54 @@
+version: 2
+updates:
+  # Node.js dependencies for backend
+  - package-ecosystem: "npm"
+    directory: "/functions"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    assignees:
+      - "Jillrinn"
+    labels:
+      - "dependencies"
+      - "backend"
+    open-pull-requests-limit: 5
+
+  # Node.js dependencies for frontend
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    assignees:
+      - "Jillrinn"
+    labels:
+      - "dependencies"
+      - "frontend"
+    open-pull-requests-limit: 5
+
+  # Python dependencies for scraper
+  - package-ecosystem: "pip"
+    directory: "/scraper"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    assignees:
+      - "Jillrinn"
+    labels:
+      - "dependencies"
+      - "python"
+      - "scraper"
+    open-pull-requests-limit: 5
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    assignees:
+      - "Jillrinn"
+    labels:
+      - "dependencies"
+      - "ci/cd"
+    open-pull-requests-limit: 3

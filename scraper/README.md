@@ -29,12 +29,52 @@ python src/main.py
 ## テスト実行
 
 ```bash
+# 基本的なテスト実行
 pytest tests/
+
+# カバレッジ付きテスト
+pytest tests/ --cov=src --cov-report=term
+
+# 詳細な出力
+pytest tests/ -v
+
+# 特定のテストのみ実行
+pytest tests/test_scraper.py::TestTimeSlotConversion
+```
+
+## 開発環境
+
+```bash
+# 開発用依存関係のインストール
+pip install -r requirements-dev.txt
+
+# コードフォーマット
+black src/ tests/
+
+# インポート整理
+isort src/ tests/
+
+# 型チェック
+mypy src/
+
+# Linting
+flake8 src/ tests/
 ```
 
 ## 出力
 
 スクレイピング結果は `../shared-data/availability.json` に保存されます。
+
+## CI/CD
+
+GitHub Actionsで以下が自動実行されます：
+
+- **テスト**: Python 3.9, 3.10, 3.11でのテスト実行
+- **カバレッジ**: テストカバレッジの測定とレポート
+- **Linting**: flake8, black, isort, mypyでのコード品質チェック
+- **セキュリティ**: safetyによる依存関係の脆弱性チェック
+
+詳細: `.github/workflows/python-scraper.yml`
 
 ## データ形式
 
