@@ -70,10 +70,9 @@ h2 {
 .update-time {
   text-align: center !important;
   min-width: 140px;
-  color: #b4bcc2;
+  color: #5a6c7d;
   font-size: 0.85rem;
   font-weight: 400;
-  font-style: italic;
 }
 
 .status {
