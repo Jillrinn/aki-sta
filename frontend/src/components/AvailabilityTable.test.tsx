@@ -59,8 +59,10 @@ describe('AvailabilityTable', () => {
     expect(availableStatuses.length).toBeGreaterThan(0);
     expect(bookedStatuses.length).toBeGreaterThan(0);
     
-    // 更新日時が表示されていることを確認（テストデータの日時）
-    expect(screen.getByText('08/20 19:00')).toBeInTheDocument();
+    // 更新日時が表示されていることを確認
+    // タイムゾーンに依存しないテスト: update-timeクラスの要素が存在することを確認
+    const updateTimes = screen.getAllByRole('cell', { name: /\d{2}\/\d{2} \d{2}:\d{2}/ });
+    expect(updateTimes).toHaveLength(2);
   });
 
   it('renders error state when API fails', async () => {
