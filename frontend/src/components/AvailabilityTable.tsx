@@ -16,9 +16,18 @@ const AvailabilityTable: React.FC = () => {
         const response = await availabilityApi.getAvailability(targetDate);
         setData(response);
         setError(null);
-      } catch (err) {
-        setError('データの取得に失敗しました');
-        console.error(err);
+      } catch (err: any) {
+        if (err.response) {
+          // HTTPエラー
+          setError(`エラー ${err.response.status}: ${err.response.statusText || 'サーバーエラー'}`);
+        } else if (err.request) {
+          // ネットワークエラー
+          setError('ネットワーク接続エラー: サーバーに接続できません');
+        } else {
+          // その他のエラー
+          setError(`エラー: ${err.message || 'データの取得に失敗しました'}`);
+        }
+        console.error('API Error:', err);
       } finally {
         setLoading(false);
       }
@@ -58,7 +67,10 @@ const AvailabilityTable: React.FC = () => {
   if (loading) {
     return (
       <div className="availability-container">
-        <div className="loading">データを読み込み中...</div>
+        <div className="loading">
+          <div className="loading-spinner"></div>
+          <p>データを読み込み中...</p>
+        </div>
       </div>
     );
   }

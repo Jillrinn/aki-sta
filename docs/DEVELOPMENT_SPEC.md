@@ -233,7 +233,7 @@ npx claude-code "React でシンプルな空き状況テーブルを作成。
 ```
 
 **期待するコンポーネント**:
-```typescript
+```tsx
 // frontend/src/components/AvailabilityTable.tsx
 import React, { useState, useEffect } from 'react';
 
