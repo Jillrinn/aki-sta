@@ -40,6 +40,20 @@ const AvailabilityTable: React.FC = () => {
     }
   };
 
+  const formatUpdateTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('ja-JP', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return '不明';
+    }
+  };
+
   if (loading) {
     return (
       <div className="availability-container">
@@ -75,6 +89,7 @@ const AvailabilityTable: React.FC = () => {
             <tr>
               <th className="facility-name">施設名</th>
               <th className="time-slot">13:00-17:00</th>
+              <th className="update-time">更新日時</th>
             </tr>
           </thead>
           <tbody>
@@ -86,6 +101,7 @@ const AvailabilityTable: React.FC = () => {
                     {getStatusSymbol(facility.timeSlots['13-17'])}
                   </span>
                 </td>
+                <td className="update-time">{formatUpdateTime(facility.lastUpdated)}</td>
               </tr>
             ))}
           </tbody>

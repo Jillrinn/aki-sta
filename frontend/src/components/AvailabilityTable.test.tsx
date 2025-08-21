@@ -51,12 +51,16 @@ describe('AvailabilityTable', () => {
     expect(screen.getByText('施設空き状況 - 2025-11-15')).toBeInTheDocument();
     expect(screen.getByText('Ensemble Studio 本郷')).toBeInTheDocument();
     expect(screen.getByText('音楽スタジオ 渋谷')).toBeInTheDocument();
+    expect(screen.getByText('更新日時')).toBeInTheDocument();
     
     const availableStatuses = screen.getAllByText('○');
     const bookedStatuses = screen.getAllByText('×');
     
     expect(availableStatuses.length).toBeGreaterThan(0);
     expect(bookedStatuses.length).toBeGreaterThan(0);
+    
+    // 更新日時が表示されていることを確認（テストデータの日時）
+    expect(screen.getByText('08/20 19:00')).toBeInTheDocument();
   });
 
   it('renders error state when API fails', async () => {

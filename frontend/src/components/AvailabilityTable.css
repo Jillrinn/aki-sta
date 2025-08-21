@@ -67,6 +67,13 @@ h2 {
   min-width: 120px;
 }
 
+.update-time {
+  text-align: center !important;
+  min-width: 140px;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
 .status {
   display: inline-block;
   width: 30px;
