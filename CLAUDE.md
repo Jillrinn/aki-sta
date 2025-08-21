@@ -34,6 +34,12 @@ aki-sta/
 │       ├── components/  # UIコンポーネント
 │       ├── services/    # API通信
 │       └── types/       # 型定義
+├── scraper/           # Python Playwrightスクレイパー
+│   └── src/
+├── e2e/               # E2Eテスト (Playwright/TypeScript)
+│   ├── tests/
+│   ├── fixtures/      # テストデータ
+│   └── scripts/       # セットアップ/クリーンアップ
 └── CLAUDE.md          # この指示書
 ```
 
@@ -51,7 +57,7 @@ cd frontend && npm start   # Terminal 2
 
 ### テスト実行
 ```bash
-# 一括テスト
+# 一括テスト（backend + frontend + scraper）
 npm test
 
 # Backend個別
@@ -59,6 +65,12 @@ cd functions && npm test
 
 # Frontend個別
 cd frontend && npm test -- --coverage --watchAll=false
+
+# Scraperテスト
+cd scraper && python -m pytest tests/ -v
+
+# E2Eテスト
+cd e2e && npm test
 ```
 
 ### プロセス確認
@@ -115,11 +127,12 @@ await act(async () => {
 
 ## 📊 現在の状態（自動更新対象）
 
-### MVP v1.0 - ✅ 完了（2025-08-20）
+### MVP v1.0 - ✅ 完了（2025-08-21）
 - Backend API: ✅ 実装完了
 - Frontend: ✅ 実装完了
-- テスト: ✅ 実装完了
+- テスト: ✅ 実装完了（E2Eテスト含む）
 - 統合動作: ✅ 動作確認済み
+- E2Eテスト: ✅ 実装完了（固定データ戦略採用）
 
 **進捗更新時**: `.github/mvp-checklist.md`で完了基準を確認
 
@@ -129,7 +142,8 @@ await act(async () => {
 - データ永続化（Cosmos DB）
 
 ### GitHub Actions  
-- **main-ci.yml**: push/PR時の全テスト実行
+- **main-ci.yml**: push/PR時の全テスト実行（Backend/Frontend/Scraper/E2E）
+- E2Eテスト: Ubuntu 22.04でPlaywright実行
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
 
 ## 🔄 コミット時の自動タスク
@@ -177,5 +191,5 @@ echo "module.exports = require('./availability-api/index');" > index.js
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
 
 ---
-*最終更新: 2025-08-20 - Claude向け指示書として最適化*
+*最終更新: 2025-08-21 - E2Eテスト追加、スクレイパー実装*
 - testを実行して成功することを確認して初めてcommitするようにしてください

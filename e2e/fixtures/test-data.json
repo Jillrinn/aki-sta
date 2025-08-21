@@ -1,0 +1,34 @@
+{
+  "lastScraped": "2025-08-20T10:00:00Z",
+  "data": {
+    "2025-11-15": [
+      {
+        "facilityName": "テスト施設A",
+        "timeSlots": {
+          "9-12": "available",
+          "13-17": "available",
+          "18-21": "booked"
+        },
+        "lastUpdated": "2025-08-20T10:00:00Z"
+      },
+      {
+        "facilityName": "テスト施設B",
+        "timeSlots": {
+          "9-12": "booked",
+          "13-17": "booked",
+          "18-21": "available"
+        },
+        "lastUpdated": "2025-08-20T10:00:00Z"
+      },
+      {
+        "facilityName": "テスト施設C",
+        "timeSlots": {
+          "9-12": "available",
+          "13-17": "available",
+          "18-21": "available"
+        },
+        "lastUpdated": "2025-08-20T10:00:00Z"
+      }
+    ]
+  }
+}

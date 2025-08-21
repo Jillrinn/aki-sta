@@ -18,10 +18,12 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     // テーブルが表示されることを確認
     await expect(page.locator('.availability-table')).toBeVisible();
     
-    // 施設名が表示されることを確認（日本語名の可能性もある）
-    const facilityName = page.locator('td.facility-name').first();
-    await expect(facilityName).toBeVisible();
-    await expect(facilityName).toContainText(/Ensemble Studio|あんさんぶるStudio/);
+    // 固定テストデータの施設名が表示されることを確認
+    const facilityNames = page.locator('td.facility-name');
+    await expect(facilityNames).toHaveCount(3); // 3施設分
+    await expect(facilityNames.nth(0)).toContainText('テスト施設A');
+    await expect(facilityNames.nth(1)).toContainText('テスト施設B');
+    await expect(facilityNames.nth(2)).toContainText('テスト施設C');
     
     // 時間帯ヘッダーが表示されることを確認
     await expect(page.locator('th:has-text("13:00-17:00")')).toBeVisible();
@@ -36,19 +38,19 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     
     // テーブル内のステータスシンボルが表示されることを確認
     const statusElements = page.locator('.availability-table .status');
-    await expect(statusElements).toHaveCount(2); // 2施設分
+    await expect(statusElements).toHaveCount(3); // 3施設分
     
-    // 各ステータスが○または×で表示されることを確認
-    const firstStatus = statusElements.first();
-    const secondStatus = statusElements.nth(1);
-    
-    // ステータスシンボルの内容を確認（○か×のいずれか）
-    await expect(firstStatus).toContainText(/○|×/);
-    await expect(secondStatus).toContainText(/○|×/);
+    // 固定テストデータのステータスを確認
+    // テスト施設A: 13-17は空き（○）
+    // テスト施設B: 13-17は予約済み（×）
+    // テスト施設C: 13-17は空き（○）
+    await expect(statusElements.nth(0)).toContainText('○');
+    await expect(statusElements.nth(1)).toContainText('×');
+    await expect(statusElements.nth(2)).toContainText('○');
     
     // 更新時刻が各レコードに表示されることを確認（tbody内のみ）
     const updateTimes = page.locator('.availability-table tbody .update-time');
-    await expect(updateTimes).toHaveCount(2); // 2施設分
+    await expect(updateTimes).toHaveCount(3); // 3施設分
     
     // 更新時刻のフォーマットを確認（MM/DD HH:mm形式）
     const firstUpdateTime = updateTimes.first();

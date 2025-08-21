@@ -6,7 +6,8 @@
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "cleanup": "node scripts/cleanup.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0"

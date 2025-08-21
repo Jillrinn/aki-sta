@@ -16,9 +16,11 @@ mainブランチへのプッシュ時に、すべてのテストを実行し、�
 **実行内容**:
 1. **バックエンドテスト** - Node.js 18.x, 20.xでのマトリックステスト
 2. **フロントエンドテスト** - React + TypeScriptのテスト
-3. **ビルド** - プロダクションビルドの作成と検証
-4. **統合テスト** - Azure Functions起動とAPI動作確認
-5. **デプロイ** - Azure環境へのデプロイ（設定後に有効化）
+3. **Pythonスクレイパーテスト** - Python 3.9, 3.11でのテスト
+4. **E2Eテスト** - Playwright/TypeScriptでのエンドツーエンドテスト
+5. **ビルド** - プロダクションビルドの作成と検証
+6. **統合テスト** - Azure Functions起動とAPI動作確認
+7. **デプロイ** - Azure環境へのデプロイ（設定後に有効化）
 
 ## 📊 パイプライン詳細
 
@@ -27,6 +29,8 @@ mainブランチへのプッシュ時に、すべてのテストを実行し、�
 |--------|----------|------|
 | backend-test | ✅ | バックエンドテスト（カバレッジ80%必須） |
 | frontend-test | ✅ | フロントエンドテスト＋カバレッジ |
+| scraper-test | ✅ | Pythonスクレイパーテスト |
+| e2e-test | ❌ | E2Eテスト（固定データ戦略） |
 | build | ❌ | テスト成功後にビルド実行 |
 | integration-test | ❌ | API統合テスト |
 | deploy-staging | ❌ | Azureデプロイ（プレースホルダー） |
@@ -38,7 +42,10 @@ mainブランチへのプッシュ時に、すべてのテストを実行し、�
     ↓
 [並列実行]
 ├─ Backend Tests (Node 18.x, 20.x)
-└─ Frontend Tests (Node 18.x, 20.x)
+├─ Frontend Tests (Node 18.x, 20.x)
+└─ Scraper Tests (Python 3.9, 3.11)
+    ↓
+E2E Tests (Playwright/TypeScript)
     ↓
 Build Application
     ↓
@@ -174,4 +181,4 @@ cd frontend && npm test -- --coverage
 - 📋 Slack/Teams通知統合
 
 ---
-*最終更新: 2025-08-21 - 単一パイプライン戦略に統合*
+*最終更新: 2025-08-21 - E2Eテスト・Pythonスクレイパーテスト追加*

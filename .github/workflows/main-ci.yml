@@ -209,6 +209,67 @@ jobs:
         retention-days: 7
 
   # ============================================
+  # E2E Tests
+  # ============================================
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-22.04
+    needs: [backend-test, frontend-test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: e2e/package-lock.json
+    
+    - name: Install Azure Functions Core Tools
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+        sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+        sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
+        sudo apt-get update
+        sudo apt-get install -y azure-functions-core-tools-4
+    
+    - name: Install dependencies
+      run: |
+        cd functions && npm ci
+        cd ../frontend && npm ci
+        cd ../e2e && npm ci
+    
+    - name: Install Playwright browsers
+      run: |
+        cd e2e
+        npx playwright install --with-deps chromium
+    
+    - name: Run E2E tests
+      run: |
+        cd e2e
+        npm test
+      env:
+        CI: true
+    
+    - name: Upload E2E test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-test-results
+        path: e2e/test-results/
+        retention-days: 7
+    
+    - name: Upload Playwright report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: e2e/playwright-report/
+        retention-days: 7
+
+  # ============================================
   # Integration Tests
   # ============================================
   integration-test:
@@ -286,7 +347,7 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [build, integration-test]
+    needs: [build, integration-test, e2e-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
@@ -309,7 +370,7 @@ jobs:
     name: CI/CD Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: [backend-test, frontend-test, scraper-test, build, integration-test, deploy-staging]
+    needs: [backend-test, frontend-test, scraper-test, build, integration-test, e2e-test, deploy-staging]
     
     steps:
     - name: Generate Summary
@@ -331,6 +392,7 @@ jobs:
         echo "| Scraper Tests | ${{ needs.scraper-test.result == 'success' && '✅ Passed' || needs.scraper-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Build | ${{ needs.build.result == 'success' && '✅ Passed' || needs.build.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Integration Tests | ${{ needs.integration-test.result == 'success' && '✅ Passed' || needs.integration-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| E2E Tests | ${{ needs.e2e-test.result == 'success' && '✅ Passed' || needs.e2e-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Deploy (Staging) | ${{ needs.deploy-staging.result == 'success' && '✅ Deployed' || needs.deploy-staging.result == 'skipped' && '⏭️ Not deployed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
@@ -339,7 +401,8 @@ jobs:
            [ "${{ needs.frontend-test.result }}" == "success" ] && \
            [ "${{ needs.scraper-test.result }}" == "success" ] && \
            [ "${{ needs.build.result }}" == "success" ] && \
-           [ "${{ needs.integration-test.result }}" == "success" ]; then
+           [ "${{ needs.integration-test.result }}" == "success" ] && \
+           [ "${{ needs.e2e-test.result }}" == "success" ]; then
           echo "## ✅ All tests passed successfully!" >> $GITHUB_STEP_SUMMARY
         else
           echo "## ⚠️ Some tests failed. Please check the logs." >> $GITHUB_STEP_SUMMARY

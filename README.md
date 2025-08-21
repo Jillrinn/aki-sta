@@ -9,13 +9,14 @@
 20人程度の音楽団体が効率的に練習場所を見つけられるよう支援します。
 
 ## 📊 開発状況
-**MVP v1.0** ✅ 完了（2025-08-20）
+**MVP v1.0** ✅ 完了（2025-08-21）
 - ✅ バックエンドAPI実装（ダミーデータ）
 - ✅ フロントエンド実装（React + TypeScript）
 - ✅ API-Frontend統合動作確認
 - ✅ バックエンドテスト実装
 - ✅ フロントエンドテスト実装
 - ✅ レスポンシブデザイン実装
+- ✅ E2Eテスト実装（Playwright/TypeScript）
 
 **MVP v2.0** 🚀 進行中（2025-08-21）
 - ✅ Pythonスクレイパー実装（Playwright）
@@ -28,7 +29,9 @@
 ## 🔧 技術スタック
 - **バックエンド**: Azure Functions (Node.js)
 - **フロントエンド**: React + TypeScript
-- **テスト**: Jest + React Testing Library
+- **テスト**: Jest + React Testing Library + Playwright
+- **スクレイパー**: Python + Playwright
+- **CI/CD**: GitHub Actions
 - **データベース**: Cosmos DB（v3.0以降予定）
 
 ## 🚀 クイックスタート
@@ -114,6 +117,14 @@ cd scraper
 python -m pytest tests/ -v  # 直接pytest実行
 ```
 
+#### E2Eテスト
+```bash
+cd e2e
+npm test                    # E2Eテスト実行
+npm run test:headed         # ブラウザを表示してテスト
+npm run test:ui             # Playwright UIモード
+```
+
 ## 📁 プロジェクト構造
 ```
 aki-sta/
@@ -151,6 +162,13 @@ aki-sta/
 │   │   └── test_scraper.py       # スクレイパーテスト
 │   ├── requirements.txt          # Python依存関係
 │   └── README.md                 # スクレイパードキュメント
+├── e2e/                           # E2Eテスト（Playwright/TypeScript）
+│   ├── tests/
+│   │   └── app.spec.ts           # E2Eテストケース
+│   ├── fixtures/
+│   │   └── test-data.json        # 固定テストデータ
+│   ├── scripts/                  # テストデータ管理
+│   └── playwright.config.ts      # Playwright設定
 ├── shared-data/                   # データ共有ディレクトリ
 │   └── availability.json         # スクレイピング結果JSON
 ├── docs/                          # ドキュメント
