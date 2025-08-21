@@ -18,8 +18,10 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     // テーブルが表示されることを確認
     await expect(page.locator('.availability-table')).toBeVisible();
     
-    // 施設名が表示されることを確認（ダミーデータ）
-    await expect(page.locator('text=Ensemble Studio')).toBeVisible();
+    // 施設名が表示されることを確認（日本語名の可能性もある）
+    const facilityName = page.locator('td.facility-name').first();
+    await expect(facilityName).toBeVisible();
+    await expect(facilityName).toContainText(/Ensemble Studio|あんさんぶるStudio/);
     
     // 時間帯ヘッダーが表示されることを確認
     await expect(page.locator('th:has-text("13:00-17:00")')).toBeVisible();
@@ -38,8 +40,8 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     
     // 凡例が表示されることを確認
     await expect(page.locator('.legend')).toBeVisible();
-    await expect(page.locator('text=空き')).toBeVisible();
-    await expect(page.locator('text=予約済み')).toBeVisible();
+    await expect(page.locator('.legend-item').filter({ hasText: '空き' })).toBeVisible();
+    await expect(page.locator('.legend-item').filter({ hasText: '予約済み' })).toBeVisible();
   });
 
   test('レスポンシブデザインが機能する - モバイル', async ({ page }) => {
