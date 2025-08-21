@@ -249,15 +249,29 @@ jobs:
     - name: Start Azure Functions
       run: |
         cd functions
-        func start --port 7071 &
+        # Start Azure Functions in background with nohup
+        nohup func start --port 7071 > azure-functions.log 2>&1 &
+        echo $! > azure-functions.pid
+        echo "Azure Functions PID: $(cat azure-functions.pid)"
+        
+        # Wait for Azure Functions to be ready
         echo "Waiting for Azure Functions to start..."
         for i in {1..30}; do
-          if curl -s http://localhost:7071 > /dev/null; then
-            echo "✅ Azure Functions is running"
+          if curl -s -f http://localhost:7071/api/availability/2025-11-15 > /dev/null 2>&1; then
+            echo "✅ Azure Functions is running and responding"
             break
           fi
+          echo "Attempt $i/30: Azure Functions not ready yet..."
           sleep 2
         done
+        
+        # Check if it's really running
+        if ! curl -s -f http://localhost:7071/api/availability/2025-11-15 > /dev/null 2>&1; then
+          echo "❌ Azure Functions failed to start"
+          echo "=== Azure Functions Log ==="
+          cat azure-functions.log
+          exit 1
+        fi
       env:
         FUNCTIONS_WORKER_RUNTIME: node
         AzureWebJobsStorage: ""
@@ -265,18 +279,34 @@ jobs:
     - name: Start Frontend
       run: |
         cd frontend
-        npm start &
+        # Start Frontend in background with nohup
+        nohup npm start > frontend.log 2>&1 &
+        echo $! > frontend.pid
+        echo "Frontend PID: $(cat frontend.pid)"
+        
+        # Wait for Frontend to be ready
         echo "Waiting for Frontend to start..."
         for i in {1..30}; do
-          if curl -s http://localhost:3300 > /dev/null; then
-            echo "✅ Frontend is running"
+          if curl -s -f http://localhost:3300 2>&1 | grep -q "<!DOCTYPE html>"; then
+            echo "✅ Frontend is running and serving HTML"
             break
           fi
+          echo "Attempt $i/30: Frontend not ready yet..."
           sleep 2
         done
+        
+        # Check if it's really running
+        if ! curl -s -f http://localhost:3300 2>&1 | grep -q "<!DOCTYPE html>"; then
+          echo "❌ Frontend failed to start"
+          echo "=== Frontend Log ==="
+          cat frontend.log
+          exit 1
+        fi
       env:
         CI: true
         BROWSER: none
+        PORT: 3300
+        HOST: localhost
     
     - name: Run E2E tests
       run: |
@@ -284,6 +314,18 @@ jobs:
         npm test
       env:
         CI: true
+    
+    - name: Show logs on failure
+      if: failure()
+      run: |
+        echo "=== Azure Functions Log ==="
+        if [ -f functions/azure-functions.log ]; then
+          tail -100 functions/azure-functions.log
+        fi
+        echo "=== Frontend Log ==="
+        if [ -f frontend/frontend.log ]; then
+          tail -100 frontend/frontend.log
+        fi
     
     - name: Upload E2E test results
       if: always()
