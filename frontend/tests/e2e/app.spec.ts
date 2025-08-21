@@ -38,6 +38,22 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     const statusElements = page.locator('.availability-table .status');
     await expect(statusElements).toHaveCount(2); // 2施設分
     
+    // 各ステータスが○または×で表示されることを確認
+    const firstStatus = statusElements.first();
+    const secondStatus = statusElements.nth(1);
+    
+    // ステータスシンボルの内容を確認（○か×のいずれか）
+    await expect(firstStatus).toContainText(/○|×/);
+    await expect(secondStatus).toContainText(/○|×/);
+    
+    // 更新時刻が各レコードに表示されることを確認（tbody内のみ）
+    const updateTimes = page.locator('.availability-table tbody .update-time');
+    await expect(updateTimes).toHaveCount(2); // 2施設分
+    
+    // 更新時刻のフォーマットを確認（MM/DD HH:mm形式）
+    const firstUpdateTime = updateTimes.first();
+    await expect(firstUpdateTime).toContainText(/\d{2}\/\d{2} \d{2}:\d{2}/);
+    
     // 凡例が表示されることを確認
     await expect(page.locator('.legend')).toBeVisible();
     await expect(page.locator('.legend-item').filter({ hasText: '空き' })).toBeVisible();
