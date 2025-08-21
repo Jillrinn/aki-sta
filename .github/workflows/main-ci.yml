@@ -160,7 +160,7 @@ jobs:
   # ============================================
   scraper-test:
     name: Python Scraper Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     strategy:
       matrix:
@@ -192,8 +192,7 @@ jobs:
     
     - name: Install Playwright browsers
       run: |
-        playwright install chromium
-        playwright install-deps chromium
+        playwright install --with-deps chromium
       working-directory: ./scraper
     
     - name: Run tests
