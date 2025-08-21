@@ -54,7 +54,7 @@ cd ..
 #### 方法1: 一括起動（推奨）
 ```bash
 # バックエンドとフロントエンドを同時起動
-npm run dev
+npm start
 ```
 
 #### 方法2: 個別起動
@@ -63,13 +63,13 @@ npm run dev
 cd functions
 npm start
 
-# ターミナル2: React アプリ起動（ポート3000）
+# ターミナル2: React アプリ起動（ポート3300）
 cd frontend
 npm start
 ```
 
 ### アクセスURL
-- **フロントエンド**: http://localhost:3000
+- **フロントエンド**: http://localhost:3300
 - **API**: http://localhost:7071/api/availability/{date}
   - 例: http://localhost:7071/api/availability/2025-11-15
 
@@ -216,8 +216,8 @@ ls functions/index.js || echo "module.exports = require('./availability-api/inde
 
 ### ポート使用中エラー
 ```bash
-# ポート3000の確認
-lsof -i :3000
+# ポート3300の確認
+lsof -i :3300
 # ポート7071の確認
 lsof -i :7071
 ```

@@ -42,7 +42,7 @@ aki-sta/
 ### 開発サーバー起動
 ```bash
 # 推奨: 一括起動
-npm run dev
+npm start
 
 # または個別起動
 cd functions && npm start  # Terminal 1
@@ -64,7 +64,7 @@ cd frontend && npm test -- --coverage --watchAll=false
 ### プロセス確認
 ```bash
 # ポート使用状況
-lsof -i :3000  # React
+lsof -i :3300  # React
 lsof -i :7071  # Azure Functions
 
 # バックグラウンドbash確認
