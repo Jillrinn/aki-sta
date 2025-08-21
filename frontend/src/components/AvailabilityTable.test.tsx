@@ -77,8 +77,49 @@ describe('AvailabilityTable', () => {
     });
 
     await waitFor(() => {
-      // エラーメッセージが表示されることを確認（詳細なエラーメッセージ形式に対応）
-      expect(screen.getByText(/エラー:/)).toBeInTheDocument();
+      // 実際のエラーメッセージ形式を確認
+      expect(screen.getByText('エラー: API Error')).toBeInTheDocument();
+    });
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('renders HTTP error state correctly', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    const httpError = {
+      response: {
+        status: 500,
+        statusText: 'Internal Server Error'
+      }
+    };
+    (availabilityApi.getAvailability as jest.Mock).mockRejectedValue(httpError);
+
+    await act(async () => {
+      render(<AvailabilityTable />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('エラー 500: Internal Server Error')).toBeInTheDocument();
+    });
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('renders network error state correctly', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    const networkError = {
+      request: {}
+    };
+    (availabilityApi.getAvailability as jest.Mock).mockRejectedValue(networkError);
+
+    await act(async () => {
+      render(<AvailabilityTable />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('ネットワーク接続エラー: サーバーに接続できません')).toBeInTheDocument();
     });
     
     consoleErrorSpy.mockRestore();
