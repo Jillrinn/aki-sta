@@ -88,7 +88,6 @@ describe('API Integration Tests', () => {
     funcProcess.stdout.on('data', (data) => {
       const output = data.toString();
 
-      console.log('[Azure Functions Log]', data.toString().trim());
       // 起動段階のチェック
       if (output.includes('Worker process started and initialized')) {
         hasStartedWorker = true;
