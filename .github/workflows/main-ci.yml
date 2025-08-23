@@ -228,11 +228,6 @@ jobs:
         cache-dependency-path: e2e/package-lock.json
     
     
-    - name: Setup local.settings.json for CI
-      run: |
-        cd functions
-        cp local.settings.ci.json local.settings.json
-    
     - name: Install dependencies
       run: |
         cd functions && npm ci
@@ -357,11 +352,6 @@ jobs:
       with:
         node-version: '20.x'
     
-    
-    - name: Setup local.settings.json for CI
-      run: |
-        cd functions
-        cp local.settings.ci.json local.settings.json
     
     - name: Install all dependencies
       run: |

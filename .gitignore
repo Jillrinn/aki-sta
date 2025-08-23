@@ -15,7 +15,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Azure Functions
-local.settings.json
 bin/
 obj/
 *.user

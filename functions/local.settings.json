@@ -7,6 +7,5 @@
   "Host": {
     "CORS": "*",
     "CORSCredentials": false
-  },
-  "_comment": "Copy this file to local.settings.json and update values as needed for your environment"
+  }
 }
