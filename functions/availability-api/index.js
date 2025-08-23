@@ -12,8 +12,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const dataStore = require('../shared/data-store');
-  const data = dataStore.getAvailabilityData(date);
+  const availabilityRepository = require('../repositories/availability-repository');
+  const data = availabilityRepository.getAvailabilityData(date);
   
   context.res = {
     status: 200,
