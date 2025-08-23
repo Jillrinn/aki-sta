@@ -6,13 +6,15 @@
     "start": "func start",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --testMatch='**/test/integration/**/*.test.js' --testTimeout=30000"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "axios": "^1.11.0",
     "jest": "^30.0.5"
   }
 }
