@@ -159,6 +159,31 @@ await act(async () => {
    - **MVP進捗更新時は`.github/mvp-checklist.md`も確認**
 5. コミットメッセージに変更内容を明確に記載
 
+### コミットメッセージスタイル
+```
+<type>: <description>
+
+<optional body>
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**タイプ（type）**:
+- `feat`: 新機能追加
+- `fix`: バグ修正
+- `refactor`: リファクタリング（機能変更なし）
+- `test`: テスト追加・修正
+- `docs`: ドキュメント更新
+- `chore`: ビルド設定、依存関係更新など
+
+**記述ルール**:
+- 日本語OK（このプロジェクトの慣例）
+- 簡潔に（1-2行）
+- 「何を」よりも「なぜ」を重視
+- 必要に応じて箇条書きで詳細を追加
+
 ## 🎯 ユーザーとのやり取りで重要なこと
 
 ### 確認すべきこと
