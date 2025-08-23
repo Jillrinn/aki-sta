@@ -11,5 +11,9 @@ module.exports = {
   testMatch: [
     '**/test/**/*.test.js'
   ],
+  testPathIgnorePatterns: [
+    '/node_modules/'
+  ],
+  testTimeout: 30000, // 統合テスト用にタイムアウトを延長
   verbose: true
 };

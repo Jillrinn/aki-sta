@@ -1,4 +1,12 @@
 const httpFunction = require('../../src/functions/availability-api');
+const mockFallbackData = require('../../src/repositories/fallback-data.json');
+
+// リポジトリをモック化
+jest.mock('../../src/repositories/availability-repository', () => ({
+  getAvailabilityData: jest.fn()
+}));
+
+const availabilityRepository = require('../../src/repositories/availability-repository');
 
 describe('Availability API', () => {
   let context;
@@ -6,14 +14,21 @@ describe('Availability API', () => {
 
   beforeEach(() => {
     context = {
-      log: jest.fn(),
+      log: {
+        error: jest.fn()
+      },
       bindingData: {},
       res: null
     };
     request = {};
+    // モックをリセット
+    jest.clearAllMocks();
   });
 
-  test('should return dummy data for valid date', async () => {
+  test('should return data for valid date', async () => {
+    // モックデータを設定
+    availabilityRepository.getAvailabilityData.mockReturnValue(mockFallbackData['2025-11-15']);
+    
     context.bindingData.date = '2025-11-15';
     
     await httpFunction(context, request);
@@ -21,18 +36,14 @@ describe('Availability API', () => {
     expect(context.res.status).toBe(200);
     expect(context.res.body.date).toBe('2025-11-15');
     expect(context.res.body.facilities).toHaveLength(2);
-    expect(context.res.body.dataSource).toBe('dummy');
-    expect(context.res.body.lastUpdated).toBeUndefined();
-    
-    const facilities = context.res.body.facilities;
-    // スクレイピングデータまたはダミーデータのどちらかをテスト
-    expect(facilities[0].facilityName).toMatch(/Ensemble Studio 本郷|あんさんぶるStudio和\(本郷\)/);
-    expect(facilities[0].lastUpdated).toBeDefined();
-    expect(facilities[1].facilityName).toMatch(/Ensemble Studio 初台|あんさんぶるStudio音\(初台\)/);
-    expect(facilities[1].lastUpdated).toBeDefined();
+    expect(context.res.body.facilities[0].facilityName).toBe('Ensemble Studio 本郷');
+    expect(context.res.body.facilities[1].facilityName).toBe('Ensemble Studio 初台');
   });
 
-  test('should return empty array for unknown date', async () => {
+  test('should return empty array for date with no data', async () => {
+    // 空配列を返すようにモック設定
+    availabilityRepository.getAvailabilityData.mockReturnValue([]);
+    
     context.bindingData.date = '2025-12-01';
     
     await httpFunction(context, request);
@@ -40,7 +51,6 @@ describe('Availability API', () => {
     expect(context.res.status).toBe(200);
     expect(context.res.body.date).toBe('2025-12-01');
     expect(context.res.body.facilities).toEqual([]);
-    expect(context.res.body.dataSource).toBe('dummy');
   });
 
   test('should return error when date is missing', async () => {
@@ -50,14 +60,58 @@ describe('Availability API', () => {
     
     expect(context.res.status).toBe(400);
     expect(context.res.body.error).toBe('Date parameter is required');
+    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('*');
   });
 
-  test('should include CORS headers', async () => {
+  test('should return 503 when repository throws error', async () => {
+    // リポジトリがエラーをスローするようにモック設定
+    availabilityRepository.getAvailabilityData.mockImplementation(() => {
+      throw new Error('Data source not available');
+    });
+    
+    context.bindingData.date = '2025-11-15';
+    
+    await httpFunction(context, request);
+    
+    expect(context.res.status).toBe(503);
+    expect(context.res.body.error).toBe('Service temporarily unavailable');
+    expect(context.res.body.details).toBe('Data source not available');
+    expect(context.log.error).toHaveBeenCalledWith(
+      'Failed to get availability data for 2025-11-15:',
+      'Data source not available'
+    );
+  });
+
+  test('should include CORS headers in all responses', async () => {
+    // 成功ケース
+    availabilityRepository.getAvailabilityData.mockReturnValue([]);
     context.bindingData.date = '2025-11-15';
     
     await httpFunction(context, request);
     
     expect(context.res.headers['Access-Control-Allow-Origin']).toBe('*');
     expect(context.res.headers['Content-Type']).toBe('application/json');
+    
+    // エラーケース
+    context.bindingData.date = null;
+    await httpFunction(context, request);
+    
+    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(context.res.headers['Content-Type']).toBe('application/json');
+  });
+
+  test('should handle JSON parse errors from repository', async () => {
+    // JSONパースエラーをシミュレート
+    availabilityRepository.getAvailabilityData.mockImplementation(() => {
+      throw new Error('Failed to read availability data: Unexpected token');
+    });
+    
+    context.bindingData.date = '2025-11-15';
+    
+    await httpFunction(context, request);
+    
+    expect(context.res.status).toBe(503);
+    expect(context.res.body.error).toBe('Service temporarily unavailable');
+    expect(context.res.body.details).toContain('Failed to read availability data');
   });
 });
