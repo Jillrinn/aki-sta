@@ -1,1 +1,1 @@
-module.exports = require('./src/availability-api/index');
+module.exports = require('./src/index');

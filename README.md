@@ -130,12 +130,12 @@ npm run test:ui             # Playwright UIモード
 aki-sta/
 ├── functions/                      # Azure Functions バックエンド
 │   ├── availability-api/           # 空き状況取得API
-│   │   ├── index.js               # API実装
-│   │   ├── index.test.js          # APIテスト
+│   │   ├── availability-api.js               # API実装
+│   │   ├── availability-api.test.js          # APIテスト
 │   │   └── function.json          # Azure Functions設定
 │   ├── shared/                     # 共通ライブラリ
 │   │   └── data-store.js          # データストア (JSONファイル読み込み)
-│   ├── index.js                   # エントリーポイント（必須）
+│   ├── availability-api.js                   # エントリーポイント（必須）
 │   ├── host.json                  # Azure Functions全体設定
 │   ├── local.settings.json        # ローカル設定（gitignore）
 │   └── package.json               # 依存関係・スクリプト
@@ -258,7 +258,7 @@ REACT_APP_API_URL=/api  # デフォルト値、プロキシ経由
 ### Azure Functions が起動しない
 ```bash
 # index.jsの確認・作成
-ls functions/index.js || echo "module.exports = require('./availability-api/index');" > functions/index.js
+ls functions/availability-api.js || echo "module.exports = require('./availability-api/index');" > functions/availability-api.js
 ```
 
 ### ポート使用中エラー

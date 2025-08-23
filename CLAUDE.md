@@ -27,7 +27,7 @@
 ```
 aki-sta/
 ├── functions/          # Azure Functions API
-│   ├── index.js       # ⚠️ 必須：これがないと起動エラー
+│   ├── availability-api.js       # ⚠️ 必須：これがないと起動エラー
 │   └── availability-api/
 ├── frontend/          # React TypeScript
 │   └── src/
@@ -89,7 +89,7 @@ lsof -i :7071  # Azure Functions
 **原因**: functions/index.jsが存在しない
 **解決**: 
 ```bash
-echo "module.exports = require('./availability-api/index');" > functions/index.js
+echo "module.exports = require('./availability-api/index');" > functions/availability-api.js
 ```
 
 ### Jest + axios ESMエラー
@@ -120,7 +120,7 @@ await act(async () => {
 3. 型安全性の確保 > 実装スピード
 
 ### API変更時の対応
-1. functions/availability-api/index.js を更新
+1. functions/availability-api/availability-api.js を更新
 2. frontend/src/types/availability.ts の型を更新
 3. 両方のテストを更新・実行
 4. 統合動作確認
@@ -205,9 +205,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Azure Functions起動エラー
 ```bash
-# "Worker was unable to load entry point 'index.js'"の場合
+# "Worker was unable to load entry point 'availability-api.js'"の場合
 cd functions
-echo "module.exports = require('./availability-api/index');" > index.js
+echo "module.exports = require('./availability-api/index');" > availability-api.js
 ```
 
 ### GitHub Actions統合テストエラー

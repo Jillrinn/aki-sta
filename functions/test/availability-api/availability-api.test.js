@@ -1,4 +1,4 @@
-const httpFunction = require('../../src/availability-api/index');
+const httpFunction = require('../../src/functions/availability-api');
 
 describe('Availability API', () => {
   let context;
