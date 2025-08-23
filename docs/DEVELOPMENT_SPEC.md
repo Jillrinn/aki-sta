@@ -115,20 +115,20 @@ studio-reservation-checker/
 │   ├── package.json
 │   ├── availability-api/           # HTTP Trigger (空き状況取得)
 │   │   ├── function.json
-│   │   ├── index.js
-│   │   └── index.test.js
+│   │   ├── availability-api.js
+│   │   └── availability-api.test.js
 │   ├── target-dates-api/           # HTTP Trigger (日付管理) [v3.0で追加]
 │   │   ├── function.json
-│   │   ├── index.js
-│   │   └── index.test.js
+│   │   ├── availability-api.js
+│   │   └── availability-api.test.js
 │   ├── scheduled-scraping/         # Timer Trigger [v3.0で追加]
 │   │   ├── function.json
-│   │   ├── index.js
-│   │   └── index.test.js
+│   │   ├── availability-api.js
+│   │   └── availability-api.test.js
 │   ├── manual-update/              # HTTP Trigger (手動更新) [v3.0で追加]
 │   │   ├── function.json
-│   │   ├── index.js
-│   │   └── index.test.js
+│   │   ├── availability-api.js
+│   │   └── availability-api.test.js
 │   ├── shared/                     # 共通ライブラリ
 │   │   ├── data-store.js           # v1.0: ダミー, v2.0: JSON, v3.0: Cosmos
 │   │   ├── data-store.test.js
@@ -202,7 +202,7 @@ module.exports = {
 
 **API実装**:
 ```javascript
-// functions/availability-api/index.js
+// functions/availability-api/availability-api.js
 module.exports = async function (context, req) {
   const date = req.params.date;
   const dataStore = require('../shared/data-store');
