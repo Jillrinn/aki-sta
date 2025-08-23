@@ -122,7 +122,9 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     
     // エラーメッセージが表示される
     await expect(page.locator('.error')).toBeVisible();
-    await expect(page.locator('.error')).toContainText('エラー');
+    await expect(page.locator('.error-main')).toContainText('サーバーエラーが発生しました');
+    await expect(page.locator('.error-details')).toContainText('HTTPステータス: 500');
+    await expect(page.locator('.error-original')).toContainText('詳細: Server error');
   });
 
   test('ネットワークエラーが適切に表示される', async ({ page }) => {
@@ -135,6 +137,6 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     
     // ネットワークエラーメッセージが表示される
     await expect(page.locator('.error')).toBeVisible();
-    await expect(page.locator('.error')).toContainText('ネットワーク接続エラー');
+    await expect(page.locator('.error-main')).toContainText('ネットワーク接続エラー: サーバーに接続できません');
   });
 });
