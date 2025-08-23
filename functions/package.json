@@ -16,5 +16,8 @@
   "devDependencies": {
     "axios": "^1.11.0",
     "jest": "^30.0.5"
+  },
+  "dependencies": {
+    "azure-functions-core-tools": "^4.2.1"
   }
 }
