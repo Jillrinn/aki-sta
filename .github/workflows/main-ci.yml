@@ -227,13 +227,11 @@ jobs:
         cache: 'npm'
         cache-dependency-path: e2e/package-lock.json
     
-    - name: Install Azure Functions Core Tools
+    
+    - name: Setup local.settings.json for CI
       run: |
-        curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-        sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
-        sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
-        sudo apt-get update
-        sudo apt-get install -y azure-functions-core-tools-4
+        cd functions
+        cp local.settings.ci.json local.settings.json
     
     - name: Install dependencies
       run: |
@@ -249,8 +247,8 @@ jobs:
     - name: Start Azure Functions
       run: |
         cd functions
-        # Start Azure Functions in background with nohup
-        nohup func start --port 7071 > azure-functions.log 2>&1 &
+        # Start Azure Functions in background with nohup using npx
+        nohup npx func start --port 7071 > azure-functions.log 2>&1 &
         echo $! > azure-functions.pid
         echo "Azure Functions PID: $(cat azure-functions.pid)"
         
@@ -359,13 +357,11 @@ jobs:
       with:
         node-version: '20.x'
     
-    - name: Install Azure Functions Core Tools
+    
+    - name: Setup local.settings.json for CI
       run: |
-        curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-        sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
-        sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
-        sudo apt-get update
-        sudo apt-get install -y azure-functions-core-tools-4
+        cd functions
+        cp local.settings.ci.json local.settings.json
     
     - name: Install all dependencies
       run: |
@@ -383,7 +379,7 @@ jobs:
         AzureWebJobsStorage: ""
       run: |
         cd functions
-        func start --port 7071 &
+        npx func start --port 7071 &
         echo "Waiting for Azure Functions to start..."
         for i in {1..30}; do
           if curl -s http://localhost:7071 > /dev/null; then

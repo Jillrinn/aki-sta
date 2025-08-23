@@ -50,6 +50,11 @@ cd aki-sta
 # バックエンドの依存関係インストール
 cd functions
 npm install
+
+# Azure Functions設定ファイルをセットアップ
+cp local.settings.example.json local.settings.json
+# 必要に応じてlocal.settings.jsonを編集
+
 cd ..
 
 # フロントエンドの依存関係インストール

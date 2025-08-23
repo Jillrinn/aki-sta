@@ -37,6 +37,23 @@ describe('API Integration Tests', () => {
   };
   
   beforeAll(async () => {
+    // funcコマンドの存在確認（npx経由）
+    const { execSync } = require('child_process');
+    try {
+      // npx funcでバージョン確認
+      const funcVersion = execSync('npx func --version', { 
+        encoding: 'utf8',
+        cwd: path.join(__dirname, '../..'),
+        timeout: 10000
+      }).trim();
+      console.log(`Azure Functions Core Tools version: ${funcVersion}`);
+    } catch (error) {
+      console.warn('Azure Functions Core Tools not found. Skipping integration tests.');
+      console.warn('Make sure azure-functions-core-tools is installed as a dependency');
+      // funcが見つからない場合はテストをスキップ
+      return;
+    }
+    
     // 既存のプロセスをクリーンアップ
     console.log(`Cleaning up port ${TEST_PORT}...`);
     await cleanupPort();
@@ -44,9 +61,10 @@ describe('API Integration Tests', () => {
     
     // Azure Functionsを起動（テスト用ポートで）
     console.log(`Starting Azure Functions on port ${TEST_PORT}...`);
-    funcProcess = spawn('func', ['start', '--port', TEST_PORT], {
+    funcProcess = spawn('npx', ['func', 'start', '--port', TEST_PORT], {
       cwd: path.join(__dirname, '../..'),
-      stdio: 'pipe'
+      stdio: 'pipe',
+      shell: true // シェルを使用してPATHを解決
     });
     
     // プロセスエラー処理
