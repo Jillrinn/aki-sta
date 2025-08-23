@@ -77,14 +77,16 @@ describe('AvailabilityTable', () => {
     });
 
     await waitFor(() => {
-      // 実際のエラーメッセージ形式を確認
-      expect(screen.getByText('エラー: API Error')).toBeInTheDocument();
+      // メインエラーメッセージを確認
+      expect(screen.getByText('データの取得に失敗しました')).toBeInTheDocument();
+      // 詳細エラーメッセージを確認
+      expect(screen.getByText('詳細: API Error')).toBeInTheDocument();
     });
     
     consoleErrorSpy.mockRestore();
   });
 
-  it('renders HTTP error state correctly', async () => {
+  it('renders HTTP 500 error state correctly', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     
     const httpError = {
@@ -100,7 +102,33 @@ describe('AvailabilityTable', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('エラー 500: Internal Server Error')).toBeInTheDocument();
+      expect(screen.getByText('サーバーエラーが発生しました。時間をおいて再度お試しください')).toBeInTheDocument();
+      expect(screen.getByText('HTTPステータス: 500')).toBeInTheDocument();
+      expect(screen.getByText(/Internal Server Error/)).toBeInTheDocument();
+    });
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('renders HTTP 404 error state correctly', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    const httpError = {
+      response: {
+        status: 404,
+        statusText: 'Not Found'
+      }
+    };
+    (availabilityApi.getAvailability as jest.Mock).mockRejectedValue(httpError);
+
+    await act(async () => {
+      render(<AvailabilityTable />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('APIエンドポイントが見つかりません。サーバーの設定を確認してください')).toBeInTheDocument();
+      expect(screen.getByText('HTTPステータス: 404')).toBeInTheDocument();
+      expect(screen.getByText(/Not Found/)).toBeInTheDocument();
     });
     
     consoleErrorSpy.mockRestore();
@@ -174,5 +202,30 @@ describe('AvailabilityTable', () => {
       expect(availableStatuses.length).toBeGreaterThan(0);
       expect(bookedStatuses.length).toBeGreaterThan(0);
     });
+  });
+
+  it('renders error with response body error message', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    const httpError = {
+      response: {
+        status: 400,
+        statusText: 'Bad Request',
+        data: { error: 'Invalid date format' }
+      }
+    };
+    (availabilityApi.getAvailability as jest.Mock).mockRejectedValue(httpError);
+
+    await act(async () => {
+      render(<AvailabilityTable />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('サーバーエラーが発生しました')).toBeInTheDocument();
+      expect(screen.getByText('HTTPステータス: 400')).toBeInTheDocument();
+      expect(screen.getByText('詳細: Invalid date format')).toBeInTheDocument();
+    });
+    
+    consoleErrorSpy.mockRestore();
   });
 });
