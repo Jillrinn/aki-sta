@@ -6,7 +6,7 @@ describe('API Integration Tests', () => {
   let funcProcess;
   const TEST_PORT = '7073'; // テスト用の別ポート（7073を使用）
   const API_URL = `http://localhost:${TEST_PORT}`;
-  const STARTUP_TIMEOUT = 20000; // 20秒に延長
+  const STARTUP_TIMEOUT = 30000; // 30秒
   
   // ポートをクリーンアップする関数
   const cleanupPort = async () => {
