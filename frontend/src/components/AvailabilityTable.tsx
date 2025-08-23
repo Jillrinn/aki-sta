@@ -3,10 +3,17 @@ import { availabilityApi } from '../services/api';
 import { AvailabilityResponse } from '../types/availability';
 import './AvailabilityTable.css';
 
+interface ErrorDetails {
+  message: string;
+  statusCode?: number;
+  statusText?: string;
+  originalError?: string;
+}
+
 const AvailabilityTable: React.FC = () => {
   const [data, setData] = useState<AvailabilityResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorDetails | null>(null);
   const targetDate = '2025-11-15';
 
   useEffect(() => {
@@ -17,16 +24,36 @@ const AvailabilityTable: React.FC = () => {
         setData(response);
         setError(null);
       } catch (err: any) {
+        const errorDetails: ErrorDetails = {
+          message: 'データの取得に失敗しました',
+        };
+        
         if (err.response) {
           // HTTPエラー
-          setError(`エラー ${err.response.status}: ${err.response.statusText || 'サーバーエラー'}`);
+          errorDetails.statusCode = err.response.status;
+          errorDetails.statusText = err.response.statusText;
+          
+          if (err.response.status === 404) {
+            errorDetails.message = 'APIエンドポイントが見つかりません。サーバーの設定を確認してください';
+          } else if (err.response.status === 500) {
+            errorDetails.message = 'サーバーエラーが発生しました。時間をおいて再度お試しください';
+          } else {
+            errorDetails.message = `サーバーエラーが発生しました`;
+          }
+          
+          // レスポンスボディのエラーメッセージがあれば追加
+          if (err.response.data?.error) {
+            errorDetails.originalError = err.response.data.error;
+          }
         } else if (err.request) {
           // ネットワークエラー
-          setError('ネットワーク接続エラー: サーバーに接続できません');
+          errorDetails.message = 'ネットワーク接続エラー: サーバーに接続できません';
         } else {
           // その他のエラー
-          setError(`エラー: ${err.message || 'データの取得に失敗しました'}`);
+          errorDetails.originalError = err.message || '不明なエラー';
         }
+        
+        setError(errorDetails);
         console.error('API Error:', err);
       } finally {
         setLoading(false);
@@ -78,7 +105,18 @@ const AvailabilityTable: React.FC = () => {
   if (error) {
     return (
       <div className="availability-container">
-        <div className="error">{error}</div>
+        <div className="error">
+          <div className="error-main">{error.message}</div>
+          {error.statusCode && (
+            <div className="error-details">
+              <span className="error-status">HTTPステータス: {error.statusCode}</span>
+              {error.statusText && <span className="error-status-text"> ({error.statusText})</span>}
+            </div>
+          )}
+          {error.originalError && (
+            <div className="error-original">詳細: {error.originalError}</div>
+          )}
+        </div>
       </div>
     );
   }
