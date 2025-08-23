@@ -8,7 +8,7 @@ module.exports = {
   getAvailabilityData: (date) => {
     try {
       // スクレイピングデータのパスを構築
-      const scrapedDataPath = path.join(__dirname, '../../shared-data/availability.json');
+      const scrapedDataPath = path.join(__dirname, '../../../shared-data/availability.json');
       
       // スクレイピングデータが存在するか確認
       if (fs.existsSync(scrapedDataPath)) {
