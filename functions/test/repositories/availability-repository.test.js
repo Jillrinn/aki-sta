@@ -1,4 +1,4 @@
-const availabilityRepository = require('./availability-repository');
+const availabilityRepository = require('../../src/repositories/availability-repository');
 
 describe('Availability Repository', () => {
   test('should return data for known date', () => {
