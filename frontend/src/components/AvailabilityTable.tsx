@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { availabilityApi } from '../services/api';
 import { AvailabilityResponse } from '../types/availability';
-import './AvailabilityTable.css';
 
 interface ErrorDetails {
   message: string;
@@ -76,6 +75,20 @@ const AvailabilityTable: React.FC = () => {
     }
   };
 
+  const getStatusClasses = (status: string) => {
+    const baseClasses = 'inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white';
+    switch (status) {
+      case 'available':
+        return `${baseClasses} bg-green-500`;
+      case 'booked':
+        return `${baseClasses} bg-red-500`;
+      case 'lottery':
+        return `${baseClasses} bg-orange-500`;
+      default:
+        return `${baseClasses} bg-gray-500`;
+    }
+  };
+
   const formatUpdateTime = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -93,10 +106,10 @@ const AvailabilityTable: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="availability-container">
-        <div className="loading">
-          <div className="loading-spinner"></div>
-          <p>データを読み込み中...</p>
+      <div className="max-w-3xl mx-auto p-5 font-sans">
+        <div className="text-blue-500 flex flex-col items-center gap-5">
+          <div className="border-4 border-gray-300 border-t-blue-500 rounded-full w-10 h-10 animate-spin"></div>
+          <p className="m-0">データを読み込み中...</p>
         </div>
       </div>
     );
@@ -104,17 +117,17 @@ const AvailabilityTable: React.FC = () => {
 
   if (error) {
     return (
-      <div className="availability-container">
-        <div className="error">
-          <div className="error-main">{error.message}</div>
+      <div className="max-w-3xl mx-auto p-5 font-sans">
+        <div className="text-red-600 bg-red-50 rounded-lg border border-red-200 p-10 text-center">
+          <div className="font-semibold">{error.message}</div>
           {error.statusCode && (
-            <div className="error-details">
-              <span className="error-status">HTTPステータス: {error.statusCode}</span>
-              {error.statusText && <span className="error-status-text"> ({error.statusText})</span>}
+            <div className="mt-2 text-sm">
+              <span className="text-red-500">HTTPステータス: {error.statusCode}</span>
+              {error.statusText && <span className="text-red-400"> ({error.statusText})</span>}
             </div>
           )}
           {error.originalError && (
-            <div className="error-original">詳細: {error.originalError}</div>
+            <div className="mt-2 text-sm text-red-400">詳細: {error.originalError}</div>
           )}
         </div>
       </div>
@@ -123,48 +136,48 @@ const AvailabilityTable: React.FC = () => {
 
   if (!data || !data.facilities || data.facilities.length === 0) {
     return (
-      <div className="availability-container">
-        <div className="no-data">データがありません</div>
+      <div className="max-w-3xl mx-auto p-5 font-sans">
+        <div className="text-center p-10 text-lg text-gray-500">データがありません</div>
       </div>
     );
   }
 
   return (
-    <div className="availability-container">
-      <h1>空きスタサーチくん</h1>
-      <h2>施設空き状況 - {targetDate}</h2>
+    <div className="max-w-3xl mx-auto p-5 font-sans">
+      <h1 className="text-3xl text-slate-700 text-center mb-2 font-bold">空きスタサーチくん</h1>
+      <h2 className="text-xl text-slate-600 text-center mb-8">施設空き状況 - {targetDate}</h2>
       
-      <div className="table-wrapper">
-        <table className="availability-table">
-          <thead>
+      <div className="overflow-x-auto mb-8 shadow-md rounded-lg">
+        <table className="w-full border-collapse bg-white">
+          <thead className="bg-blue-500 text-white">
             <tr>
-              <th className="facility-name">施設名</th>
-              <th className="time-slot">13:00-17:00</th>
-              <th className="update-time">更新日時</th>
+              <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">施設名</th>
+              <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[120px]">13:00-17:00</th>
+              <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[140px]">更新日時</th>
             </tr>
           </thead>
           <tbody>
             {data.facilities.map((facility, index) => (
-              <tr key={index}>
-                <td className="facility-name">{facility.facilityName}</td>
-                <td className="time-slot">
-                  <span className={`status status-${facility.timeSlots['13-17']}`}>
+              <tr key={index} className="hover:bg-gray-50">
+                <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">{facility.facilityName}</td>
+                <td className="p-4 text-center border-b border-gray-200">
+                  <span className={getStatusClasses(facility.timeSlots['13-17'])}>
                     {getStatusSymbol(facility.timeSlots['13-17'])}
                   </span>
                 </td>
-                <td className="update-time">{formatUpdateTime(facility.lastUpdated)}</td>
+                <td className="p-4 text-center border-b border-gray-200 text-gray-600 text-sm">{formatUpdateTime(facility.lastUpdated)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       
-      <div className="legend">
-        <span className="legend-item">
-          <span className="status status-available">○</span> 空き
+      <div className="flex justify-center gap-8 mb-5 flex-wrap">
+        <span className="flex items-center gap-2 text-sm text-gray-600">
+          <span className="inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white bg-green-500">○</span> 空き
         </span>
-        <span className="legend-item">
-          <span className="status status-booked">×</span> 予約済み
+        <span className="flex items-center gap-2 text-sm text-gray-600">
+          <span className="inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white bg-red-500">×</span> 予約済み
         </span>
       </div>
       

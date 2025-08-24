@@ -33,13 +33,14 @@ describe('App', () => {
     expect(screen.getByText('空きスタサーチくん')).toBeInTheDocument();
   });
 
-  it('applies App styling class', () => {
+  it('applies Tailwind styling classes', () => {
     (availabilityApi.getAvailability as jest.Mock).mockReturnValue(
       new Promise(() => {})
     );
 
     const { container } = render(<App />);
-    const appDiv = container.querySelector('.App');
+    const appDiv = container.querySelector('.min-h-screen');
     expect(appDiv).toBeInTheDocument();
+    expect(appDiv).toHaveClass('bg-gradient-to-br');
   });
 });

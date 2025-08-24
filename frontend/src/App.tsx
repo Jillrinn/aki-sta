@@ -1,10 +1,9 @@
 import React from 'react';
 import AvailabilityTable from './components/AvailabilityTable';
-import './App.css';
 
 function App() {
   return (
-    <div className="App">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-5">
       <AvailabilityTable />
     </div>
   );
