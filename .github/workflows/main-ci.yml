@@ -237,7 +237,10 @@ jobs:
     - name: Install Playwright browsers
       run: |
         cd e2e
+        # Playwrightのブラウザを確実にインストール
         npx playwright install --with-deps chromium
+        # 念のため再度確認とインストール
+        npm run ensure-browsers
     
     - name: Start Azure Functions
       run: |

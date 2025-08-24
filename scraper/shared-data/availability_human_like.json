@@ -1,0 +1,105 @@
+{
+  "data": {
+    "2025-08-25": [
+      {
+        "facilityName": "あんさんぶるStudio和(本郷)",
+        "timeSlots": {
+          "9-12": "unknown",
+          "13-17": "unknown",
+          "18-21": "unknown"
+        },
+        "lastUpdated": "2025-08-24T15:47:52Z"
+      },
+      {
+        "facilityName": "あんさんぶるStudio音(初台)",
+        "timeSlots": {
+          "9-12": "unknown",
+          "13-17": "unknown",
+          "18-21": "unknown"
+        },
+        "lastUpdated": "2025-08-24T15:47:52Z"
+      }
+    ],
+    "2025-08-28": [
+      {
+        "facilityName": "あんさんぶるStudio和(本郷)",
+        "timeSlots": {
+          "9-12": "booked",
+          "13-17": "available",
+          "18-21": "booked"
+        },
+        "lastUpdated": "2025-08-24T15:40:55Z"
+      },
+      {
+        "facilityName": "あんさんぶるStudio音(初台)",
+        "timeSlots": {
+          "9-12": "booked",
+          "13-17": "booked",
+          "18-21": "booked"
+        },
+        "lastUpdated": "2025-08-24T15:40:55Z"
+      }
+    ],
+    "2025-09-15": [
+      {
+        "facilityName": "あんさんぶるStudio和(本郷)",
+        "timeSlots": {
+          "9-12": "booked",
+          "13-17": "booked",
+          "18-21": "booked"
+        },
+        "lastUpdated": "2025-08-24T15:41:13Z"
+      },
+      {
+        "facilityName": "あんさんぶるStudio音(初台)",
+        "timeSlots": {
+          "9-12": "booked",
+          "13-17": "booked",
+          "18-21": "booked"
+        },
+        "lastUpdated": "2025-08-24T15:41:13Z"
+      }
+    ],
+    "2025-08-29": [
+      {
+        "facilityName": "あんさんぶるStudio和(本郷)",
+        "timeSlots": {
+          "9-12": "booked",
+          "13-17": "booked",
+          "18-21": "booked"
+        },
+        "lastUpdated": "2025-08-24T15:48:15Z"
+      },
+      {
+        "facilityName": "あんさんぶるStudio音(初台)",
+        "timeSlots": {
+          "9-12": "booked",
+          "13-17": "booked",
+          "18-21": "available"
+        },
+        "lastUpdated": "2025-08-24T15:48:15Z"
+      }
+    ],
+    "2025-10-29": [
+      {
+        "facilityName": "あんさんぶるStudio和(本郷)",
+        "timeSlots": {
+          "9-12": "available",
+          "13-17": "booked",
+          "18-21": "booked"
+        },
+        "lastUpdated": "2025-08-24T15:49:18Z"
+      },
+      {
+        "facilityName": "あんさんぶるStudio音(初台)",
+        "timeSlots": {
+          "9-12": "available",
+          "13-17": "booked",
+          "18-21": "available"
+        },
+        "lastUpdated": "2025-08-24T15:49:18Z"
+      }
+    ]
+  },
+  "lastScraped": "2025-08-24T15:49:18Z"
+}

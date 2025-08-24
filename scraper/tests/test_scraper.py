@@ -1,55 +1,67 @@
 """
-あんさんぶるスタジオスクレイパーのテスト
+あんさんぶるスタジオスクレイパーのテスト（人間の操作を模倣した版）
 """
 import json
 import os
 import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch, mock_open
-from src.scraper import (
-    EnsembleStudioScraper,
-    convert_time_slot,
-    parse_availability
-)
+from unittest.mock import Mock, patch, MagicMock
+from src.scraper import EnsembleStudioScraper
 
 
 class TestTimeSlotConversion:
     """時間帯変換のテスト"""
     
-    def test_morning_slot(self):
+    @pytest.fixture
+    def scraper(self):
+        """スクレイパーインスタンスを作成"""
+        return EnsembleStudioScraper()
+    
+    def test_morning_slot(self, scraper):
         """9:00 → 9-12 への変換"""
-        assert convert_time_slot("09:00") == "9-12"
-        assert convert_time_slot("9:00") == "9-12"
+        assert scraper.convert_time_to_slot("09:00") == "9-12"
+        assert scraper.convert_time_to_slot("9:00") == "9-12"
     
-    def test_afternoon_slot(self):
+    def test_afternoon_slot(self, scraper):
         """13:00 → 13-17 への変換"""
-        assert convert_time_slot("13:00") == "13-17"
+        assert scraper.convert_time_to_slot("13:00") == "13-17"
     
-    def test_evening_slot(self):
+    def test_evening_slot(self, scraper):
         """18:00 → 18-21 への変換"""
-        assert convert_time_slot("18:00") == "18-21"
+        assert scraper.convert_time_to_slot("18:00") == "18-21"
     
-    def test_invalid_time(self):
+    def test_invalid_time(self, scraper):
         """無効な時間の処理"""
-        assert convert_time_slot("10:00") is None
-        assert convert_time_slot("invalid") is None
+        assert scraper.convert_time_to_slot("10:00") is None
+        assert scraper.convert_time_to_slot("invalid") is None
+        assert scraper.convert_time_to_slot("") is None
 
 
-class TestAvailabilityParsing:
-    """空き状況パースのテスト"""
+class TestJapaneseYearMonthParsing:
+    """日本語年月パースのテスト"""
     
-    def test_parse_available(self):
-        """○ → available への変換"""
-        assert parse_availability("○") == "available"
+    @pytest.fixture
+    def scraper(self):
+        """スクレイパーインスタンスを作成"""
+        return EnsembleStudioScraper()
     
-    def test_parse_booked(self):
-        """× → booked への変換"""
-        assert parse_availability("×") == "booked"
+    def test_parse_valid_year_month(self, scraper):
+        """有効な年月文字列のパース"""
+        result = scraper.parse_japanese_year_month("2025年8月")
+        assert result.year == 2025
+        assert result.month == 8
+        assert result.day == 1
     
-    def test_parse_unknown(self):
-        """不明な記号の処理"""
-        assert parse_availability("?") == "unknown"
-        assert parse_availability("") == "unknown"
+    def test_parse_double_digit_month(self, scraper):
+        """2桁月のパース"""
+        result = scraper.parse_japanese_year_month("2025年12月")
+        assert result.year == 2025
+        assert result.month == 12
+    
+    def test_parse_invalid_format(self, scraper):
+        """無効な形式の処理"""
+        assert scraper.parse_japanese_year_month("invalid") is None
+        assert scraper.parse_japanese_year_month("2025/08") is None
 
 
 class TestEnsembleStudioScraper:
@@ -60,96 +72,102 @@ class TestEnsembleStudioScraper:
         """スクレイパーインスタンスを作成"""
         return EnsembleStudioScraper()
     
-    @patch('src.scraper.sync_playwright')
-    def test_fetch_page_success(self, mock_playwright, scraper):
-        """ページ取得成功のテスト"""
-        # モックの設定
-        mock_page = Mock()
-        mock_page.content.return_value = "<html>test content</html>"
-        mock_browser = Mock()
-        mock_browser.new_page.return_value = mock_page
-        mock_chromium = Mock()
-        mock_chromium.launch.return_value = mock_browser
-        mock_p = Mock()
-        mock_p.chromium = mock_chromium
-        mock_playwright.return_value.__enter__.return_value = mock_p
+    def test_find_date_cell(self, scraper):
+        """日付セルの特定テスト"""
+        # モックのLocatorを作成
+        mock_day_box = Mock()
+        mock_day_number = Mock()
+        mock_day_number.text_content.return_value = "15"
+        mock_day_number.count.return_value = 1
         
-        # 実行
-        content = scraper.fetch_page("https://ensemble-studio.com/schedule/")
+        # locatorメソッドが.firstを返すように設定
+        mock_day_box.locator.return_value.first = mock_day_number
         
-        # 検証
-        assert content == "<html>test content</html>"
-        mock_page.goto.assert_called_once_with("https://ensemble-studio.com/schedule/", wait_until="networkidle")
+        mock_calendar = Mock()
+        mock_day_boxes = Mock()
+        mock_day_boxes.count.return_value = 1
+        mock_day_boxes.nth.return_value = mock_day_box
+        mock_calendar.locator.return_value = mock_day_boxes
+        
+        result = scraper.find_date_cell(mock_calendar, 15)
+        assert result == mock_day_box
     
-    def test_extract_studio_data(self, scraper):
-        """スタジオデータ抽出のテスト - 実際のサイト構造に基づく"""
-        # 実際のサイトでは、グリッド形式でカレンダーが表示される
-        # スタジオ名、日付、時間帯ごとに○×－の記号で表示
-        html_content = """
-        <div class="calendar-grid">
-            <div class="studio-section">
-                <div class="studio-name">あんさんぶるStudio和(本郷)</div>
-                <div class="date-row">
-                    <div class="date">15</div>
-                    <div class="time-slots">
-                        <div class="slot" data-time="09:00">○</div>
-                        <div class="slot" data-time="13:00">×</div>
-                        <div class="slot" data-time="18:00">○</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        """
+    def test_extract_time_slots_disabled(self, scraper):
+        """営業していない日の時刻情報抽出テスト"""
+        # モックのday_boxを作成
+        mock_day_box = Mock()
+        mock_disable = Mock()
+        mock_disable.count.return_value = 1
+        mock_disable.first.text_content.return_value = "－"
+        mock_day_box.locator.return_value = mock_disable
         
-        result = scraper.extract_studio_data(html_content, "あんさんぶるStudio和(本郷)", "2025-11-15")
-        
-        assert result["facilityName"] == "あんさんぶるStudio和(本郷)"
-        assert result["timeSlots"]["9-12"] == "available"
-        assert result["timeSlots"]["13-17"] == "booked"
-        assert result["timeSlots"]["18-21"] == "available"
-        assert "lastUpdated" in result
+        result = scraper.extract_time_slots(mock_day_box)
+        assert result == {
+            "9-12": "unknown",
+            "13-17": "unknown",
+            "18-21": "unknown"
+        }
     
-    @patch('src.scraper.sync_playwright')
-    def test_scrape_availability(self, mock_playwright, scraper):
-        """全体のスクレイピング処理のテスト"""
-        # モックの設定
-        mock_page = Mock()
-        mock_page.content.return_value = """
-        <html>
-            <div>Mock calendar content</div>
-        </html>
-        """
-        mock_browser = Mock()
-        mock_browser.new_page.return_value = mock_page
-        mock_chromium = Mock()
-        mock_chromium.launch.return_value = mock_browser
-        mock_p = Mock()
-        mock_p.chromium = mock_chromium
-        mock_playwright.return_value.__enter__.return_value = mock_p
+    def test_extract_time_slots_with_marks(self, scraper):
+        """時刻マークがある日の時刻情報抽出テスト"""
+        # 時刻マークのモックを作成
+        mock_day_box = Mock()
         
-        # extract_studio_dataをモック
-        with patch.object(scraper, 'extract_studio_data') as mock_extract:
-            def mock_extract_side_effect(html, studio, date):
-                if studio == "あんさんぶるStudio和(本郷)":
-                    return {
-                        "facilityName": "あんさんぶるStudio和(本郷)",
-                        "timeSlots": {"9-12": "available", "13-17": "booked", "18-21": "available"},
-                        "lastUpdated": "2025-08-21T12:00:00Z"
-                    }
-                else:
-                    return {
-                        "facilityName": "あんさんぶるStudio音(初台)",
-                        "timeSlots": {"9-12": "booked", "13-17": "available", "18-21": "booked"},
-                        "lastUpdated": "2025-08-21T12:00:00Z"
-                    }
+        # calendar-time-disableは存在しない
+        mock_disable = Mock()
+        mock_disable.count.return_value = 0
+        
+        # 時刻マークを設定
+        mock_time_marks = Mock()
+        mock_time_marks.count.return_value = 3
+        
+        # 各時刻マークのモック
+        mock_marks = []
+        time_data = [
+            ("09:00", "×", False),  # リンクなし、×
+            ("13:00", "○", True),   # リンクあり、○
+            ("18:00", "×", False),  # リンクなし、×
+        ]
+        
+        for time_str, symbol, has_link in time_data:
+            mock_mark = Mock()
+            mock_time_string = Mock()
+            mock_time_string.count.return_value = 1
+            mock_time_string.text_content.return_value = time_str
             
-            mock_extract.side_effect = mock_extract_side_effect
+            # locatorメソッドの設定
+            def create_locator_func(ts_mock, has_link_val, symbol_val):
+                def locator_func(selector):
+                    if selector == ".time-string":
+                        return Mock(first=ts_mock)
+                    elif selector == "a":
+                        link_mock = Mock()
+                        link_mock.count.return_value = 1 if has_link_val else 0
+                        link_mock.text_content.return_value = symbol_val if has_link_val else ""
+                        return Mock(first=link_mock)
+                    return Mock()
+                return locator_func
             
-            result = scraper.scrape_availability("2025-11-15")
-            
-            assert len(result) == 2
-            assert result[0]["facilityName"] == "あんさんぶるStudio和(本郷)"
-            assert result[1]["facilityName"] == "あんさんぶるStudio音(初台)"
+            mock_mark.locator = create_locator_func(mock_time_string, has_link, symbol)
+            mock_mark.text_content.return_value = f"{time_str}{symbol}"
+            mock_marks.append(mock_mark)
+        
+        mock_time_marks.nth = lambda i: mock_marks[i]
+        
+        # day_boxのlocatorメソッドを設定
+        def day_box_locator(selector):
+            if selector == ".calendar-time-disable":
+                return mock_disable
+            elif selector == ".calendar-time-mark":
+                return mock_time_marks
+            return Mock()
+        
+        mock_day_box.locator = day_box_locator
+        
+        result = scraper.extract_time_slots(mock_day_box)
+        assert result["9-12"] == "booked"
+        assert result["13-17"] == "available"
+        assert result["18-21"] == "booked"
     
     def test_save_to_json(self, scraper, tmp_path):
         """JSON保存のテスト"""
@@ -179,25 +197,19 @@ class TestEnsembleStudioScraper:
         assert saved_data == data
     
     @patch('src.scraper.sync_playwright')
-    def test_retry_on_failure(self, mock_playwright, scraper):
-        """リトライ機能のテスト"""
-        # 最初の2回は失敗、3回目で成功
-        mock_page = Mock()
-        mock_page.content.side_effect = [
-            Exception("Network error"),
-            Exception("Timeout"),
-            "<html>success</html>"
-        ]
-        mock_page.goto.return_value = None
-        mock_browser = Mock()
-        mock_browser.new_page.return_value = mock_page
-        mock_chromium = Mock()
-        mock_chromium.launch.return_value = mock_browser
-        mock_p = Mock()
-        mock_p.chromium = mock_chromium
-        mock_playwright.return_value.__enter__.return_value = mock_p
+    def test_scrape_availability_error_handling(self, mock_playwright, scraper):
+        """エラー時のデフォルトデータ返却テスト"""
+        # Playwrightがエラーを発生させる
+        mock_playwright.side_effect = Exception("Connection error")
         
-        content = scraper.fetch_page_with_retry("https://ensemble-studio.com/schedule/", max_retries=3)
+        result = scraper.scrape_availability("2025-11-15")
         
-        assert content == "<html>success</html>"
-        assert mock_page.content.call_count == 3
+        # デフォルトデータが返される
+        assert len(result) == 2
+        assert result[0]["facilityName"] == "あんさんぶるStudio和(本郷)"
+        assert result[1]["facilityName"] == "あんさんぶるStudio音(初台)"
+        
+        # すべての時間帯がunknown
+        for facility in result:
+            for time_slot in ["9-12", "13-17", "18-21"]:
+                assert facility["timeSlots"][time_slot] == "unknown"
