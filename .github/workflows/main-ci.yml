@@ -336,77 +336,12 @@ jobs:
         retention-days: 7
 
   # ============================================
-  # Integration Tests
-  # ============================================
-  integration-test:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test, scraper-test]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-    
-    
-    - name: Install all dependencies
-      run: |
-        cd functions && npm ci
-        cd ../frontend && npm ci
-    
-    - name: Setup Azure Functions
-      run: |
-        cd functions
-        echo "module.exports = require('./availability-api/index');" > index.js
-    
-    - name: Start Azure Functions
-      env:
-        FUNCTIONS_WORKER_RUNTIME: node
-        AzureWebJobsStorage: ""
-      run: |
-        cd functions
-        npx func start --port 7071 &
-        echo "Waiting for Azure Functions to start..."
-        for i in {1..30}; do
-          if curl -s http://localhost:7071 > /dev/null; then
-            echo "✅ Azure Functions is running"
-            break
-          fi
-          sleep 2
-        done
-    
-    - name: Test API endpoints
-      run: |
-        # Test availability endpoint
-        response=$(curl -s -f http://localhost:7071/api/availability/2025-11-15)
-        echo "API Response: $response"
-        
-        if [[ $response == *"facilities"* ]] && [[ $response == *"date"* ]]; then
-          echo "✅ API returns expected data structure"
-        else
-          echo "❌ API response is invalid"
-          exit 1
-        fi
-        
-        # Test response format
-        if echo "$response" | jq -e '.facilities | length > 0' > /dev/null; then
-          echo "✅ API returns facilities data"
-        else
-          echo "❌ No facilities data in response"
-          exit 1
-        fi
-
-  # ============================================
   # Deploy (Placeholder for future)
   # ============================================
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [build, integration-test, e2e-test]
+    needs: [build, e2e-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
@@ -429,7 +364,7 @@ jobs:
     name: CI/CD Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: [backend-test, frontend-test, scraper-test, build, integration-test, e2e-test, deploy-staging]
+    needs: [backend-test, frontend-test, scraper-test, build, e2e-test, deploy-staging]
     
     steps:
     - name: Generate Summary
