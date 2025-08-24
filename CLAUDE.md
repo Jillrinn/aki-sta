@@ -92,6 +92,20 @@ lsof -i :7071  # Azure Functions
 echo "module.exports = require('./availability-api/index');" > functions/availability-api.js
 ```
 
+### Playwrightバージョン競合問題（解決済み）
+**原因**: Python（スクレイパー）とNode.js（E2E）で異なるPlaywrightバージョンを使用
+**解決**: 環境分離システム実装（2025-08-24）
+```bash
+# 包括的セットアップ
+./setup-playwright-environments.sh
+
+# Python実行（環境分離）
+cd scraper && ./run-playwright.sh src/scraper.py
+
+# E2E実行（環境分離）
+cd e2e && npm test
+```
+
 ### Jest + axios ESMエラー
 **原因**: axiosのESモジュール問題
 **解決**: setupTests.tsでモック、package.jsonでtransformIgnorePatterns設定
@@ -134,12 +148,20 @@ await act(async () => {
 - 統合動作: ✅ 動作確認済み
 - E2Eテスト: ✅ 実装完了（固定データ戦略採用）
 
+### MVP v2.0 - ✅ 完了（2025-08-24）
+- 実データスクレイピング: ✅ 完了（あんさんぶるスタジオ対応）
+- Playwright実装: ✅ 完了（人間的操作・環境分離システム）
+- データ共有: ✅ 完了（JSONファイルベース、shared-data/）
+- 3時間帯表示: ✅ 完了（9-12, 13-17, 18-21）
+- 環境分離システム: ✅ 完了（バージョン競合完全解決）
+
 **進捗更新時**: `.github/mvp-checklist.md`で完了基準を確認
 
-### 次の作業: MVP v2.0
-- 実データスクレイピング実装
-- Puppeteer/Playwright導入
-- データ永続化（Cosmos DB）
+### 次の作業: MVP v3.0
+- Azure本番環境デプロイ
+- Cosmos DB統合・データ永続化
+- 複数日付管理機能
+- 自動スケジュール実行（Timer Trigger）
 
 ### GitHub Actions  
 - **main-ci.yml**: push/PR時の全テスト実行（Backend/Frontend/Scraper/E2E）
@@ -216,5 +238,5 @@ echo "module.exports = require('./availability-api/index');" > availability-api.
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
 
 ---
-*最終更新: 2025-08-21 - E2Eテスト追加、スクレイパー実装*
+*最終更新: 2025-08-24 - MVP v2.0完了、Playwright環境分離システム実装*
 - testを実行して成功することを確認して初めてcommitするようにしてください

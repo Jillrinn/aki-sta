@@ -18,13 +18,16 @@
 - ✅ レスポンシブデザイン実装
 - ✅ E2Eテスト実装（Playwright/TypeScript）
 
-**MVP v2.0** 🚀 進行中（2025-08-21）
+**MVP v2.0** ✅ 完了（2025-08-24）
 - ✅ Pythonスクレイパー実装（Playwright）
+- ✅ 実サイトからのスクレイピング実装（あんさんぶるスタジオ）
+- ✅ 人間的操作スクレイピング（DOM探索・カレンダー操作）
 - ✅ JSONファイルベースのデータ共有
 - ✅ 3時間帯表示（9-12, 13-17, 18-21）
-- ⏳ 実サイトからのスクレイピング実装
+- ✅ Playwright環境分離システム（バージョン競合解決）
+- ✅ 自動修復・ブラウザインストール機能
 
-**次のステップ**: MVP v3.0 - Azure本番環境デプロイ
+**次のステップ**: MVP v3.0 - Azure本番環境デプロイ・Cosmos DB統合
 
 ## 🔧 技術スタック
 - **バックエンド**: Azure Functions (Node.js)
@@ -33,6 +36,21 @@
 - **スクレイパー**: Python + Playwright
 - **CI/CD**: GitHub Actions
 - **データベース**: Cosmos DB（v3.0以降予定）
+
+## 🛠️ 開発環境・特殊機能
+
+### Playwright環境分離システム 🎯
+Python（スクレイパー）とNode.js（E2E）で異なるバージョンのPlaywrightを使用してもバージョン競合が発生しない包括的なシステムを実装。
+- **環境分離**: `~/.cache/playwright-python` と `~/.cache/playwright-node`
+- **自動修復**: ブラウザ不足時の自動インストール・復旧機能
+- **バージョン独立**: どちらの環境を先に実行しても影響なし
+- **設定**: `scraper/.env.playwright` と `e2e/.env.playwright`
+
+### 初回セットアップ
+```bash
+# 包括的環境セットアップ（推奨）
+./setup-playwright-environments.sh
+```
 
 ## 🚀 クイックスタート
 
@@ -112,9 +130,9 @@ npm test -- --coverage --watchAll=false  # カバレッジ付きテスト
 #### Pythonスクレイパーテスト
 ```bash
 cd scraper
-./test.sh                   # テスト実行スクリプト
+./run-playwright.sh --install-browsers src/scraper.py  # 環境分離実行
 # または
-python -m pytest tests/ -v  # 直接pytest実行
+source venv/bin/activate && python -m pytest tests/ -v  # 直接pytest実行
 ```
 
 #### E2Eテスト
@@ -155,11 +173,19 @@ aki-sta/
 │   └── tsconfig.json              # TypeScript設定
 ├── scraper/                       # Pythonスクレイパー（Playwright）
 │   ├── src/
-│   │   ├── scraper.py            # スクレイピングロジック
+│   │   ├── scraper.py            # スクレイピングロジック（人間的操作）
+│   │   ├── playwright_wrapper.py # 自動修復機能付きPlaywrightラッパー
 │   │   ├── main.py               # CLIエントリーポイント
 │   │   └── generate_test_data.py # テストデータ生成
 │   ├── tests/
-│   │   └── test_scraper.py       # スクレイパーテスト
+│   │   ├── test_scraper.py       # スクレイパーテスト
+│   │   └── test_dynamic_date.py  # 動的日付テスト
+│   ├── docs/
+│   │   └── scraping-specification.md # 人間的スクレイピング仕様
+│   ├── shared-data/              # スクレイピング結果保存
+│   │   └── availability.json     # 実データ
+│   ├── run-playwright.sh         # 環境分離実行スクリプト
+│   ├── .env.playwright           # Python用環境設定
 │   ├── requirements.txt          # Python依存関係
 │   └── README.md                 # スクレイパードキュメント
 ├── e2e/                           # E2Eテスト（Playwright/TypeScript）
@@ -167,7 +193,12 @@ aki-sta/
 │   │   └── app.spec.ts           # E2Eテストケース
 │   ├── fixtures/
 │   │   └── test-data.json        # 固定テストデータ
-│   ├── scripts/                  # テストデータ管理
+│   ├── scripts/                  # 環境管理・テストデータ管理
+│   │   ├── load-env.js           # 環境変数読み込み
+│   │   ├── ensure-browsers.js    # ブラウザ自動インストール
+│   │   └── cleanup.js            # テストデータクリーンアップ
+│   ├── run-test.sh               # 環境分離テスト実行
+│   ├── .env.playwright           # Node.js用環境設定
 │   └── playwright.config.ts      # Playwright設定
 ├── shared-data/                   # データ共有ディレクトリ
 │   └── availability.json         # スクレイピング結果JSON
@@ -175,7 +206,10 @@ aki-sta/
 │   ├── DEVELOPMENT_SPEC.md       # 開発仕様書
 │   └── GITHUB_ACTIONS.md         # CI/CDパイプライン詳細
 ├── .github/                       # GitHub Actions CI/CD
-│   └── workflows/
+│   ├── workflows/
+│   ├── mvp-checklist.md          # MVP完了判定基準
+│   └── commit-checklist.md       # コミット前確認事項
+├── setup-playwright-environments.sh # 包括的環境セットアップスクリプト
 ├── README.md                      # プロジェクト概要（このファイル）
 └── CLAUDE.md                      # Claude専用指示書
 ```
@@ -276,11 +310,11 @@ lsof -i :7071
 ## 🗓️ ロードマップ
 | バージョン | 内容 | ステータス |
 |-----------|------|----------|
-| MVP v1.0 | ダミーデータ表示 | ✅ 完了 |
-| MVP v2.0 | 実データスクレイピング | ⏳ 計画中 |
-| MVP v3.0 | Azure本番デプロイ | ⏳ 計画中 |
-| v1.0 | 複数日付対応 | 📋 バックログ |
-| v2.0 | ユーザー認証・お気に入り | 📋 バックログ |
+| MVP v1.0 | ダミーデータ表示 | ✅ 完了（2025-08-21） |
+| MVP v2.0 | 実データスクレイピング・環境分離システム | ✅ 完了（2025-08-24） |
+| MVP v3.0 | Azure本番デプロイ・Cosmos DB | 🚀 計画中 |
+| v1.0 | 複数施設対応・複数日付管理 | 📋 バックログ |
+| v2.0 | ユーザー認証・お気に入り・通知機能 | 📋 バックログ |
 
 ## 📚 外部リソース
 
