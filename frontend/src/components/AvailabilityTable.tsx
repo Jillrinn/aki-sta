@@ -144,12 +144,12 @@ const AvailabilityTable: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-5 font-sans">
-      <h1 className="text-3xl text-slate-700 text-center mb-2 font-bold">空きスタサーチくん</h1>
-      <h2 className="text-xl text-slate-600 text-center mb-8">施設空き状況 - {targetDate}</h2>
+      <h1 className="text-3xl text-gray-800 text-center mb-2 font-bold">空きスタサーチくん</h1>
+      <h2 className="text-xl text-gray-600 text-center mb-8">施設空き状況 - {targetDate}</h2>
       
-      <div className="overflow-x-auto mb-8 shadow-md rounded-lg">
+      <div className="overflow-x-auto mb-8 shadow-lg rounded-lg border border-gray-200">
         <table className="w-full border-collapse bg-white">
-          <thead className="bg-blue-500 text-white">
+          <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
             <tr>
               <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">施設名</th>
               <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[120px]">13:00-17:00</th>
@@ -158,7 +158,7 @@ const AvailabilityTable: React.FC = () => {
           </thead>
           <tbody>
             {data.facilities.map((facility, index) => (
-              <tr key={index} className="hover:bg-gray-50">
+              <tr key={index} className="hover:bg-blue-50 transition-colors duration-150">
                 <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">{facility.facilityName}</td>
                 <td className="p-4 text-center border-b border-gray-200">
                   <span className={getStatusClasses(facility.timeSlots['13-17'])}>
