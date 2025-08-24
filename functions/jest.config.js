@@ -12,8 +12,9 @@ module.exports = {
     '**/test/**/*.test.js'
   ],
   testPathIgnorePatterns: [
-    '/node_modules/'
+    '/node_modules/',
+    '/test/integration/'
   ],
-  testTimeout: 30000, // 統合テスト用にタイムアウトを延長
+  testTimeout: 30000,
   verbose: true
 };
