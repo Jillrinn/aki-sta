@@ -190,9 +190,11 @@ jobs:
         pip install pytest pytest-cov
       working-directory: ./scraper
     
-    - name: Install Playwright browsers
+    - name: Install Playwright browsers with environment isolation
       run: |
-        playwright install --with-deps chromium
+        # 環境分離設定を適用してブラウザをインストール
+        source .env.playwright
+        playwright install --with-deps webkit
       working-directory: ./scraper
     
     - name: Run tests
@@ -234,12 +236,12 @@ jobs:
         cd ../frontend && npm ci
         cd ../e2e && npm ci
     
-    - name: Install Playwright browsers
+    - name: Install Playwright browsers with environment isolation
       run: |
         cd e2e
-        # Playwrightのブラウザを確実にインストール
-        npx playwright install --with-deps chromium
-        # 念のため再度確認とインストール
+        # 新しい環境分離システムを使用
+        npm run setup-env
+        # 動作確認
         npm run ensure-browsers
     
     - name: Start Azure Functions
