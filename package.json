@@ -11,6 +11,7 @@
     "test:backend": "cd functions && npm test",
     "test:frontend": "cd frontend && npm test -- --watchAll=false",
     "test:scraper": "cd scraper && ./test.sh",
+    "test:scraper:real": "cd scraper && source venv/bin/activate && RUN_REAL_TESTS=true python -m pytest tests/test_dynamic_date.py::TestDynamicDateScraping::test_real_site_scraping -v -s",
     "test:e2e": "cd e2e && npm test",
     "test:all": "concurrently -n \"backend,frontend,scraper,e2e,integration\" -c \"blue,green,yellow,magenta,cyan\" \"npm run test:backend\" \"npm run test:frontend\" \"npm run test:scraper\" \"npm run test:e2e\" \"npm run test:integration\"",
     "test:integration": "cd functions && npm run test:integration"

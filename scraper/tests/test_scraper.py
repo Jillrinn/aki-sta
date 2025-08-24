@@ -82,26 +82,26 @@ class TestEnsembleStudioScraper:
         mock_page.goto.assert_called_once_with("https://ensemble-studio.com/schedule/", wait_until="networkidle")
     
     def test_extract_studio_data(self, scraper):
-        """スタジオデータ抽出のテスト"""
+        """スタジオデータ抽出のテスト - 実際のサイト構造に基づく"""
+        # 実際のサイトでは、グリッド形式でカレンダーが表示される
+        # スタジオ名、日付、時間帯ごとに○×－の記号で表示
         html_content = """
-        <div class="studio-schedule">
-            <h3>あんさんぶるStudio和(本郷)</h3>
-            <div class="time-slot">
-                <span class="time">09:00</span>
-                <span class="status">○</span>
-            </div>
-            <div class="time-slot">
-                <span class="time">13:00</span>
-                <span class="status">×</span>
-            </div>
-            <div class="time-slot">
-                <span class="time">18:00</span>
-                <span class="status">○</span>
+        <div class="calendar-grid">
+            <div class="studio-section">
+                <div class="studio-name">あんさんぶるStudio和(本郷)</div>
+                <div class="date-row">
+                    <div class="date">15</div>
+                    <div class="time-slots">
+                        <div class="slot" data-time="09:00">○</div>
+                        <div class="slot" data-time="13:00">×</div>
+                        <div class="slot" data-time="18:00">○</div>
+                    </div>
+                </div>
             </div>
         </div>
         """
         
-        result = scraper.extract_studio_data(html_content, "あんさんぶるStudio和(本郷)")
+        result = scraper.extract_studio_data(html_content, "あんさんぶるStudio和(本郷)", "2025-11-15")
         
         assert result["facilityName"] == "あんさんぶるStudio和(本郷)"
         assert result["timeSlots"]["9-12"] == "available"
@@ -129,18 +129,21 @@ class TestEnsembleStudioScraper:
         
         # extract_studio_dataをモック
         with patch.object(scraper, 'extract_studio_data') as mock_extract:
-            mock_extract.side_effect = [
-                {
-                    "facilityName": "あんさんぶるStudio和(本郷)",
-                    "timeSlots": {"9-12": "available", "13-17": "booked", "18-21": "available"},
-                    "lastUpdated": "2025-08-21T12:00:00Z"
-                },
-                {
-                    "facilityName": "あんさんぶるStudio音(初台)",
-                    "timeSlots": {"9-12": "booked", "13-17": "available", "18-21": "booked"},
-                    "lastUpdated": "2025-08-21T12:00:00Z"
-                }
-            ]
+            def mock_extract_side_effect(html, studio, date):
+                if studio == "あんさんぶるStudio和(本郷)":
+                    return {
+                        "facilityName": "あんさんぶるStudio和(本郷)",
+                        "timeSlots": {"9-12": "available", "13-17": "booked", "18-21": "available"},
+                        "lastUpdated": "2025-08-21T12:00:00Z"
+                    }
+                else:
+                    return {
+                        "facilityName": "あんさんぶるStudio音(初台)",
+                        "timeSlots": {"9-12": "booked", "13-17": "available", "18-21": "booked"},
+                        "lastUpdated": "2025-08-21T12:00:00Z"
+                    }
+            
+            mock_extract.side_effect = mock_extract_side_effect
             
             result = scraper.scrape_availability("2025-11-15")
             
