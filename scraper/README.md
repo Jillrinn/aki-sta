@@ -54,25 +54,21 @@ scraper.scrape_and_save(date, "availability.json")
 ## テスト実行
 
 ```bash
-# 基本的なテスト実行（実サイトアクセスはスキップ）
+# 基本的なテスト実行
 ./test.sh
 
 # または直接pytestを使用
 pytest tests/ -v
 
-# 実サイトアクセステストを含める場合
-RUN_REAL_TESTS=true pytest tests/ -v
-
 # npmコマンドから実行（プロジェクトルートから）
-npm run test:scraper       # 通常テスト
-npm run test:scraper:real  # 実サイトテスト含む
+npm run test:scraper
 ```
 
 ### テストの種類
 
 - **単体テスト** (`test_scraper.py`): 個別関数のテスト
 - **動的日付テスト** (`test_dynamic_date.py`): 現在日時+7日での型検証テスト
-- **統合テスト**: 実際のサイトへのアクセステスト（環境変数で制御）
+- **統合テスト**: 実際のサイトへのアクセステスト
 
 ## 開発環境
 
@@ -160,21 +156,8 @@ playwright install chromium
 - サイトが稼働しているか確認（https://ensemble-studio.com/schedule/）
 - `src/scraper.py`の`timeout`設定を調整（デフォルト: 30秒）
 
-### テストがスキップされる場合
-
-実サイトアクセステストはデフォルトでスキップされます。実行する場合：
-
-```bash
-# 環境変数を設定して実行
-RUN_REAL_TESTS=true pytest tests/test_dynamic_date.py -v
-
-# またはnpmコマンドを使用
-npm run test:scraper:real
-```
-
 ## 注意事項
 
 - スクレイピングは対象サイトの利用規約を遵守して実行してください
 - 過度なアクセスは避け、適切な間隔を空けて実行してください
-- 実サイトアクセステストは開発時のみ使用し、CI/CDでは無効化してください
 - venv/フォルダはgitで追跡されません（.gitignoreに記載済み）
