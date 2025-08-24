@@ -382,8 +382,9 @@ npx claude-code "Azure Functions とReactアプリの統合設定。
 ```
 
 **期待する設定ファイル**:
+
+**functions/local.settings.json**:
 ```json
-// functions/local.settings.json
 {
   "IsEncrypted": false,
   "Values": {
@@ -395,8 +396,10 @@ npx claude-code "Azure Functions とReactアプリの統合設定。
     "CORSCredentials": false
   }
 }
+```
 
-// frontend/package.json (proxy設定)
+**frontend/package.json (proxy設定)**:
+```json
 {
   "name": "studio-reservation-frontend",
   "proxy": "http://localhost:7071",
@@ -725,8 +728,9 @@ describe('Full Application Flow', () => {
 ## 💾 データベース設計（Cosmos DB）
 
 ### Collections
-```javascript
-// target_dates collection
+
+**target_dates collection**:
+```json
 {
   "id": "2025-11-15",
   "date": "2025-11-15",
@@ -735,8 +739,10 @@ describe('Full Application Flow', () => {
   "priority": 1,
   "createdAt": "2025-08-19T10:00:00Z"
 }
+```
 
-// availability collection  
+**availability collection**:
+```json
 {
   "id": "2025-11-15_ensemble-hongo",
   "date": "2025-11-15",
@@ -752,16 +758,20 @@ describe('Full Application Flow', () => {
   "dataSource": "scraping",
   "scrapingStatus": "success"
 }
+```
 
-// rate_limits collection
+**rate_limits collection**:
+```json
 {
   "id": "2025-08-19",
   "date": "2025-08-19",
   "count": 2,
   "lastUpdate": "2025-08-19T15:30:00Z"
 }
+```
 
-// scraping_logs collection
+**scraping_logs collection**:
+```json
 {
   "id": "log_2025-08-19_17:00:00",
   "timestamp": "2025-08-19T17:00:00Z",
