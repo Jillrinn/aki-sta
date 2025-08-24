@@ -2,7 +2,6 @@
 動的な日付を使った型チェックテスト
 実際のスクレイピング結果の値は問わず、型と構造が正しいことを確認
 """
-import os
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
@@ -137,13 +136,8 @@ class TestDynamicDateScraping:
             saved_data = result["data"][dynamic_date]
             self._validate_scraping_results(saved_data, dynamic_date)
     
-    @pytest.mark.integration
-    @pytest.mark.skipif(
-        os.environ.get("RUN_REAL_TESTS") != "true",
-        reason="実際のサイトへのアクセスは手動テスト用（RUN_REAL_TESTS=true で実行）"
-    )
     def test_real_site_scraping(self, scraper, dynamic_date):
-        """実際のサイトに対するスクレイピングテスト（オプショナル）"""
+        """実際のサイトに対するスクレイピングテスト"""
         # 実際のサイトにアクセス
         results = scraper.scrape_availability(dynamic_date)
         
