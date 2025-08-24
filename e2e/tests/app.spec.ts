@@ -117,8 +117,8 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     await page.route('**/api/availability/**', route => {
       route.fulfill({
         status: 500,
-        statusText: 'Internal Server Error',
-        body: JSON.stringify({ error: 'Server error' })
+        body: JSON.stringify({ error: 'Server error' }),
+        headers: { 'Content-Type': 'application/json' }
       });
     });
     
