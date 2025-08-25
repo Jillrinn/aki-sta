@@ -130,9 +130,21 @@ npm test -- --coverage --watchAll=false  # カバレッジ付きテスト
 #### Pythonスクレイパーテスト
 ```bash
 cd scraper
-./run-playwright.sh --install-browsers src/scraper.py  # 環境分離実行
+./test.sh  # テスト実行
 # または
-source venv/bin/activate && python -m pytest tests/ -v  # 直接pytest実行
+npm run test:scraper  # ルートから実行
+```
+
+### 🕷️ スクレイパー実行
+```bash
+# デフォルト実行（今日の日付でスクレイピング）
+npm run scraper
+
+# 特定の日付を指定して実行（ディレクトリ内から）
+cd scraper && ./run-playwright.sh src/main.py --date 2025-11-15
+
+# ヘルプを表示
+cd scraper && ./run-playwright.sh src/main.py --help
 ```
 
 #### E2Eテスト
