@@ -406,7 +406,7 @@ class EnsembleStudioScraper:
             保存したデータ
         """
         if output_path is None:
-            output_path = Path(__file__).parent.parent / "shared-data" / "availability.json"
+            output_path = Path(__file__).parent.parent.parent / "shared-data" / "availability.json"
         
         # 既存データを読み込む（存在する場合）
         existing_data = {}

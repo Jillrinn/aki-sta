@@ -28,7 +28,7 @@ def main():
         '--output',
         type=str,
         default=None,
-        help='出力ファイルパス（省略時は../shared-data/availability.json）'
+        help='出力ファイルパス（省略時は../../shared-data/availability.json）'
     )
     
     args = parser.parse_args()
@@ -58,7 +58,7 @@ def main():
                     status_symbol = "○" if status == "available" else "×" if status == "booked" else "?"
                     print(f"  {time_slot}: {status_symbol} ({status})")
         
-        print(f"\n保存先: {args.output or '../shared-data/availability.json'}")
+        print(f"\n保存先: {args.output or '../../shared-data/availability.json'}")
         print("スクレイピング完了")
         
     except Exception as e:
