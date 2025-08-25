@@ -1,6 +1,16 @@
+const fs = require('fs');
 const availabilityRepository = require('../../src/repositories/availability-repository');
 
+// モック用のオリジナル関数を保存
+const originalExistsSync = fs.existsSync;
+const originalReadFileSync = fs.readFileSync;
+
 describe('Availability Repository', () => {
+  afterEach(() => {
+    // モックをリセット
+    fs.existsSync = originalExistsSync;
+    fs.readFileSync = originalReadFileSync;
+  });
   describe('getAvailabilityData', () => {
     test('should return data for known date', () => {
       const data = availabilityRepository.getAvailabilityData('2025-11-15');
@@ -64,6 +74,66 @@ describe('Availability Repository', () => {
       dates.forEach(date => {
         expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       });
+    });
+    
+    test('should throw error when file does not exist', () => {
+      // ファイルが存在しない場合をモック
+      fs.existsSync = jest.fn().mockReturnValue(false);
+      
+      expect(() => {
+        availabilityRepository.getAvailabilityData('2025-11-15');
+      }).toThrow('Data source not available');
+    });
+    
+    test('should throw error when data structure is invalid', () => {
+      // 無効なデータ構造をモック
+      fs.existsSync = jest.fn().mockReturnValue(true);
+      fs.readFileSync = jest.fn().mockReturnValue('{"invalid": "structure"}');
+      
+      expect(() => {
+        availabilityRepository.getAvailabilityData('2025-11-15');
+      }).toThrow('Invalid data structure');
+    });
+    
+    test('should throw error when JSON is invalid', () => {
+      // 無効なJSONをモック
+      fs.existsSync = jest.fn().mockReturnValue(true);
+      fs.readFileSync = jest.fn().mockReturnValue('invalid json');
+      
+      expect(() => {
+        availabilityRepository.getAvailabilityData('2025-11-15');
+      }).toThrow('Failed to read availability data');
+    });
+  });
+  
+  describe('getAllAvailabilityData error cases', () => {
+    test('should throw error when file does not exist', () => {
+      // ファイルが存在しない場合をモック
+      fs.existsSync = jest.fn().mockReturnValue(false);
+      
+      expect(() => {
+        availabilityRepository.getAllAvailabilityData();
+      }).toThrow('Data source not available');
+    });
+    
+    test('should throw error when data structure is invalid', () => {
+      // 無効なデータ構造をモック
+      fs.existsSync = jest.fn().mockReturnValue(true);
+      fs.readFileSync = jest.fn().mockReturnValue('{"invalid": "structure"}');
+      
+      expect(() => {
+        availabilityRepository.getAllAvailabilityData();
+      }).toThrow('Invalid data structure');
+    });
+    
+    test('should throw error when JSON is invalid', () => {
+      // 無効なJSONをモック
+      fs.existsSync = jest.fn().mockReturnValue(true);
+      fs.readFileSync = jest.fn().mockReturnValue('invalid json');
+      
+      expect(() => {
+        availabilityRepository.getAllAvailabilityData();
+      }).toThrow('Failed to read all availability data');
     });
   });
 });
