@@ -85,12 +85,12 @@ lsof -i :7071  # Azure Functions
 
 ## 🐛 既知の問題と解決策
 
-### Azure Functions起動エラー
-**原因**: functions/index.jsが存在しない
-**解決**: 
-```bash
-echo "module.exports = require('./availability-api/index');" > functions/availability-api.js
-```
+### Azure Functions起動エラー（解決済み: 2025-08-25）
+**原因**: availability-api.jsファイルがルートディレクトリに存在しない
+**解決**: Azure Functions標準構造を復元
+- functions/availability-api.js（エントリーポイント）
+- functions/availability-api/index.js（ハンドラー）
+- functions/availability-api/function.json（設定）
 
 ### Playwrightバージョン競合問題（解決済み）
 **原因**: Python（スクレイパー）とNode.js（E2E）で異なるPlaywrightバージョンを使用
@@ -158,7 +158,10 @@ await act(async () => {
 **進捗更新時**: `.github/mvp-checklist.md`で完了基準を確認
 
 ### MVP v3.0 - ✅ 完了（2025-08-25）
-- ✅ Cosmos DB統合・データ永続化（フェーズ2完了）
+- ✅ Cosmos DB統合・データ永続化（Phase 3移行完了）
+- ✅ Azure Functions構造修正（availability-api.js復元）
+- ✅ 環境変数設定改善（テスト時自動読み込み）
+- ✅ E2Eテスト柔軟化（データ有無両対応）
 - ✅ 環境変数統合システム（ルートレベル管理）
 - ✅ JSONファイル依存完全削除（フェーズ3完了）
 - ✅ Pure Cosmos DBアーキテクチャ移行完了
@@ -243,5 +246,5 @@ echo "module.exports = require('./availability-api/index');" > availability-api.
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
 
 ---
-*最終更新: 2025-08-25 - 統合テスト削除（E2Eテストで代替）*
+*最終更新: 2025-08-25 - MVP v3.0完了、Pure Cosmos DBアーキテクチャ実装*
 - testを実行して成功することを確認して初めてcommitするようにしてください
