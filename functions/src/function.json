@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "availability/{date}"
+      "route": "availability/{date?}"
     },
     {
       "type": "http",
