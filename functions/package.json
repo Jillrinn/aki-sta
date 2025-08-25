@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "setup": "node scripts/setup-local.js",
     "start": "func start",
     "test": "jest",
     "test:watch": "jest --watch",
