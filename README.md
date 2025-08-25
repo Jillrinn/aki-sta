@@ -238,11 +238,20 @@ aki-sta/
 ## 📡 API仕様
 
 ### エンドポイント
+
+#### 特定日付のデータ取得
 ```
 GET /api/availability/{date}
 ```
 - **パラメータ**: date (YYYY-MM-DD形式)
 - **例**: `/api/availability/2025-11-15`
+
+#### 全日付のデータ取得
+```
+GET /api/availability
+```
+- **パラメータ**: なし
+- **レスポンス**: 日付をキーとしたデータのオブジェクト
 
 ### レスポンス形式
 ```typescript
