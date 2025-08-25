@@ -34,12 +34,6 @@ def main():
         default=datetime.now().strftime("%Y-%m-%d"),
         help='スクレイピング対象日付 (YYYY-MM-DD または YYYY/MM/DD 形式)'
     )
-    parser.add_argument(
-        '--output',
-        type=str,
-        default=None,
-        help='出力ファイルパス（省略時は../../shared-data/availability.json）'
-    )
     
     args = parser.parse_args()
     
@@ -68,7 +62,7 @@ def main():
     scraper = EnsembleStudioScraper()
     
     try:
-        result = scraper.scrape_and_save(normalized_date, args.output)
+        result = scraper.scrape_and_save(normalized_date)
         
         # 結果を表示
         if normalized_date in result.get("data", {}):
@@ -80,8 +74,8 @@ def main():
                     status_symbol = "○" if status == "available" else "×" if status == "booked" else "?"
                     print(f"  {time_slot}: {status_symbol} ({status})")
         
-        print(f"\n保存先: {args.output or '../../shared-data/availability.json'}")
-        print("スクレイピング完了")
+        # Cosmos DB保存のため、出力パス表示は削除（scraper.py内でログ出力済み）
+        print("\nスクレイピング完了")
         
     except Exception as e:
         print(f"エラーが発生しました: {e}")
