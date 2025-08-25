@@ -1,11 +1,16 @@
 module.exports = async function (context, req) {
   const date = context.bindingData.date;
-  const availabilityRepository = require('../repositories/availability-repository');
+  
+  // Cosmos DBが設定されている場合は優先的に使用
+  const useCosmosDB = process.env.COSMOS_ENDPOINT && process.env.COSMOS_KEY;
+  const availabilityRepository = useCosmosDB 
+    ? require('../repositories/availability-repository-cosmos')
+    : require('../repositories/availability-repository');
   
   // 日付パラメータがない場合は全データを返す
   if (!date) {
     try {
-      const allData = availabilityRepository.getAllAvailabilityData();
+      const allData = await availabilityRepository.getAllAvailabilityData();
       
       context.res = {
         status: 200,
@@ -36,8 +41,7 @@ module.exports = async function (context, req) {
 
   try {
     // データリポジトリから情報を取得
-    const availabilityRepository = require('../repositories/availability-repository');
-    const data = availabilityRepository.getAvailabilityData(date);
+    const data = await availabilityRepository.getAvailabilityData(date);
     
     // 成功レスポンス
     context.res = {
