@@ -1,16 +1,11 @@
 // 環境変数を読み込み（テスト実行時）
 require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 
+// CosmosClientをモック化（jest.mockは常にトップレベルで実行する必要がある）
+jest.mock('../../src/repositories/cosmos-client');
+
 const cosmosClient = require('../../src/repositories/cosmos-client');
 const availabilityRepository = require('../../src/repositories/availability-repository');
-
-// 環境変数を使った実DBテストの場合はモックしない
-const isRealDBTest = process.env.COSMOS_ENDPOINT && process.env.COSMOS_KEY && process.env.COSMOS_DATABASE;
-
-// CosmosClientをモック化（実DBテスト以外）
-if (!isRealDBTest) {
-  jest.mock('../../src/repositories/cosmos-client');
-}
 
 describe('Availability Repository with Cosmos DB (Pure)', () => {
   beforeEach(() => {
@@ -148,7 +143,12 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
     const testOrSkip = hasCosmosConfig ? test : test.skip;
 
     testOrSkip('should retrieve all data from real Cosmos DB and validate structure', async () => {
-      // 実際のCosmos DBリポジトリを使用（モックなし）
+      // モックをリセットして実際の実装を使用
+      jest.unmock('../../src/repositories/cosmos-client');
+      jest.resetModules();
+      
+      // 実際のCosmos DBリポジトリを使用
+      const realCosmosClient = require('../../src/repositories/cosmos-client');
       const realRepository = require('../../src/repositories/availability-repository');
       
       // 実際のDBからデータ取得
@@ -206,6 +206,11 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
     }, 30000); // タイムアウトを30秒に設定（DBアクセスのため）
 
     testOrSkip('should handle getAvailabilityData with real DB for specific date', async () => {
+      // モックをリセットして実際の実装を使用
+      jest.unmock('../../src/repositories/cosmos-client');
+      jest.resetModules();
+      
+      // 実際のCosmos DBリポジトリを使用
       const realRepository = require('../../src/repositories/availability-repository');
       
       // テスト用の未来の日付
