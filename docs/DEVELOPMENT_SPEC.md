@@ -725,11 +725,34 @@ describe('Full Application Flow', () => {
 });
 ```
 
-## 💾 データベース設計（Cosmos DB）
+## 💾 データベース設計（Cosmos DB NoSQL）
 
-### Collections
+### 設計方針
+- **NoSQLデータベースとして使用**（非正規化によるパフォーマンス最適化）
+- **パーティションキー戦略**: 日付（date）を使用し、日付単位でのクエリを高速化
+- **ログ保持なし**: スクレイピング成功時は最新データで上書き更新
 
-**target_dates collection**:
+### コンテナ（Collections）
+
+**1. availability コンテナ**（メインデータ）:
+```json
+{
+  "id": "2025-11-15_ensemble-hongo",
+  "partitionKey": "2025-11-15",
+  "date": "2025-11-15",
+  "facility": "ensemble-hongo",
+  "facilityName": "あんさんぶるStudio和(本郷)",
+  "timeSlots": {
+    "9-12": "available",
+    "13-17": "booked",
+    "18-21": "available"
+  },
+  "updatedAt": "2025-08-19T17:00:00Z",
+  "dataSource": "scraping"
+}
+```
+
+**2. target_dates コンテナ**（監視対象日付管理）:
 ```json
 {
   "id": "2025-11-15",
@@ -741,26 +764,7 @@ describe('Full Application Flow', () => {
 }
 ```
 
-**availability collection**:
-```json
-{
-  "id": "2025-11-15_ensemble-hongo",
-  "date": "2025-11-15",
-  "facility": "ensemble-hongo",
-  "facilityName": "Ensemble Studio 本郷",
-  "timeSlots": {
-    "9-12": "available",
-    "13-17": "booked", 
-    "18-21": "available"
-  },
-  "updatedAt": "2025-08-19T17:00:00Z",
-  "nextUpdate": "2025-08-20T08:00:00Z",
-  "dataSource": "scraping",
-  "scrapingStatus": "success"
-}
-```
-
-**rate_limits collection**:
+**3. rate_limits コンテナ**（手動更新制限管理）:
 ```json
 {
   "id": "2025-08-19",
@@ -770,18 +774,21 @@ describe('Full Application Flow', () => {
 }
 ```
 
-**scraping_logs collection**:
-```json
-{
-  "id": "log_2025-08-19_17:00:00",
-  "timestamp": "2025-08-19T17:00:00Z",
-  "facility": "ensemble-studio",
-  "date": "2025-11-15",
-  "status": "success",
-  "duration": 5.2,
-  "message": "Successfully scraped 2 studios"
-}
+### クエリパターン
+
+**日付指定での取得**:
+```sql
+SELECT * FROM c WHERE c.date = @targetDate
 ```
+
+**施設・日付指定での取得（ポイント読み取り）**:
+```sql
+SELECT * FROM c WHERE c.id = @id AND c.partitionKey = @date
+```
+
+### インデックスポリシー
+- デフォルトインデックスを使用（全プロパティに自動インデックス）
+- 追加のカスタムインデックスは不要（シンプルなクエリのため）
 
 ## 🚀 Claude Code活用フロー
 
