@@ -17,6 +17,8 @@
     "jest": "^30.0.5"
   },
   "dependencies": {
-    "azure-functions-core-tools": "^4.2.1"
+    "@azure/cosmos": "^4.5.0",
+    "azure-functions-core-tools": "^4.2.1",
+    "dotenv": "^17.2.1"
   }
 }
