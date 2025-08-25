@@ -1,3 +1,6 @@
+// 環境変数を読み込み（テスト実行時）
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
+
 const httpFunction = require('../../src/functions/availability-api');
 const mockFallbackData = require('../../src/repositories/fallback-data.json');
 

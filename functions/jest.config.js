@@ -16,5 +16,6 @@ module.exports = {
     '/test/integration/'
   ],
   testTimeout: 30000,
-  verbose: true
+  verbose: true,
+  setupFilesAfterEnv: ['<rootDir>/test/setup.js']
 };
