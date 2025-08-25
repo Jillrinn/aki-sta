@@ -9,6 +9,126 @@ interface ErrorDetails {
   originalError?: string;
 }
 
+interface LoadingStateProps {}
+
+const LoadingState: React.FC<LoadingStateProps> = () => (
+  <div className="max-w-6xl mx-auto p-5 font-sans">
+    <div className="text-blue-500 flex flex-col items-center gap-5">
+      <div className="border-4 border-gray-300 border-t-blue-500 rounded-full w-10 h-10 animate-spin"></div>
+      <p className="m-0">データを読み込み中...</p>
+    </div>
+  </div>
+);
+
+interface ErrorStateProps {
+  error: ErrorDetails;
+}
+
+const ErrorState: React.FC<ErrorStateProps> = ({ error }) => (
+  <div className="max-w-6xl mx-auto p-5 font-sans">
+    <div className="text-red-600 bg-red-50 rounded-lg border border-red-200 p-10 text-center">
+      <div className="font-semibold">{error.message}</div>
+      {error.statusCode && (
+        <div className="mt-2 text-sm">
+          <span className="text-red-500">HTTPステータス: {error.statusCode}</span>
+          {error.statusText && <span className="text-red-400"> ({error.statusText})</span>}
+        </div>
+      )}
+      {error.originalError && (
+        <div className="mt-2 text-sm text-red-400">詳細: {error.originalError}</div>
+      )}
+    </div>
+  </div>
+);
+
+interface EmptyStateProps {}
+
+const EmptyState: React.FC<EmptyStateProps> = () => (
+  <div className="max-w-6xl mx-auto p-5 font-sans">
+    <div className="text-center p-10 text-lg text-gray-500">データがありません</div>
+  </div>
+);
+
+interface StatusBadgeProps {
+  status: string;
+}
+
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+  const getStatusSymbol = () => {
+    switch (status) {
+      case 'available':
+        return '○';
+      case 'booked':
+        return '×';
+      case 'lottery':
+        return '△';
+      default:
+        return '?';
+    }
+  };
+
+  const getStatusClasses = () => {
+    const baseClasses = 'inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white';
+    switch (status) {
+      case 'available':
+        return `${baseClasses} bg-green-500`;
+      case 'booked':
+        return `${baseClasses} bg-red-500`;
+      case 'lottery':
+        return `${baseClasses} bg-orange-500`;
+      default:
+        return `${baseClasses} bg-gray-500`;
+    }
+  };
+
+  return (
+    <span className={getStatusClasses()}>
+      {getStatusSymbol()}
+    </span>
+  );
+};
+
+interface LegendSectionProps {}
+
+const LegendSection: React.FC<LegendSectionProps> = () => (
+  <div className="flex justify-center gap-8 mb-5 flex-wrap mt-8">
+    <span className="flex items-center gap-2 text-sm text-gray-600">
+      <StatusBadge status="available" /> 空き
+    </span>
+    <span className="flex items-center gap-2 text-sm text-gray-600">
+      <StatusBadge status="booked" /> 予約済み
+    </span>
+    <span className="flex items-center gap-2 text-sm text-gray-600">
+      <StatusBadge status="unknown" /> 不明
+    </span>
+  </div>
+);
+
+interface AvailabilityTableRowProps {
+  facility: Facility;
+  formatUpdateTime: (dateString: string) => string;
+}
+
+const AvailabilityTableRow: React.FC<AvailabilityTableRowProps> = ({ facility, formatUpdateTime }) => (
+  <tr className="hover:bg-blue-50 transition-colors duration-150">
+    <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">
+      {facility.facilityName}
+    </td>
+    <td className="p-4 text-center border-b border-gray-200">
+      <StatusBadge status={facility.timeSlots['9-12']} />
+    </td>
+    <td className="p-4 text-center border-b border-gray-200">
+      <StatusBadge status={facility.timeSlots['13-17']} />
+    </td>
+    <td className="p-4 text-center border-b border-gray-200">
+      <StatusBadge status={facility.timeSlots['18-21']} />
+    </td>
+    <td className="p-4 text-center border-b border-gray-200 text-gray-600 text-sm">
+      {formatUpdateTime(facility.lastUpdated)}
+    </td>
+  </tr>
+);
+
 const AvailabilityTable: React.FC = () => {
   const [data, setData] = useState<AllAvailabilityResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,32 +181,6 @@ const AvailabilityTable: React.FC = () => {
     fetchData();
   }, []);
 
-  const getStatusSymbol = (status: string) => {
-    switch (status) {
-      case 'available':
-        return '○';
-      case 'booked':
-        return '×';
-      case 'lottery':
-        return '△';
-      default:
-        return '?';
-    }
-  };
-
-  const getStatusClasses = (status: string) => {
-    const baseClasses = 'inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white';
-    switch (status) {
-      case 'available':
-        return `${baseClasses} bg-green-500`;
-      case 'booked':
-        return `${baseClasses} bg-red-500`;
-      case 'lottery':
-        return `${baseClasses} bg-orange-500`;
-      default:
-        return `${baseClasses} bg-gray-500`;
-    }
-  };
 
   const formatUpdateTime = (dateString: string) => {
     try {
@@ -104,41 +198,15 @@ const AvailabilityTable: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto p-5 font-sans">
-        <div className="text-blue-500 flex flex-col items-center gap-5">
-          <div className="border-4 border-gray-300 border-t-blue-500 rounded-full w-10 h-10 animate-spin"></div>
-          <p className="m-0">データを読み込み中...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
-    return (
-      <div className="max-w-6xl mx-auto p-5 font-sans">
-        <div className="text-red-600 bg-red-50 rounded-lg border border-red-200 p-10 text-center">
-          <div className="font-semibold">{error.message}</div>
-          {error.statusCode && (
-            <div className="mt-2 text-sm">
-              <span className="text-red-500">HTTPステータス: {error.statusCode}</span>
-              {error.statusText && <span className="text-red-400"> ({error.statusText})</span>}
-            </div>
-          )}
-          {error.originalError && (
-            <div className="mt-2 text-sm text-red-400">詳細: {error.originalError}</div>
-          )}
-        </div>
-      </div>
-    );
+    return <ErrorState error={error} />;
   }
 
   if (!data || Object.keys(data).length === 0) {
-    return (
-      <div className="max-w-6xl mx-auto p-5 font-sans">
-        <div className="text-center p-10 text-lg text-gray-500">データがありません</div>
-      </div>
-    );
+    return <EmptyState />;
   }
 
   // 日付を昇順でソート
@@ -171,29 +239,11 @@ const AvailabilityTable: React.FC = () => {
               </thead>
               <tbody>
                 {data[date].map((facility: Facility, facilityIndex: number) => (
-                  <tr key={facilityIndex} className="hover:bg-blue-50 transition-colors duration-150">
-                    <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">
-                      {facility.facilityName}
-                    </td>
-                    <td className="p-4 text-center border-b border-gray-200">
-                      <span className={getStatusClasses(facility.timeSlots['9-12'])}>
-                        {getStatusSymbol(facility.timeSlots['9-12'])}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center border-b border-gray-200">
-                      <span className={getStatusClasses(facility.timeSlots['13-17'])}>
-                        {getStatusSymbol(facility.timeSlots['13-17'])}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center border-b border-gray-200">
-                      <span className={getStatusClasses(facility.timeSlots['18-21'])}>
-                        {getStatusSymbol(facility.timeSlots['18-21'])}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center border-b border-gray-200 text-gray-600 text-sm">
-                      {formatUpdateTime(facility.lastUpdated)}
-                    </td>
-                  </tr>
+                  <AvailabilityTableRow 
+                    key={facilityIndex} 
+                    facility={facility} 
+                    formatUpdateTime={formatUpdateTime}
+                  />
                 ))}
               </tbody>
             </table>
@@ -201,17 +251,7 @@ const AvailabilityTable: React.FC = () => {
         </div>
       ))}
       
-      <div className="flex justify-center gap-8 mb-5 flex-wrap mt-8">
-        <span className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white bg-green-500">○</span> 空き
-        </span>
-        <span className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white bg-red-500">×</span> 予約済み
-        </span>
-        <span className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white bg-gray-500">?</span> 不明
-        </span>
-      </div>
+      <LegendSection />
       
     </div>
   );
