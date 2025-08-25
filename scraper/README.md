@@ -9,6 +9,7 @@ Playwright + BeautifulSoup4を使用してあんさんぶるスタジオ（本�
 - リトライ機能付きの安定したスクレイピング
 - 動的な日付ナビゲーション（カレンダー月移動対応）
 - JSON形式でのデータ保存と既存データの更新
+- **Cosmos DB統合対応準備**（MVP v3.0で実装予定）
 
 ## セットアップ
 
@@ -140,6 +141,14 @@ flake8 src/ tests/
 ## 出力
 
 スクレイピング結果は `../../shared-data/availability.json`（プロジェクトルートの`shared-data`ディレクトリ）に保存されます。
+
+### データストレージ（現在）
+- **JSONファイル**: `shared-data/availability.json`に保存
+- **バックエンド連携**: Azure FunctionsがJSONファイルを読み込み
+
+### データストレージ（MVP v3.0予定）
+- **Cosmos DB直接書き込み**: スクレイピング結果を直接Cosmos DBに保存
+- **JSONファイルバックアップ**: 障害時のフォールバック用に並行保存
 
 ## CI/CD
 

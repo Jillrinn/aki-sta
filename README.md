@@ -27,15 +27,21 @@
 - ✅ Playwright環境分離システム（バージョン競合解決）
 - ✅ 自動修復・ブラウザインストール機能
 
-**次のステップ**: MVP v3.0 - Azure本番環境デプロイ・Cosmos DB統合
+**MVP v3.0** 🚧 進行中（2025-08-25）
+- ✅ Azure Cosmos DB統合（NoSQL）
+- ✅ データマイグレーション機能
+- ✅ フォールバック機構（JSON → Cosmos DB）
+- ✅ 環境変数同期システム
+- ⏳ Azure本番環境デプロイ
+- ⏳ Timer Trigger自動実行
 
 ## 🔧 技術スタック
 - **バックエンド**: Azure Functions (Node.js)
 - **フロントエンド**: React + TypeScript
+- **データベース**: Azure Cosmos DB (NoSQL)
 - **テスト**: Jest + React Testing Library + Playwright
 - **スクレイパー**: Python + Playwright
 - **CI/CD**: GitHub Actions
-- **データベース**: Cosmos DB（v3.0以降予定）
 
 ## 🛠️ 開発環境・特殊機能
 
@@ -52,12 +58,20 @@ Python（スクレイパー）とNode.js（E2E）で異なるバージョンのP
 ./setup-playwright-environments.sh
 ```
 
+### Cosmos DB統合 🌐
+Azure Cosmos DB（NoSQL）を使用したデータ永続化を実装。
+- **無料枠**: 1000 RU/s + 25GB ストレージ
+- **自動フォールバック**: Cosmos DB → JSONファイル
+- **環境変数同期**: .env → local.settings.json
+- **データマイグレーション**: JSONからCosmos DBへの移行ツール
+
 ## 🚀 クイックスタート
 
 ### 前提条件
 - Node.js v18以上
 - Azure Functions Core Tools v4
 - Git
+- Azure アカウント（Cosmos DB用、無料枠利用可）
 
 ### インストール
 ```bash
@@ -74,6 +88,23 @@ cd ..
 cd frontend
 npm install
 cd ..
+```
+
+### Cosmos DBセットアップ
+```bash
+# 1. Azure PortalでCosmos DBアカウント作成（無料枠適用）
+# 2. functions/.envファイルに接続情報を設定
+COSMOS_ENDPOINT=https://your-account.documents.azure.com:443/
+COSMOS_KEY=your-primary-key
+COSMOS_DATABASE=akista-db
+
+# 3. 環境変数同期と接続テスト
+npm run cosmos:setup  # 同期→テスト→マイグレーション一括実行
+
+# または個別実行
+npm run sync:env      # .env → local.settings.json
+npm run cosmos:test   # 接続テスト
+npm run cosmos:migrate # データマイグレーション
 ```
 
 ### ローカル開発
