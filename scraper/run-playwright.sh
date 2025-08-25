@@ -62,9 +62,10 @@ if [[ $# -eq 0 ]]; then
     echo "  --help               Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0 src/scraper.py"
-    echo "  $0 --install-browsers src/scraper.py"
-    echo "  $0 --browser chromium src/scraper.py"
+    echo "  $0 src/main.py"
+    echo "  $0 src/main.py --date 2025-11-15"
+    echo "  $0 --install-browsers src/main.py"
+    echo "  $0 --browser chromium src/main.py --date 2025-11-15"
     echo ""
     exit 0
 fi
@@ -89,8 +90,14 @@ while [[ $# -gt 0 ]]; do
             exec "$0"  # Show usage
             ;;
         -*)
-            echo "Unknown option: $1"
-            exit 1
+            # If we already have a Python script, pass this as an argument to it
+            if [[ -n "$PYTHON_SCRIPT" ]]; then
+                SCRIPT_ARGS+=("$1")
+                shift
+            else
+                echo "Unknown option: $1"
+                exit 1
+            fi
             ;;
         *)
             # First non-option argument is the Python script
