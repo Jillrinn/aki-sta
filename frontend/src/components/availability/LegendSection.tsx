@@ -1,0 +1,19 @@
+import React from 'react';
+import StatusBadge from './StatusBadge';
+import { STATUS_LABELS } from '../../constants/availability';
+
+const LegendSection: React.FC = () => (
+  <div className="flex justify-center gap-8 mb-5 flex-wrap mt-8">
+    <span className="flex items-center gap-2 text-sm text-gray-600">
+      <StatusBadge status="available" /> {STATUS_LABELS.available}
+    </span>
+    <span className="flex items-center gap-2 text-sm text-gray-600">
+      <StatusBadge status="booked" /> {STATUS_LABELS.booked}
+    </span>
+    <span className="flex items-center gap-2 text-sm text-gray-600">
+      <StatusBadge status="unknown" /> {STATUS_LABELS.unknown}
+    </span>
+  </div>
+);
+
+export default LegendSection;
