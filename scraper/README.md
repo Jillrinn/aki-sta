@@ -26,9 +26,49 @@ playwright install chromium
 
 ## 使用方法
 
-### コマンドラインから
+### run-playwright.sh スクリプトを使用（推奨）
+
+`run-playwright.sh`は、Playwright環境を適切に設定してPythonスクリプトを実行するラッパースクリプトです。
+
+#### 特徴
+- **環境分離**: Python用とNode.js用のPlaywrightが競合しないよう環境を分離
+- **自動設定**: `.env.playwright`から環境変数を自動読み込み
+- **ブラウザ管理**: 必要に応じてブラウザを自動インストール
+- **仮想環境サポート**: venv環境を自動検出・アクティベート
+
+#### 基本的な使い方
 
 ```bash
+# デフォルト実行（今日の日付でスクレイピング）
+./run-playwright.sh src/main.py
+
+# 特定日付のスクレイピング
+./run-playwright.sh src/main.py --date 2025-11-15
+
+# ブラウザをインストールしてから実行
+./run-playwright.sh --install-browsers src/main.py
+
+# 別のブラウザを使用（デフォルトはwebkit）
+./run-playwright.sh --browser chromium src/main.py
+
+# ヘルプを表示
+./run-playwright.sh --help
+```
+
+#### 環境設定（.env.playwright）
+```bash
+# Playwright環境分離設定
+PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/playwright-python
+PLAYWRIGHT_BROWSER=webkit
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
+```
+
+### 直接Pythonで実行
+
+```bash
+# 仮想環境をアクティベート
+source venv/bin/activate
+
 # 特定日付のスクレイピング
 python src/main.py --date 2025-11-15
 
@@ -150,11 +190,36 @@ pip install --upgrade playwright
 playwright install chromium
 ```
 
+### Playwright環境の競合問題
+
+Node.js（E2Eテスト）とPython（スクレイパー）でPlaywrightのバージョンが異なる場合、環境が競合することがあります。
+
+**解決方法:**
+```bash
+# 環境分離システムを使用
+./run-playwright.sh src/main.py
+
+# または包括的セットアップスクリプトを実行（プロジェクトルートから）
+../setup-playwright-environments.sh
+```
+
 ### 実サイトへの接続がタイムアウトする場合
 
 - ネットワーク接続を確認
 - サイトが稼働しているか確認（https://ensemble-studio.com/schedule/）
 - `src/scraper.py`の`timeout`設定を調整（デフォルト: 30秒）
+
+### run-playwright.shが実行できない場合
+
+```bash
+# 実行権限を付与
+chmod +x run-playwright.sh
+
+# 仮想環境がない場合は作成
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
 ## 注意事項
 
