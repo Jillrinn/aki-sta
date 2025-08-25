@@ -131,7 +131,7 @@ flake8 src/ tests/
 
 ## 出力
 
-スクレイピング結果は `../shared-data/availability.json` に保存されます。
+スクレイピング結果は `../../shared-data/availability.json`（プロジェクトルートの`shared-data`ディレクトリ）に保存されます。
 
 ## CI/CD
 
