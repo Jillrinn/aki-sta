@@ -23,15 +23,12 @@ module.exports = {
       
       // 指定された日付のデータを返す（存在しない場合は空配列）
       if (data.data[date]) {
-        console.log(`Returning data for ${date}`);
         return data.data[date];
       } else {
-        console.log(`No data available for ${date}`);
         return [];
       }
       
     } catch (error) {
-      console.error('Error reading availability data:', error);
       throw new Error(`Failed to read availability data: ${error.message}`);
     }
   },
@@ -55,11 +52,9 @@ module.exports = {
         throw new Error('Invalid data structure');
       }
       
-      console.log('Returning all availability data');
       return data.data;
       
     } catch (error) {
-      console.error('Error reading all availability data:', error);
       throw new Error(`Failed to read all availability data: ${error.message}`);
     }
   }
