@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { availabilityApi } from '../services/api';
-import { AvailabilityResponse } from '../types/availability';
+import { AllAvailabilityResponse, Facility } from '../types/availability';
 
 interface ErrorDetails {
   message: string;
@@ -10,16 +10,15 @@ interface ErrorDetails {
 }
 
 const AvailabilityTable: React.FC = () => {
-  const [data, setData] = useState<AvailabilityResponse | null>(null);
+  const [data, setData] = useState<AllAvailabilityResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ErrorDetails | null>(null);
-  const targetDate = '2025-11-15';
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await availabilityApi.getAvailability(targetDate);
+        const response = await availabilityApi.getAllAvailability();
         setData(response);
         setError(null);
       } catch (err: any) {
@@ -106,7 +105,7 @@ const AvailabilityTable: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto p-5 font-sans">
+      <div className="max-w-6xl mx-auto p-5 font-sans">
         <div className="text-blue-500 flex flex-col items-center gap-5">
           <div className="border-4 border-gray-300 border-t-blue-500 rounded-full w-10 h-10 animate-spin"></div>
           <p className="m-0">データを読み込み中...</p>
@@ -117,7 +116,7 @@ const AvailabilityTable: React.FC = () => {
 
   if (error) {
     return (
-      <div className="max-w-3xl mx-auto p-5 font-sans">
+      <div className="max-w-6xl mx-auto p-5 font-sans">
         <div className="text-red-600 bg-red-50 rounded-lg border border-red-200 p-10 text-center">
           <div className="font-semibold">{error.message}</div>
           {error.statusCode && (
@@ -134,50 +133,83 @@ const AvailabilityTable: React.FC = () => {
     );
   }
 
-  if (!data || !data.facilities || data.facilities.length === 0) {
+  if (!data || Object.keys(data).length === 0) {
     return (
-      <div className="max-w-3xl mx-auto p-5 font-sans">
+      <div className="max-w-6xl mx-auto p-5 font-sans">
         <div className="text-center p-10 text-lg text-gray-500">データがありません</div>
       </div>
     );
   }
 
+  // 日付を昇順でソート
+  const sortedDates = Object.keys(data).sort();
+
   return (
-    <div className="max-w-3xl mx-auto p-5 font-sans">
+    <div className="max-w-6xl mx-auto p-5 font-sans">
       <h1 className="text-3xl text-gray-800 text-center mb-2 font-bold">空きスタサーチくん</h1>
-      <h2 className="text-xl text-gray-600 text-center mb-8">施設空き状況 - {targetDate}</h2>
+      <p className="text-center text-gray-600 mb-8">施設空き状況一覧</p>
       
-      <div className="overflow-x-auto mb-8 shadow-lg rounded-lg border border-gray-200">
-        <table className="w-full border-collapse bg-white">
-          <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-            <tr>
-              <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">施設名</th>
-              <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[120px]">13:00-17:00</th>
-              <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[140px]">更新日時</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.facilities.map((facility, index) => (
-              <tr key={index} className="hover:bg-blue-50 transition-colors duration-150">
-                <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">{facility.facilityName}</td>
-                <td className="p-4 text-center border-b border-gray-200">
-                  <span className={getStatusClasses(facility.timeSlots['13-17'])}>
-                    {getStatusSymbol(facility.timeSlots['13-17'])}
-                  </span>
-                </td>
-                <td className="p-4 text-center border-b border-gray-200 text-gray-600 text-sm">{formatUpdateTime(facility.lastUpdated)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {sortedDates.map((date, dateIndex) => (
+        <div key={date} className="mb-8">
+          <h2 
+            className="text-xl text-gray-700 mb-3 font-semibold"
+            data-testid={`date-header-${dateIndex}`}
+          >
+            {date}の空き状況
+          </h2>
+          
+          <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
+            <table className="w-full border-collapse bg-white">
+              <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                <tr>
+                  <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">施設名</th>
+                  <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[100px]">9-12</th>
+                  <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[100px]">13-17</th>
+                  <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[100px]">18-21</th>
+                  <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[140px]">更新日時</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data[date].map((facility: Facility, facilityIndex: number) => (
+                  <tr key={facilityIndex} className="hover:bg-blue-50 transition-colors duration-150">
+                    <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">
+                      {facility.facilityName}
+                    </td>
+                    <td className="p-4 text-center border-b border-gray-200">
+                      <span className={getStatusClasses(facility.timeSlots['9-12'])}>
+                        {getStatusSymbol(facility.timeSlots['9-12'])}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center border-b border-gray-200">
+                      <span className={getStatusClasses(facility.timeSlots['13-17'])}>
+                        {getStatusSymbol(facility.timeSlots['13-17'])}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center border-b border-gray-200">
+                      <span className={getStatusClasses(facility.timeSlots['18-21'])}>
+                        {getStatusSymbol(facility.timeSlots['18-21'])}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center border-b border-gray-200 text-gray-600 text-sm">
+                      {formatUpdateTime(facility.lastUpdated)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
       
-      <div className="flex justify-center gap-8 mb-5 flex-wrap">
+      <div className="flex justify-center gap-8 mb-5 flex-wrap mt-8">
         <span className="flex items-center gap-2 text-sm text-gray-600">
           <span className="inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white bg-green-500">○</span> 空き
         </span>
         <span className="flex items-center gap-2 text-sm text-gray-600">
           <span className="inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white bg-red-500">×</span> 予約済み
+        </span>
+        <span className="flex items-center gap-2 text-sm text-gray-600">
+          <span className="inline-block w-8 h-8 leading-8 text-center rounded-full font-bold text-xl text-white bg-gray-500">?</span> 不明
         </span>
       </div>
       

@@ -13,3 +13,7 @@ export interface AvailabilityResponse {
   facilities: Facility[];
   dataSource: 'dummy' | 'scraping';
 }
+
+export interface AllAvailabilityResponse {
+  [date: string]: Facility[];
+}

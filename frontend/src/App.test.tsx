@@ -12,18 +12,20 @@ describe('App', () => {
 
   it('renders the AvailabilityTable component', async () => {
     const mockData = {
-      date: '2025-11-15',
-      facilities: [
+      '2025-11-15': [
         {
           facilityName: 'Test Facility',
-          timeSlots: { '13-17': 'available' },
+          timeSlots: { 
+            '9-12': 'available',
+            '13-17': 'available',
+            '18-21': 'available'
+          },
+          lastUpdated: '2025-08-20T10:00:00Z',
         },
       ],
-      lastUpdated: '2025-08-20T10:00:00Z',
-      dataSource: 'dummy' as const,
     };
 
-    (availabilityApi.getAvailability as jest.Mock).mockResolvedValue(mockData);
+    (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
     await act(async () => {
       render(<App />);
@@ -34,7 +36,7 @@ describe('App', () => {
   });
 
   it('applies Tailwind styling classes', () => {
-    (availabilityApi.getAvailability as jest.Mock).mockReturnValue(
+    (availabilityApi.getAllAvailability as jest.Mock).mockReturnValue(
       new Promise(() => {})
     );
 
