@@ -12,9 +12,13 @@ test.describe('空きスタサーチくん E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Azure Functions と Reactが起動していることを前提
     await page.goto('http://localhost:3300');
+    // ページの初期ロードを待つ
+    await page.waitForLoadState('networkidle');
   });
 
   test('アプリケーションが正常に起動する', async ({ page }) => {
+    // タイトル要素が表示されるまで待つ
+    await page.waitForSelector('h1', { timeout: 30000 });
     // タイトルが表示されることを確認
     await expect(page.locator('h1')).toContainText('空きスタサーチくん');
     // サブタイトルも確認
@@ -88,6 +92,8 @@ test.describe('空きスタサーチくん E2E Tests', () => {
   });
 
   test('施設データの構造が正しい', async ({ page }) => {
+    // データのロードを待つ
+    await page.waitForTimeout(2000);
     await validateFacilityStructure(page);
   });
 
@@ -107,6 +113,8 @@ test.describe('空きスタサーチくん E2E Tests', () => {
   });
 
   test('レスポンシブデザインが機能する - モバイル', async ({ page }) => {
+    // ビューポート設定前に少し待つ
+    await page.waitForTimeout(1000);
     await testResponsiveDesign(page, { width: 375, height: 667 });
   });
 

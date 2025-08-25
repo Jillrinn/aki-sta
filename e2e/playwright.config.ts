@@ -9,13 +9,13 @@ export default defineConfig({
   globalSetup: './scripts/global-setup.ts',
   globalTeardown: './scripts/global-teardown.ts',
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: false,  // 並列実行を無効化して順番に実行
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,  // 単一ワーカーで実行
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -36,18 +36,22 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: process.env.CI ? undefined : [
+  webServer: [
     {
-      command: 'cd ../functions && npm start',
+      command: 'cd .. && npm run start:backend',
       port: 7071,
       reuseExistingServer: true,
       timeout: 120 * 1000,
+      stdout: 'pipe',
+      stderr: 'pipe',
     },
     {
-      command: 'cd ../frontend && npm start',
+      command: 'cd .. && npm run start:frontend',
       port: 3300,
       reuseExistingServer: true,
-      timeout: 120 * 1000,
+      timeout: 180 * 1000,  // フロントエンドは起動に時間がかかるため180秒に延長
+      stdout: 'pipe',
+      stderr: 'pipe',
     },
   ],
 });
