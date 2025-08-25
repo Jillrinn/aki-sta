@@ -22,7 +22,7 @@ def main():
         '--date',
         type=str,
         default=datetime.now().strftime("%Y-%m-%d"),
-        help='スクレイピング対象日付 (YYYY-MM-DD形式)'
+        help='スクレイピング対象日付 (YYYY-MM-DD または YYYY/MM/DD 形式)'
     )
     parser.add_argument(
         '--output',
@@ -33,25 +33,37 @@ def main():
     
     args = parser.parse_args()
     
-    # 日付フォーマットの検証
-    try:
-        datetime.strptime(args.date, "%Y-%m-%d")
-    except ValueError:
-        print(f"エラー: 日付は YYYY-MM-DD 形式で指定してください: {args.date}")
+    # 日付フォーマットの検証と正規化
+    date_str = args.date
+    parsed_date = None
+    
+    # YYYY/MM/DD または YYYY-MM-DD 形式をサポート
+    for fmt in ["%Y/%m/%d", "%Y-%m-%d"]:
+        try:
+            parsed_date = datetime.strptime(date_str, fmt)
+            break
+        except ValueError:
+            continue
+    
+    if parsed_date is None:
+        print(f"エラー: 日付は YYYY-MM-DD または YYYY/MM/DD 形式で指定してください: {date_str}")
         sys.exit(1)
     
-    print(f"スクレイピング開始: {args.date}")
+    # 正規化された日付文字列 (YYYY-MM-DD形式)
+    normalized_date = parsed_date.strftime("%Y-%m-%d")
+    
+    print(f"スクレイピング開始: {normalized_date}")
     
     # スクレイピング実行
     scraper = EnsembleStudioScraper()
     
     try:
-        result = scraper.scrape_and_save(args.date, args.output)
+        result = scraper.scrape_and_save(normalized_date, args.output)
         
         # 結果を表示
-        if args.date in result.get("data", {}):
-            facilities = result["data"][args.date]
-            print(f"\n取得したデータ ({args.date}):")
+        if normalized_date in result.get("data", {}):
+            facilities = result["data"][normalized_date]
+            print(f"\n取得したデータ ({normalized_date}):")
             for facility in facilities:
                 print(f"\n{facility['facilityName']}:")
                 for time_slot, status in facility['timeSlots'].items():

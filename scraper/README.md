@@ -42,8 +42,11 @@ playwright install chromium
 # デフォルト実行（今日の日付でスクレイピング）
 ./run-playwright.sh src/main.py
 
-# 特定日付のスクレイピング
+# 特定日付のスクレイピング（YYYY-MM-DD形式）
 ./run-playwright.sh src/main.py --date 2025-11-15
+
+# YYYY/MM/DD形式でも指定可能
+./run-playwright.sh src/main.py --date 2025/11/15
 
 # ブラウザをインストールしてから実行
 ./run-playwright.sh --install-browsers src/main.py
@@ -69,8 +72,11 @@ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
 # 仮想環境をアクティベート
 source venv/bin/activate
 
-# 特定日付のスクレイピング
+# 特定日付のスクレイピング（YYYY-MM-DD形式）
 python src/main.py --date 2025-11-15
+
+# YYYY/MM/DD形式でも指定可能
+python src/main.py --date 2025/09/01
 
 # 今日の日付でスクレイピング
 python src/main.py
@@ -108,6 +114,8 @@ npm run test:scraper
 
 - **単体テスト** (`test_scraper.py`): 個別関数のテスト
 - **動的日付テスト** (`test_dynamic_date.py`): 現在日時+7日での型検証テスト
+- **日付形式テスト** (`test_date_format.py`): YYYY-MM-DDとYYYY/MM/DD形式のサポート確認
+- **ファイル更新テスト** (`test_file_update.py`): ファイルの作成・更新・タイムスタンプ確認
 - **統合テスト**: 実際のサイトへのアクセステスト
 
 ## 開発環境
