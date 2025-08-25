@@ -7,7 +7,13 @@ jest.mock('../../src/repositories/availability-repository', () => ({
   getAllAvailabilityData: jest.fn()
 }));
 
+jest.mock('../../src/repositories/availability-repository-cosmos', () => ({
+  getAvailabilityData: jest.fn(),
+  getAllAvailabilityData: jest.fn()
+}));
+
 const availabilityRepository = require('../../src/repositories/availability-repository');
+const availabilityRepositoryCosmos = require('../../src/repositories/availability-repository-cosmos');
 
 describe('Availability API', () => {
   let context;
@@ -24,6 +30,9 @@ describe('Availability API', () => {
     request = {};
     // モックをリセット
     jest.clearAllMocks();
+    // 環境変数をクリア
+    delete process.env.COSMOS_ENDPOINT;
+    delete process.env.COSMOS_KEY;
   });
 
   test('should return data for valid date', async () => {
@@ -60,7 +69,7 @@ describe('Availability API', () => {
       '2025-11-15': mockFallbackData['2025-11-15'],
       '2025-11-16': mockFallbackData['2025-11-16']
     };
-    availabilityRepository.getAllAvailabilityData.mockReturnValue(mockAllData);
+    availabilityRepository.getAllAvailabilityData.mockResolvedValue(mockAllData);
     
     context.bindingData.date = null;
     
@@ -73,9 +82,9 @@ describe('Availability API', () => {
 
   test('should return 503 when getAllAvailabilityData throws error', async () => {
     // リポジトリがエラーをスローするようにモック設定
-    availabilityRepository.getAllAvailabilityData.mockImplementation(() => {
-      throw new Error('Data source not available');
-    });
+    availabilityRepository.getAllAvailabilityData.mockRejectedValue(
+      new Error('Data source not available')
+    );
     
     context.bindingData.date = null;
     
@@ -140,5 +149,46 @@ describe('Availability API', () => {
     expect(context.res.status).toBe(503);
     expect(context.res.body.error).toBe('Service temporarily unavailable');
     expect(context.res.body.details).toContain('Failed to read availability data');
+  });
+
+  test('should use Cosmos DB repository when environment variables are set', async () => {
+    // Cosmos DB環境変数を設定
+    process.env.COSMOS_ENDPOINT = 'https://test.documents.azure.com:443/';
+    process.env.COSMOS_KEY = 'test-key';
+    
+    // Cosmos DBリポジトリのモックデータを設定
+    availabilityRepositoryCosmos.getAvailabilityData.mockResolvedValue(mockFallbackData['2025-11-15']);
+    
+    context.bindingData.date = '2025-11-15';
+    
+    await httpFunction(context, request);
+    
+    expect(context.res.status).toBe(200);
+    expect(context.res.body.date).toBe('2025-11-15');
+    expect(context.res.body.facilities).toHaveLength(2);
+    
+    // Cosmos DBリポジトリが呼ばれたことを確認
+    expect(availabilityRepositoryCosmos.getAvailabilityData).toHaveBeenCalledWith('2025-11-15');
+    // 通常のリポジトリが呼ばれていないことを確認
+    expect(availabilityRepository.getAvailabilityData).not.toHaveBeenCalled();
+  });
+
+  test('should use file repository when Cosmos DB environment variables are not set', async () => {
+    // Cosmos DB環境変数が設定されていない状態（beforeEachでクリア済み）
+    
+    // ファイルリポジトリのモックデータを設定
+    availabilityRepository.getAvailabilityData.mockReturnValue(mockFallbackData['2025-11-15']);
+    
+    context.bindingData.date = '2025-11-15';
+    
+    await httpFunction(context, request);
+    
+    expect(context.res.status).toBe(200);
+    expect(context.res.body.date).toBe('2025-11-15');
+    
+    // ファイルリポジトリが呼ばれたことを確認
+    expect(availabilityRepository.getAvailabilityData).toHaveBeenCalledWith('2025-11-15');
+    // Cosmos DBリポジトリが呼ばれていないことを確認  
+    expect(availabilityRepositoryCosmos.getAvailabilityData).not.toHaveBeenCalled();
   });
 });
