@@ -394,40 +394,50 @@ class EnsembleStudioScraper:
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     
-    def scrape_and_save(self, date: str, output_path: str = None) -> Dict:
+    def scrape_and_save(self, date: str, output_path: Optional[str] = None) -> Dict:
         """
-        スクレイピングしてJSONに保存
+        指定日付の空き状況をスクレイピングして保存
         
         Args:
             date: "YYYY-MM-DD"形式の日付文字列
-            output_path: 出力先パス（省略時はデフォルト）
+            output_path: 出力先パス（省略時はCosmos DBに保存）
         
         Returns:
             保存したデータ
         """
-        if output_path is None:
-            output_path = Path(__file__).parent.parent.parent / "shared-data" / "availability.json"
-        
-        # 既存データを読み込む（存在する場合）
-        existing_data = {}
-        if Path(output_path).exists():
-            try:
-                with open(output_path, 'r', encoding='utf-8') as f:
-                    existing_data = json.load(f)
-            except:
-                existing_data = {}
-        
         # スクレイピング実行
         facilities = self.scrape_availability(date)
         
-        # データ構造を作成
-        if "data" not in existing_data:
-            existing_data["data"] = {}
+        # Cosmos DBに保存を試みる
+        try:
+            from cosmos_writer import CosmosWriter
+            writer = CosmosWriter()
+            if writer.save_availability(date, facilities):
+                print(f"Successfully saved to Cosmos DB: {date}")
+            else:
+                print("Failed to save to Cosmos DB, falling back to JSON file")
+                output_path = output_path or Path(__file__).parent.parent.parent / "shared-data" / "availability.json"
+        except Exception as e:
+            print(f"Cosmos DB not available: {e}")
+            output_path = output_path or Path(__file__).parent.parent.parent / "shared-data" / "availability.json"
         
-        existing_data["lastScraped"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-        existing_data["data"][date] = facilities
+        # JSONファイルにも保存（移行期間中の暫定対応）
+        if output_path:
+            existing_data = {}
+            if Path(output_path).exists():
+                try:
+                    with open(output_path, 'r', encoding='utf-8') as f:
+                        existing_data = json.load(f)
+                except:
+                    existing_data = {}
+            
+            if "data" not in existing_data:
+                existing_data["data"] = {}
+            
+            existing_data["lastScraped"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            existing_data["data"][date] = facilities
+            
+            self.save_to_json(existing_data, str(output_path))
+            print(f"Also saved to JSON file: {output_path}")
         
-        # 保存
-        self.save_to_json(existing_data, str(output_path))
-        
-        return existing_data
+        return {"data": {date: facilities}}
