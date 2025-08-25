@@ -232,11 +232,11 @@ cd functions
 echo "module.exports = require('./availability-api/index');" > availability-api.js
 ```
 
-### GitHub Actions統合テストエラー
+### GitHub Actionsエラー
 - "Select a number for worker runtime"で止まる場合
 - → 環境変数`FUNCTIONS_WORKER_RUNTIME=node`を設定済み（main-ci.yml）
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
 
 ---
-*最終更新: 2025-08-24 - MVP v2.0完了、Playwright環境分離システム実装*
+*最終更新: 2025-08-25 - 統合テスト削除（E2Eテストで代替）*
 - testを実行して成功することを確認して初めてcommitするようにしてください

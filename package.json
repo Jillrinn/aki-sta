@@ -7,13 +7,12 @@
     "start": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "cd functions && npm start",
     "start:frontend": "wait-on http://localhost:7071 && cd frontend && npm start",
-    "test": "npm run test:backend && npm run test:frontend && npm run test:scraper && npm run test:e2e && npm run test:integration",
+    "test": "npm run test:backend && npm run test:frontend && npm run test:scraper && npm run test:e2e",
     "test:backend": "cd functions && npm test",
     "test:frontend": "cd frontend && npm test -- --watchAll=false",
     "test:scraper": "cd scraper && ./test.sh",
     "test:e2e": "cd e2e && npm test",
-    "test:all": "concurrently -n \"backend,frontend,scraper,e2e,integration\" -c \"blue,green,yellow,magenta,cyan\" \"npm run test:backend\" \"npm run test:frontend\" \"npm run test:scraper\" \"npm run test:e2e\" \"npm run test:integration\"",
-    "test:integration": "cd functions && npm run test:integration"
+    "test:all": "concurrently -n \"backend,frontend,scraper,e2e\" -c \"blue,green,yellow,magenta\" \"npm run test:backend\" \"npm run test:frontend\" \"npm run test:scraper\" \"npm run test:e2e\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
