@@ -15,10 +15,10 @@
     "test:all": "concurrently -n \"backend,frontend,scraper,e2e\" -c \"blue,green,yellow,magenta\" \"npm run test:backend\" \"npm run test:frontend\" \"npm run test:scraper\" \"npm run test:e2e\"",
     "scraper": "cd scraper && ./run-playwright.sh src/main.py",
     "scraper:date": "cd scraper && ./run-playwright.sh src/main.py --date",
-    "sync:env": "node functions/scripts/sync-env.js",
-    "cosmos:test": "npm run sync:env && cd functions && node test-cosmos-connection.js",
-    "cosmos:migrate": "npm run sync:env && cd functions && node scripts/migrate-to-cosmos.js",
-    "cosmos:setup": "npm run sync:env && npm run cosmos:test && npm run cosmos:migrate"
+    "setup": "node functions/scripts/setup-local.js",
+    "cosmos:test": "cd functions && node test-cosmos-connection.js",
+    "cosmos:migrate": "cd functions && node scripts/migrate-to-cosmos.js",
+    "cosmos:setup": "npm run setup && npm run cosmos:test && npm run cosmos:migrate"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

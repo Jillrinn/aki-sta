@@ -3,8 +3,18 @@
 """
 import argparse
 import sys
+import os
 from datetime import datetime
 from pathlib import Path
+from dotenv import load_dotenv
+
+# root .envファイルを読み込み（COSMOS設定）
+root_env_path = Path(__file__).parent.parent.parent / '.env'
+load_dotenv(root_env_path)
+
+# playwright環境設定ファイルを読み込み
+playwright_env_path = Path(__file__).parent.parent / '.env.playwright'
+load_dotenv(playwright_env_path)
 
 # srcディレクトリをパスに追加
 sys.path.insert(0, str(Path(__file__).parent.parent))
