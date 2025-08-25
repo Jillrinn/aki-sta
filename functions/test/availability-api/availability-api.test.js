@@ -3,7 +3,8 @@ const mockFallbackData = require('../../src/repositories/fallback-data.json');
 
 // リポジトリをモック化
 jest.mock('../../src/repositories/availability-repository', () => ({
-  getAvailabilityData: jest.fn()
+  getAvailabilityData: jest.fn(),
+  getAllAvailabilityData: jest.fn()
 }));
 
 const availabilityRepository = require('../../src/repositories/availability-repository');
@@ -53,14 +54,40 @@ describe('Availability API', () => {
     expect(context.res.body.facilities).toEqual([]);
   });
 
-  test('should return error when date is missing', async () => {
+  test('should return all data when date is missing', async () => {
+    // 全データを返すようにモック設定
+    const mockAllData = {
+      '2025-11-15': mockFallbackData['2025-11-15'],
+      '2025-11-16': mockFallbackData['2025-11-16']
+    };
+    availabilityRepository.getAllAvailabilityData.mockReturnValue(mockAllData);
+    
     context.bindingData.date = null;
     
     await httpFunction(context, request);
     
-    expect(context.res.status).toBe(400);
-    expect(context.res.body.error).toBe('Date parameter is required');
+    expect(context.res.status).toBe(200);
+    expect(context.res.body).toEqual(mockAllData);
     expect(context.res.headers['Access-Control-Allow-Origin']).toBe('*');
+  });
+
+  test('should return 503 when getAllAvailabilityData throws error', async () => {
+    // リポジトリがエラーをスローするようにモック設定
+    availabilityRepository.getAllAvailabilityData.mockImplementation(() => {
+      throw new Error('Data source not available');
+    });
+    
+    context.bindingData.date = null;
+    
+    await httpFunction(context, request);
+    
+    expect(context.res.status).toBe(503);
+    expect(context.res.body.error).toBe('Service temporarily unavailable');
+    expect(context.res.body.details).toBe('Data source not available');
+    expect(context.log.error).toHaveBeenCalledWith(
+      'Failed to get all availability data:',
+      'Data source not available'
+    );
   });
 
   test('should return 503 when repository throws error', async () => {

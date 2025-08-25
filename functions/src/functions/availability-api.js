@@ -1,19 +1,37 @@
 module.exports = async function (context, req) {
   const date = context.bindingData.date;
+  const availabilityRepository = require('../repositories/availability-repository');
   
-  // 日付パラメータの検証
+  // 日付パラメータがない場合は全データを返す
   if (!date) {
-    context.res = {
-      status: 400,
-      headers: { 
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      },
-      body: {
-        error: "Date parameter is required"
-      }
-    };
-    return;
+    try {
+      const allData = availabilityRepository.getAllAvailabilityData();
+      
+      context.res = {
+        status: 200,
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: allData
+      };
+      return;
+    } catch (error) {
+      context.log.error('Failed to get all availability data:', error.message);
+      
+      context.res = {
+        status: 503,
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: {
+          error: "Service temporarily unavailable",
+          details: error.message
+        }
+      };
+      return;
+    }
   }
 
   try {
