@@ -12,7 +12,6 @@
     "test:headed": "./run-test.sh --headed",
     "pretest:ui": "npm run ensure-browsers", 
     "test:ui": "./run-test.sh --ui",
-    "cleanup": "node scripts/cleanup.js",
     "setup-env": "node scripts/load-env.js && npx playwright install --with-deps"
   },
   "devDependencies": {
