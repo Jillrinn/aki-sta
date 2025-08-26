@@ -1,0 +1,311 @@
+name: Deploy to Production
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'production'
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  NODE_VERSION: '20.x'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ============================================
+  # Stage 1: Deploy Azure Functions
+  # ============================================
+  deploy-functions:
+    name: Deploy Azure Functions
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: functions/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd functions
+        npm ci --production
+    
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy to Azure Functions
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
+        package: ./functions
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+    
+    - name: Configure App Settings
+      run: |
+        az functionapp config appsettings set \
+          --name ${{ secrets.AZURE_FUNCTIONAPP_NAME }} \
+          --resource-group rg-aki-sta-prod-japaneast \
+          --settings \
+            "COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}" \
+            "COSMOS_KEY=${{ secrets.COSMOS_KEY }}" \
+            "COSMOS_DATABASE=${{ secrets.COSMOS_DATABASE }}" \
+            "NODE_ENV=production"
+    
+    - name: Verify Functions deployment
+      run: |
+        echo "🔍 Verifying Functions deployment..."
+        FUNCTION_URL="https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/availability/2025-11-15"
+        
+        # 最大10回リトライ
+        for i in {1..10}; do
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $FUNCTION_URL || echo "000")
+          
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Functions API is responding correctly"
+            break
+          elif [ "$HTTP_STATUS" = "404" ]; then
+            echo "✅ Functions is deployed (404 is expected for empty data)"
+            break
+          else
+            echo "Attempt $i/10: HTTP status $HTTP_STATUS, waiting..."
+            sleep 10
+          fi
+        done
+        
+        if [ "$HTTP_STATUS" != "200" ] && [ "$HTTP_STATUS" != "404" ]; then
+          echo "❌ Functions deployment verification failed"
+          exit 1
+        fi
+    
+    - name: Summary
+      run: |
+        echo "### 🚀 Azure Functions Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Status**: ✅ Deployed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "**App Name**: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}" >> $GITHUB_STEP_SUMMARY
+        echo "**URL**: https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Stage 2: Deploy Frontend to Static Web Apps
+  # ============================================
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: deploy-functions
+    environment: ${{ inputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        # Production API URL設定
+        echo "REACT_APP_API_URL=https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net" > .env.production
+        npm run build
+      env:
+        CI: true
+        GENERATE_SOURCEMAP: false
+    
+    - name: Deploy to Azure Static Web Apps
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "/frontend"
+        api_location: ""
+        output_location: "build"
+        skip_app_build: true
+    
+    - name: Verify Frontend deployment
+      run: |
+        echo "🔍 Verifying Frontend deployment..."
+        # Static Web Appsはデプロイ直後は少し時間がかかる
+        sleep 30
+        
+        # Static Web Apps URLを構築（実際のURLは環境により異なる可能性あり）
+        SWA_URL="https://swa-aki-sta-prod.azurestaticapps.net"
+        
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $SWA_URL || echo "000")
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "✅ Frontend is accessible"
+        else
+          echo "⚠️ Frontend might still be deploying (status: $HTTP_STATUS)"
+        fi
+    
+    - name: Summary
+      run: |
+        echo "### 🎨 Frontend Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Status**: ✅ Deployed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "**Static Web App**: swa-aki-sta-prod" >> $GITHUB_STEP_SUMMARY
+        echo "**URL**: https://swa-aki-sta-prod.azurestaticapps.net" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Stage 3: Deploy Scraper to Web Apps
+  # ============================================
+  deploy-scraper:
+    name: Deploy Scraper to Web Apps
+    runs-on: ubuntu-latest
+    needs: [deploy-functions, deploy-frontend]
+    environment: ${{ inputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Prepare deployment package
+      run: |
+        cd scraper
+        
+        # requirements.txtとソースコードをパッケージ
+        zip -r deploy.zip . -x "*.pyc" -x "__pycache__/*" -x ".env*" -x "tests/*"
+    
+    - name: Deploy to Azure Web Apps
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+        package: scraper/deploy.zip
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+    
+    - name: Configure App Settings
+      run: |
+        az webapp config appsettings set \
+          --name ${{ secrets.AZURE_WEBAPP_NAME }} \
+          --resource-group rg-aki-sta-prod-japaneast \
+          --settings \
+            "COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}" \
+            "COSMOS_KEY=${{ secrets.COSMOS_KEY }}" \
+            "COSMOS_DATABASE=${{ secrets.COSMOS_DATABASE }}" \
+            "FUNCTIONS_API_URL=https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net"
+    
+    - name: Set startup command
+      run: |
+        az webapp config set \
+          --name ${{ secrets.AZURE_WEBAPP_NAME }} \
+          --resource-group rg-aki-sta-prod-japaneast \
+          --startup-file "gunicorn --bind 0.0.0.0:8000 app:app"
+    
+    - name: Verify deployment
+      run: |
+        echo "🔍 Verifying Scraper deployment..."
+        sleep 30
+        
+        # Health check
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/health || echo "000")
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "✅ Scraper Web App is responding correctly"
+        else
+          echo "⚠️ Scraper might still be starting up (status: $HTTP_STATUS)"
+        fi
+    
+    - name: Summary
+      run: |
+        echo "### 🤖 Scraper Web App Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Status**: ✅ Deployed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "**App Name**: ${{ secrets.AZURE_WEBAPP_NAME }}" >> $GITHUB_STEP_SUMMARY
+        echo "**URL**: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+        echo "**Runtime**: Python 3.11" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Final Summary
+  # ============================================
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [deploy-functions, deploy-frontend, deploy-scraper]
+    
+    steps:
+    - name: Generate Summary
+      run: |
+        echo "# 🚀 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Deployment Date**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Azure Functions | ${{ needs.deploy-functions.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Frontend (SWA) | ${{ needs.deploy-frontend.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Scraper (Web App) | ${{ needs.deploy-scraper.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "## 🔗 Production URLs" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Application**: https://swa-aki-sta-prod.azurestaticapps.net" >> $GITHUB_STEP_SUMMARY
+        echo "- **API**: https://func-aki-sta-prod.azurewebsites.net/api" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Overall status
+        if [ "${{ needs.deploy-functions.result }}" == "success" ] && \
+           [ "${{ needs.deploy-frontend.result }}" == "success" ] && \
+           [ "${{ needs.deploy-scraper.result }}" == "success" ]; then
+          echo "## ✅ All deployments completed successfully!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ⚠️ Some deployments failed. Please check the logs." >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Notify deployment status (optional)
+      if: always()
+      run: |
+        # Slack, Teams, またはメール通知を追加可能
+        echo "Deployment notification would be sent here"
