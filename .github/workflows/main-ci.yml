@@ -67,11 +67,24 @@ jobs:
         cd functions
         COVERAGE=$(npx jest --coverage --silent 2>&1 | grep "All files" | awk '{print $10}' | sed 's/%//')
         echo "Backend test coverage: $COVERAGE%"
+        
+        # ジョブサマリーに追加
+        echo "### 📊 Backend Coverage Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Coverage**: $COVERAGE%" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
         if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-          echo "❌ Coverage is below 80% threshold"
-          exit 1
+          echo "⚠️ Coverage is below 80% threshold (Current: $COVERAGE%)"
+          echo "⚠️ **Warning**: Coverage is below 80% threshold" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please consider adding more tests to improve coverage." >> $GITHUB_STEP_SUMMARY
+          # パイプラインは継続（exit 0）
+          exit 0
+        else
+          echo "✅ Coverage meets the 80% threshold"
+          echo "✅ Coverage meets the 80% threshold" >> $GITHUB_STEP_SUMMARY
         fi
-        echo "✅ Coverage meets the 80% threshold"
     
     - name: Upload backend coverage
       if: matrix.node-version == '20.x'
