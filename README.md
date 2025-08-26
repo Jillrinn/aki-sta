@@ -34,9 +34,11 @@
 - ✅ 環境変数統合システム
 - ✅ JSONファイル依存完全削除
 
-**MVP v4.0** ⏳ 計画中
-- Azure本番環境デプロイ
-- Timer Trigger自動実行システム
+**MVP v4.0** 🚀 開発中（2025-08-26）
+- ✅ Azure本番環境デプロイ設定完了
+- ✅ GitHub Actionsデプロイパイプライン構築
+- ✅ Infrastructure as Code (Bicep) 実装
+- ⏳ Timer Trigger自動実行システム
 
 ## 🔧 技術スタック
 - **バックエンド**: Azure Functions (Node.js)
@@ -188,6 +190,72 @@ npm test                    # E2Eテスト実行
 npm run test:headed         # ブラウザを表示してテスト
 npm run test:ui             # Playwright UIモード
 ```
+
+## 🚀 Azure本番環境デプロイ
+
+### 自動デプロイ (GitHub Actions)
+本プロジェクトはGitHub Actionsによる自動デプロイが設定されています。
+`main`ブランチへのpush時に以下の順序でデプロイが実行されます：
+
+1. **テスト実行**: Backend/Frontend/Scraper/E2E
+2. **Azure Functions デプロイ**: Backend APIデプロイ
+3. **Static Web Apps デプロイ**: Frontendデプロイ  
+4. **Container デプロイ**: Scraperコンテナデプロイ
+
+### 初回セットアップ手順
+
+#### 1. Azureリソースの作成
+```bash
+# インフラストラクチャの一括作成
+cd infrastructure
+./deploy-azure.sh production
+```
+
+このスクリプトは以下を自動作成します：
+- Resource Group
+- Cosmos DB (無料枠)
+- Storage Account
+- Azure Functions
+- Static Web Apps
+- Container Registry
+- Application Insights
+
+#### 2. GitHub Secrets設定
+スクリプト実行後に生成される`github-secrets-production.json`の内容をGitHub Secretsに設定：
+
+1. GitHubリポジトリ → Settings → Secrets and variables → Actions
+2. 以下のSecretsを追加：
+   - `AZURE_CREDENTIALS`
+   - `AZURE_SUBSCRIPTION_ID`
+   - `AZURE_FUNCTIONAPP_NAME`
+   - `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`
+   - `AZURE_STATIC_WEB_APPS_API_TOKEN`
+   - `AZURE_CONTAINER_REGISTRY_SERVER`
+   - `AZURE_CONTAINER_REGISTRY_USERNAME`
+   - `AZURE_CONTAINER_REGISTRY_PASSWORD`
+   - `COSMOS_ENDPOINT`
+   - `COSMOS_KEY`
+   - `COSMOS_DATABASE`
+
+詳細は[GitHub Secrets設定ガイド](./docs/GITHUB_SECRETS.md)を参照。
+
+#### 3. デプロイ実行
+```bash
+# mainブランチにpush
+git push origin main
+
+# または手動実行
+# GitHub Actions → Deploy to Production → Run workflow
+```
+
+### 本番環境URL
+- **アプリケーション**: https://swa-aki-sta-prod.azurestaticapps.net
+- **API**: https://func-aki-sta-prod.azurewebsites.net/api
+
+### デプロイ関連ドキュメント
+- [Azure デプロイ詳細手順](./docs/AZURE_DEPLOYMENT.md)
+- [GitHub Secrets設定](./docs/GITHUB_SECRETS.md)
+- [デプロイワークフロー](./.github/workflows/deploy-production.yml)
 
 ## 📁 プロジェクト構造
 ```
@@ -367,8 +435,9 @@ lsof -i :7071
 |-----------|------|----------|
 | MVP v1.0 | ダミーデータ表示 | ✅ 完了（2025-08-21） |
 | MVP v2.0 | 実データスクレイピング・環境分離システム | ✅ 完了（2025-08-24） |
-| MVP v3.0 | Azure本番デプロイ・Cosmos DB | 🚀 計画中 |
-| v1.0 | 複数施設対応・複数日付管理 | 📋 バックログ |
+| MVP v3.0 | Cosmos DB統合・データ永続化 | ✅ 完了（2025-08-25） |
+| MVP v4.0 | Azure本番デプロイ・CI/CD | 🚀 開発中（2025-08-26） |
+| v1.0 | 複数施設対応・複数日付管理・Timer Trigger | 📋 次期開発 |
 | v2.0 | ユーザー認証・お気に入り・通知機能 | 📋 バックログ |
 
 ## 📚 外部リソース
