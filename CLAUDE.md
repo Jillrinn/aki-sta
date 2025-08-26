@@ -26,9 +26,13 @@
 
 ```
 aki-sta/
-├── functions/          # Azure Functions API
-│   ├── availability-api.js       # ⚠️ 必須：これがないと起動エラー
-│   └── availability-api/
+├── functions/          # Azure Functions API（標準構造）
+│   ├── availability-api/         # 各関数は独立ディレクトリ
+│   │   ├── index.js              # 関数実装
+│   │   └── function.json         # 関数設定
+│   ├── src/                      # 共通コード専用
+│   │   └── repositories/         # データアクセス層
+│   └── test/                     # テスト
 ├── frontend/          # React TypeScript
 │   └── src/
 │       ├── components/  # UIコンポーネント
@@ -37,9 +41,7 @@ aki-sta/
 ├── scraper/           # Python Playwrightスクレイパー
 │   └── src/
 ├── e2e/               # E2Eテスト (Playwright/TypeScript)
-│   ├── tests/
-│   ├── fixtures/      # テストデータ
-│   └── scripts/       # セットアップ/クリーンアップ
+│   └── tests/
 └── CLAUDE.md          # この指示書
 ```
 
@@ -85,12 +87,12 @@ lsof -i :7071  # Azure Functions
 
 ## 🐛 既知の問題と解決策
 
-### Azure Functions起動エラー（解決済み: 2025-08-25）
-**原因**: availability-api.jsファイルがルートディレクトリに存在しない
-**解決**: Azure Functions標準構造を復元
-- functions/availability-api.js（エントリーポイント）
-- functions/availability-api/index.js（ハンドラー）
-- functions/availability-api/function.json（設定）
+### Azure Functions構造（2025-08-26更新）
+**現在の構造**: Azure Functions標準構造を採用
+- functions/availability-api/index.js（関数実装）
+- functions/availability-api/function.json（関数設定）
+- functions/src/（共通コード専用）
+- package.jsonのmainフィールドは削除済み
 
 ### Playwrightバージョン競合問題（解決済み）
 **原因**: Python（スクレイパー）とNode.js（E2E）で異なるPlaywrightバージョンを使用
@@ -134,10 +136,15 @@ await act(async () => {
 3. 型安全性の確保 > 実装スピード
 
 ### API変更時の対応
-1. functions/availability-api/availability-api.js を更新
+1. functions/availability-api/index.js を更新
 2. frontend/src/types/availability.ts の型を更新
 3. 両方のテストを更新・実行
 4. 統合動作確認
+
+### 新しいAPI追加時の手順
+1. functions/に新しい関数ディレクトリを作成（例: user-api/）
+2. index.jsとfunction.jsonを配置
+3. 共通コードはsrc/に配置
 
 ## 📊 現在の状態（自動更新対象）
 
@@ -235,9 +242,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Azure Functions起動エラー
 ```bash
-# "Worker was unable to load entry point 'availability-api.js'"の場合
-cd functions
-echo "module.exports = require('./availability-api/index');" > availability-api.js
+# "Worker was unable to load entry point"の場合
+# 1. package.jsonにmainフィールドがないことを確認
+# 2. 各関数ディレクトリ構造を確認
+ls functions/availability-api/index.js
+ls functions/availability-api/function.json
 ```
 
 ### GitHub Actionsエラー

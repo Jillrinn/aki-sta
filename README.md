@@ -192,14 +192,15 @@ npm run test:ui             # Playwright UIモード
 ## 📁 プロジェクト構造
 ```
 aki-sta/
-├── functions/                      # Azure Functions バックエンド
+├── functions/                      # Azure Functions バックエンド（標準構造）
 │   ├── availability-api/           # 空き状況取得API
-│   │   ├── availability-api.js               # API実装
-│   │   ├── availability-api.test.js          # APIテスト
-│   │   └── function.json          # Azure Functions設定
-│   ├── shared/                     # 共通ライブラリ
-│   │   └── data-store.js          # データストア (JSONファイル読み込み)
-│   ├── availability-api.js                   # エントリーポイント（必須）
+│   │   ├── index.js               # 関数実装
+│   │   └── function.json          # 関数設定
+│   ├── src/                        # 共通コード専用
+│   │   └── repositories/          # データアクセス層
+│   │       ├── availability-repository.js
+│   │       └── cosmos-client.js
+│   ├── test/                       # テストコード
 │   ├── host.json                  # Azure Functions全体設定
 │   ├── local.settings.json        # ローカル設定（gitignore）
 │   └── package.json               # 依存関係・スクリプト
@@ -239,15 +240,12 @@ aki-sta/
 │   │   └── app.spec.ts           # E2Eテストケース
 │   ├── fixtures/
 │   │   └── test-data.json        # 固定テストデータ
-│   ├── scripts/                  # 環境管理・テストデータ管理
+│   ├── scripts/                  # 環境管理
 │   │   ├── load-env.js           # 環境変数読み込み
-│   │   ├── ensure-browsers.js    # ブラウザ自動インストール
-│   │   └── cleanup.js            # テストデータクリーンアップ
+│   │   └── ensure-browsers.js    # ブラウザ自動インストール
 │   ├── run-test.sh               # 環境分離テスト実行
 │   ├── .env.playwright           # Node.js用環境設定
 │   └── playwright.config.ts      # Playwright設定
-├── shared-data/                   # データ共有ディレクトリ
-│   └── availability.json         # スクレイピング結果JSON
 ├── docs/                          # ドキュメント
 │   ├── DEVELOPMENT_SPEC.md       # 開発仕様書
 │   └── GITHUB_ACTIONS.md         # CI/CDパイプライン詳細
@@ -346,8 +344,10 @@ REACT_APP_API_URL=/api  # デフォルト値、プロキシ経由
 
 ### Azure Functions が起動しない
 ```bash
-# index.jsの確認・作成
-ls functions/availability-api.js || echo "module.exports = require('./availability-api/index');" > functions/availability-api.js
+# 構造確認
+ls functions/availability-api/index.js
+ls functions/availability-api/function.json
+# package.jsonのmainフィールドが削除されていることを確認
 ```
 
 ### ポート使用中エラー

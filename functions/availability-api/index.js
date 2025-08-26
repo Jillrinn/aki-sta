@@ -2,7 +2,7 @@ module.exports = async function (context, req) {
   const date = context.bindingData.date;
   
   // Cosmos DB専用リポジトリを使用
-  const availabilityRepository = require('../repositories/availability-repository');
+  const availabilityRepository = require('../src/repositories/availability-repository');
   
   // 日付パラメータがない場合は全データを返す
   if (!date) {
