@@ -1183,7 +1183,7 @@ python -m pytest tests/ -v
 #### Backend側
 `functions/src/repositories/availability-repository.js`からJSONファイル読み込み部分を削除
 
-#### Scraper側  
+#### Scraper側
 `scraper/src/scraper.py`からJSONファイル書き込み部分を削除
 
 #### ファイル削除

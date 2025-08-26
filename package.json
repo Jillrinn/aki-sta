@@ -16,9 +16,7 @@
     "scraper": "cd scraper && ./run-playwright.sh src/main.py",
     "scraper:date": "cd scraper && ./run-playwright.sh src/main.py --date",
     "setup": "node functions/scripts/setup-local.js",
-    "cosmos:test": "cd functions && node test-cosmos-connection.js",
-    "cosmos:migrate": "cd functions && node scripts/migrate-to-cosmos.js",
-    "cosmos:setup": "npm run setup && npm run cosmos:test && npm run cosmos:migrate"
+    "cosmos:test": "cd functions && node test-cosmos-connection.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

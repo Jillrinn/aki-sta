@@ -106,8 +106,13 @@ class TestDynamicDateScraping:
             except ValueError:
                 pytest.fail(f"lastUpdated '{studio_data['lastUpdated']}' はISO形式である必要があります")
     
-    def test_save_with_dynamic_date(self, scraper, dynamic_date, tmp_path):
-        """動的な日付での保存機能テスト"""
+    @patch('src.cosmos_writer.CosmosWriter')
+    def test_save_with_dynamic_date(self, mock_cosmos_writer, scraper, dynamic_date, tmp_path):
+        """動的な日付での保存機能テスト（Cosmos DBモック）"""
+        # CosmosWriterのモック設定
+        mock_writer_instance = mock_cosmos_writer.return_value
+        mock_writer_instance.save_availability.return_value = True
+        
         # extract_studio_dataをモック化
         with patch.object(scraper, 'scrape_availability') as mock_scrape:
             mock_scrape.return_value = [
@@ -123,14 +128,15 @@ class TestDynamicDateScraping:
                 }
             ]
             
-            # 一時ファイルパスで保存
-            output_path = tmp_path / "test_availability.json"
-            result = scraper.scrape_and_save(dynamic_date, str(output_path))
+            # Cosmos DBに保存（モック）
+            result = scraper.scrape_and_save(dynamic_date)
             
             # 保存されたデータの検証
-            assert "lastScraped" in result, "lastScrapedフィールドが必要です"
             assert "data" in result, "dataフィールドが必要です"
             assert dynamic_date in result["data"], f"日付 {dynamic_date} のデータが保存されているはずです"
+            
+            # CosmosWriterが呼ばれたことを確認
+            mock_writer_instance.save_availability.assert_called_once_with(dynamic_date, mock_scrape.return_value)
             
             # 保存された日付のデータを検証
             saved_data = result["data"][dynamic_date]

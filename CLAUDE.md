@@ -157,11 +157,16 @@ await act(async () => {
 
 **進捗更新時**: `.github/mvp-checklist.md`で完了基準を確認
 
-### 次の作業: MVP v3.0
+### MVP v3.0 - ✅ 完了（2025-08-25）
+- ✅ Cosmos DB統合・データ永続化（フェーズ2完了）
+- ✅ 環境変数統合システム（ルートレベル管理）
+- ✅ JSONファイル依存完全削除（フェーズ3完了）
+- ✅ Pure Cosmos DBアーキテクチャ移行完了
+
+### 次の作業: MVP v4.0
 - Azure本番環境デプロイ
-- Cosmos DB統合・データ永続化
+- Timer Trigger自動実行システム
 - 複数日付管理機能
-- 自動スケジュール実行（Timer Trigger）
 
 ### GitHub Actions  
 - **main-ci.yml**: push/PR時の全テスト実行（Backend/Frontend/Scraper/E2E）
