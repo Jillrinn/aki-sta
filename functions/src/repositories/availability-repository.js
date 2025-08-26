@@ -1,61 +1,69 @@
-const fs = require('fs');
-const path = require('path');
+const cosmosClient = require('./cosmos-client');
 
 module.exports = {
-  getAvailabilityData: (date) => {
-    // スクレイピングデータのパスを構築
-    const scrapedDataPath = path.join(__dirname, '../../../shared-data/availability.json');
-    
-    // データソースが存在しない場合はエラー
-    if (!fs.existsSync(scrapedDataPath)) {
-      throw new Error('Data source not available');
-    }
-    
+  getAvailabilityData: async (date) => {
     try {
-      // JSONファイルを読み込む
-      const jsonContent = fs.readFileSync(scrapedDataPath, 'utf8');
-      const data = JSON.parse(jsonContent);
+      // Cosmos DBから取得を試みる
+      await cosmosClient.initialize();
+      const container = cosmosClient.getContainer('availability');
       
-      // データ構造を検証
-      if (!data.data) {
-        throw new Error('Invalid data structure');
+      const querySpec = {
+        query: "SELECT * FROM c WHERE c.date = @date",
+        parameters: [{ name: "@date", value: date }]
+      };
+      
+      const { resources } = await container.items
+        .query(querySpec)
+        .fetchAll();
+      
+      if (resources && resources.length > 0) {
+        // Cosmos DBからデータを整形して返す
+        return resources.map(item => ({
+          facilityName: item.facilityName,
+          timeSlots: item.timeSlots,
+          lastUpdated: item.updatedAt
+        }));
       }
       
-      // 指定された日付のデータを返す（存在しない場合は空配列）
-      if (data.data[date]) {
-        return data.data[date];
-      } else {
-        return [];
-      }
-      
+      // データが存在しない場合は空配列を返す
+      return [];
     } catch (error) {
-      throw new Error(`Failed to read availability data: ${error.message}`);
+      console.error('Cosmos DB read error:', error);
+      throw new Error(`Failed to read availability data from Cosmos DB: ${error.message}`);
     }
   },
   
-  getAllAvailabilityData: () => {
-    // スクレイピングデータのパスを構築
-    const scrapedDataPath = path.join(__dirname, '../../../shared-data/availability.json');
-    
-    // データソースが存在しない場合はエラー
-    if (!fs.existsSync(scrapedDataPath)) {
-      throw new Error('Data source not available');
-    }
-    
+  getAllAvailabilityData: async () => {
     try {
-      // JSONファイルを読み込む
-      const jsonContent = fs.readFileSync(scrapedDataPath, 'utf8');
-      const data = JSON.parse(jsonContent);
+      // Cosmos DBから全データ取得
+      await cosmosClient.initialize();
+      const container = cosmosClient.getContainer('availability');
       
-      // データ構造を検証
-      if (!data.data) {
-        throw new Error('Invalid data structure');
+      const { resources } = await container.items
+        .readAll()
+        .fetchAll();
+      
+      if (resources && resources.length > 0) {
+        // 日付でグループ化
+        const groupedData = {};
+        resources.forEach(item => {
+          if (!groupedData[item.date]) {
+            groupedData[item.date] = [];
+          }
+          groupedData[item.date].push({
+            facilityName: item.facilityName,
+            timeSlots: item.timeSlots,
+            lastUpdated: item.updatedAt
+          });
+        });
+        return groupedData;
       }
       
-      return data.data;
-      
+      // データが存在しない場合は空オブジェクトを返す
+      return {};
     } catch (error) {
-      throw new Error(`Failed to read all availability data: ${error.message}`);
+      console.error('Cosmos DB read all error:', error);
+      throw new Error(`Failed to read all availability data from Cosmos DB: ${error.message}`);
     }
   }
 };

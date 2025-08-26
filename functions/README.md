@@ -144,7 +144,7 @@ functions/
 ├── src/
 │   ├── repositories/          # データアクセス層
 │   │   ├── availability-repository.js
-│   │   ├── availability-repository-cosmos.js
+│   │   ├── availability-repository.js
 │   │   └── cosmos-client.js
 │   └── shared/
 │       └── data-store.js      # JSONファイル読み込み

@@ -1,23 +1,18 @@
 const httpFunction = require('../../src/functions/availability-api');
 const mockFallbackData = require('../../src/repositories/fallback-data.json');
 
-// リポジトリをモック化
+// Cosmos DBリポジトリをモック化
 jest.mock('../../src/repositories/availability-repository', () => ({
   getAvailabilityData: jest.fn(),
   getAllAvailabilityData: jest.fn()
 }));
 
-jest.mock('../../src/repositories/availability-repository-cosmos', () => ({
-  getAvailabilityData: jest.fn(),
-  getAllAvailabilityData: jest.fn()
-}));
-
 const availabilityRepository = require('../../src/repositories/availability-repository');
-const availabilityRepositoryCosmos = require('../../src/repositories/availability-repository-cosmos');
 
 describe('Availability API', () => {
   let context;
   let request;
+  let consoleErrorSpy;
 
   beforeEach(() => {
     context = {
@@ -30,9 +25,13 @@ describe('Availability API', () => {
     request = {};
     // モックをリセット
     jest.clearAllMocks();
-    // 環境変数をクリア
-    delete process.env.COSMOS_ENDPOINT;
-    delete process.env.COSMOS_KEY;
+    // console.errorをモック化
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // console.errorのモックを復元
+    consoleErrorSpy.mockRestore();
   });
 
   test('should return data for valid date', async () => {
@@ -151,13 +150,9 @@ describe('Availability API', () => {
     expect(context.res.body.details).toContain('Failed to read availability data');
   });
 
-  test('should use Cosmos DB repository when environment variables are set', async () => {
-    // Cosmos DB環境変数を設定
-    process.env.COSMOS_ENDPOINT = 'https://test.documents.azure.com:443/';
-    process.env.COSMOS_KEY = 'test-key';
-    
+  test('should use Cosmos DB repository (Pure Cosmos DB architecture)', async () => {
     // Cosmos DBリポジトリのモックデータを設定
-    availabilityRepositoryCosmos.getAvailabilityData.mockResolvedValue(mockFallbackData['2025-11-15']);
+    availabilityRepository.getAvailabilityData.mockResolvedValue(mockFallbackData['2025-11-15']);
     
     context.bindingData.date = '2025-11-15';
     
@@ -168,27 +163,6 @@ describe('Availability API', () => {
     expect(context.res.body.facilities).toHaveLength(2);
     
     // Cosmos DBリポジトリが呼ばれたことを確認
-    expect(availabilityRepositoryCosmos.getAvailabilityData).toHaveBeenCalledWith('2025-11-15');
-    // 通常のリポジトリが呼ばれていないことを確認
-    expect(availabilityRepository.getAvailabilityData).not.toHaveBeenCalled();
-  });
-
-  test('should use file repository when Cosmos DB environment variables are not set', async () => {
-    // Cosmos DB環境変数が設定されていない状態（beforeEachでクリア済み）
-    
-    // ファイルリポジトリのモックデータを設定
-    availabilityRepository.getAvailabilityData.mockReturnValue(mockFallbackData['2025-11-15']);
-    
-    context.bindingData.date = '2025-11-15';
-    
-    await httpFunction(context, request);
-    
-    expect(context.res.status).toBe(200);
-    expect(context.res.body.date).toBe('2025-11-15');
-    
-    // ファイルリポジトリが呼ばれたことを確認
     expect(availabilityRepository.getAvailabilityData).toHaveBeenCalledWith('2025-11-15');
-    // Cosmos DBリポジトリが呼ばれていないことを確認  
-    expect(availabilityRepositoryCosmos.getAvailabilityData).not.toHaveBeenCalled();
   });
 });
