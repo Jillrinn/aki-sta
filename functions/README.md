@@ -137,26 +137,32 @@ npm run test:watch
 
 ```
 functions/
-├── availability-api/           # API実装
-│   ├── availability-api.js
-│   ├── availability-api.test.js
-│   └── function.json
-├── src/
-│   ├── repositories/          # データアクセス層
-│   │   ├── availability-repository.js
-│   │   ├── availability-repository.js
-│   │   └── cosmos-client.js
-│   └── shared/
-│       └── data-store.js      # JSONファイル読み込み
+├── availability-api/           # Azure Functions標準構造
+│   ├── index.js               # 関数実装
+│   └── function.json          # 関数設定
+├── src/                        # 共通コード専用
+│   └── repositories/          # データアクセス層
+│       ├── availability-repository.js
+│       ├── cosmos-client.js
+│       └── fallback-data.json
 ├── scripts/
-│   ├── setup-local.js         # ローカル設定初期化
-│   ├── sync-env.js            # 環境変数同期（廃止予定）
-│   └── migrate-to-cosmos.js   # データマイグレーション
+│   └── sync-env.js            # 環境変数同期
+├── test/
+│   ├── availability-api/
+│   │   └── availability-api.test.js
+│   └── repositories/
+│       ├── availability-repository.test.js
+│       └── cosmos-client.test.js
 ├── test-cosmos-connection.js  # DB接続テスト
 ├── local.settings.json        # Azure Functions設定（gitignore）
-├── local.settings.json.template # 設定テンプレート
-└── package.json
+├── host.json                  # Azure Functions全体設定
+└── package.json               # mainフィールド削除済み
 ```
+
+### 構造の特徴
+- **Azure Functions標準構造採用**: 各関数がディレクトリとして独立
+- **srcディレクトリ**: 共通コード（リポジトリ、ユーティリティ）専用
+- **拡張性**: 新しいAPIは新しいディレクトリを作成するだけ
 
 ## 🛠️ NPMスクリプト
 
@@ -181,7 +187,9 @@ npm run test:watch        # ウォッチモード
 ### Azure Functions起動エラー
 ```bash
 # "Worker was unable to load entry point"の場合
-echo "module.exports = require('./availability-api/index');" > availability-api.js
+# package.jsonのmainフィールドを削除
+# 各関数ディレクトリにindex.jsとfunction.jsonが存在することを確認
+ls availability-api/index.js availability-api/function.json
 ```
 
 ### Cosmos DB接続エラー
