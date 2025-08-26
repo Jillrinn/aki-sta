@@ -2,7 +2,7 @@ playwright==1.41.0
 pytest==7.4.4
 python-dateutil==2.8.2
 beautifulsoup4==4.12.2
-lxml==4.9.3
+lxml==6.0.1
 azure-cosmos==4.5.0
 azure-core==1.35.0
 python-dotenv==1.0.0
