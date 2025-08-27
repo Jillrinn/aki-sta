@@ -24,7 +24,7 @@ jobs:
   # ============================================
   backend-test:
     name: Backend Tests
-    if: ${{ !inputs.skip-tests && !inputs.deploy-only }}
+    if: ${{ github.event_name != 'workflow_dispatch' || (!inputs.skip-tests && !inputs.deploy-only) }}
     uses: ./.github/workflows/test-backend.yml
     secrets: inherit
 
@@ -33,16 +33,18 @@ jobs:
   # ============================================
   frontend-test:
     name: Frontend Tests
-    if: ${{ !inputs.skip-tests && !inputs.deploy-only }}
+    if: ${{ github.event_name != 'workflow_dispatch' || (!inputs.skip-tests && !inputs.deploy-only) }}
     uses: ./.github/workflows/test-frontend.yml
+    secrets: inherit
 
   # ============================================
   # Scraper Tests
   # ============================================
   scraper-test:
     name: Scraper Tests
-    if: ${{ !inputs.skip-tests && !inputs.deploy-only }}
+    if: ${{ github.event_name != 'workflow_dispatch' || (!inputs.skip-tests && !inputs.deploy-only) }}
     uses: ./.github/workflows/test-scraper.yml
+    secrets: inherit
 
   # ============================================
   # Build
@@ -50,10 +52,10 @@ jobs:
   build:
     name: Build Application
     needs: [backend-test, frontend-test]
-    # ビルドは条件的に依存関係をスキップ
+    # ビルドはテストが成功またはスキップされた場合のみ実行
     if: |
-      always() && 
-      !inputs.deploy-only && 
+      !cancelled() && 
+      (github.event_name != 'workflow_dispatch' || !inputs.deploy-only) && 
       (needs.backend-test.result == 'success' || needs.backend-test.result == 'skipped') &&
       (needs.frontend-test.result == 'success' || needs.frontend-test.result == 'skipped')
     uses: ./.github/workflows/build.yml
@@ -65,9 +67,8 @@ jobs:
     name: E2E Tests
     needs: [backend-test, frontend-test]
     if: |
-      always() && 
-      !inputs.skip-tests && 
-      !inputs.deploy-only && 
+      !cancelled() && 
+      (github.event_name != 'workflow_dispatch' || (!inputs.skip-tests && !inputs.deploy-only)) && 
       (needs.backend-test.result == 'success' || needs.backend-test.result == 'skipped') &&
       (needs.frontend-test.result == 'success' || needs.frontend-test.result == 'skipped')
     uses: ./.github/workflows/test-e2e.yml
@@ -80,12 +81,11 @@ jobs:
     name: Deploy Azure Functions
     needs: [build, e2e-test, scraper-test]
     if: |
-      always() && 
       github.event_name == 'push' && 
       github.ref == 'refs/heads/main' &&
-      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
-      (needs.e2e-test.result == 'success' || needs.e2e-test.result == 'skipped') &&
-      (needs.scraper-test.result == 'success' || needs.scraper-test.result == 'skipped')
+      needs.build.result == 'success' &&
+      needs.e2e-test.result == 'success' &&
+      needs.scraper-test.result == 'success'
     uses: ./.github/workflows/deploy-azure-functions.yml
     with:
       environment: production
@@ -98,10 +98,9 @@ jobs:
     name: Deploy Static Web App
     needs: [build, deploy-functions]
     if: |
-      always() && 
       github.event_name == 'push' && 
       github.ref == 'refs/heads/main' &&
-      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      needs.build.result == 'success' &&
       needs.deploy-functions.result == 'success'
     uses: ./.github/workflows/deploy-static-web-app.yml
     with:
@@ -113,19 +112,18 @@ jobs:
   # ============================================
   # Deploy Production (Legacy - Scraper など)
   # ============================================
-  deploy-production-legacy:
-    name: Deploy Production (Legacy)
-    needs: [deploy-functions, deploy-static-web-app]
-    if: |
-      always() && 
-      github.event_name == 'push' && 
-      github.ref == 'refs/heads/main' &&
-      needs.deploy-functions.result == 'success' &&
-      needs.deploy-static-web-app.result == 'success'
-    uses: ./.github/workflows/deploy-production.yml
-    with:
-      environment: production
-    secrets: inherit
+  # deploy-production-legacy:
+  #   name: Deploy Production (Legacy)
+  #   needs: [deploy-functions, deploy-static-web-app]
+  #   if: |
+  #     github.event_name == 'push' && 
+  #     github.ref == 'refs/heads/main' &&
+  #     needs.deploy-functions.result == 'success' &&
+  #     needs.deploy-static-web-app.result == 'success'
+  #   uses: ./.github/workflows/deploy-production.yml
+  #   with:
+  #     environment: production
+  #   secrets: inherit
 
   # ============================================
   # Summary

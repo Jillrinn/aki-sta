@@ -8,16 +8,6 @@ on:
         required: false
         default: 'production'
         type: string
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: false
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
 
 env:
   NODE_VERSION: '20.x'
