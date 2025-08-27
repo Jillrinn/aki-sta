@@ -1,0 +1,96 @@
+name: Backend Tests
+
+on:
+  workflow_call:
+    secrets:
+      COSMOS_ENDPOINT:
+        required: true
+      COSMOS_KEY:
+        required: true
+      COSMOS_DATABASE:
+        required: true
+
+jobs:
+  test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: functions/package-lock.json
+    
+    - name: Create local.settings.json
+      run: |
+        cat > functions/local.settings.json << EOF
+        {
+          "IsEncrypted": false,
+          "Values": {
+            "AzureWebJobsStorage": "",
+            "FUNCTIONS_WORKER_RUNTIME": "node",
+            "COSMOS_ENDPOINT": "${{ secrets.COSMOS_ENDPOINT }}",
+            "COSMOS_KEY": "${{ secrets.COSMOS_KEY }}",
+            "COSMOS_DATABASE": "${{ secrets.COSMOS_DATABASE }}"
+          },
+          "Host": {
+            "CORS": "*",
+            "CORSCredentials": false
+          }
+        }
+        EOF
+    
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ./functions
+    
+    - name: Run tests
+      run: npm test
+      working-directory: ./functions
+    
+    - name: Run tests with coverage
+      if: matrix.node-version == '20.x'
+      run: npm run test:coverage
+      working-directory: ./functions
+    
+    - name: Check coverage threshold
+      if: matrix.node-version == '20.x'
+      run: |
+        cd functions
+        COVERAGE=$(npx jest --coverage --silent 2>&1 | grep "All files" | awk '{print $10}' | sed 's/%//')
+        echo "Backend test coverage: $COVERAGE%"
+        
+        # ジョブサマリーに追加
+        echo "### 📊 Backend Coverage Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Coverage**: $COVERAGE%" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+          echo "⚠️ Coverage is below 80% threshold (Current: $COVERAGE%)"
+          echo "⚠️ **Warning**: Coverage is below 80% threshold" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please consider adding more tests to improve coverage." >> $GITHUB_STEP_SUMMARY
+          # パイプラインは継続（exit 0）
+          exit 0
+        else
+          echo "✅ Coverage meets the 80% threshold"
+          echo "✅ Coverage meets the 80% threshold" >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Upload backend coverage
+      if: matrix.node-version == '20.x'
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-coverage
+        path: functions/coverage/
+        retention-days: 7

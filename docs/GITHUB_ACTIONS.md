@@ -1,8 +1,27 @@
 # GitHub Actions CI/CD パイプライン
 
 ## 📋 概要
-空きスタサーチくんでは、シンプルで効率的な単一パイプライン戦略を採用しています。
-mainブランチへのプッシュ時に、すべてのテストを実行し、将来的にはデプロイまで自動化します。
+空きスタサーチくんでは、モジュール化された再利用可能なワークフロー構造を採用しています。
+`main-ci.yml`を統合エントリーポイントとして、各機能別のワークフローを呼び出す設計により、保守性と柔軟性を実現しています。
+
+## 🏗️ ワークフロー構造
+
+### モジュール化アーキテクチャ
+```
+main-ci.yml (エントリーポイント)
+├── 並列テスト実行
+│   ├── test-backend.yml
+│   ├── test-frontend.yml
+│   └── test-scraper.yml
+├── ビルド
+│   └── build.yml
+├── E2Eテスト
+│   └── test-e2e.yml
+└── デプロイ (mainブランチのみ)
+    ├── deploy-azure-functions.yml
+    ├── deploy-static-web-app.yml
+    └── deploy-production.yml (レガシー)
+```
 
 ## 🚀 CI/CDパイプライン
 
@@ -12,15 +31,21 @@ mainブランチへのプッシュ時に、すべてのテストを実行し、�
 **トリガー**:
 - `main`ブランチへのプッシュ
 - `main`ブランチへのプルリクエスト
+- 手動実行（workflow_dispatch）
+  - `skip-tests`: テストをスキップ
+  - `deploy-only`: デプロイのみ実行
 
-**実行内容**:
-1. **バックエンドテスト** - Node.js 18.x, 20.xでのマトリックステスト
-2. **フロントエンドテスト** - React + TypeScriptのテスト
-3. **Pythonスクレイパーテスト** - Python 3.9, 3.11でのテスト
-4. **E2Eテスト** - Playwright/TypeScriptでのエンドツーエンドテスト
-5. **ビルド** - プロダクションビルドの作成と検証
-6. **統合テスト** - Azure Functions起動とAPI動作確認
-7. **デプロイ** - Azure環境へのデプロイ（設定後に有効化）
+### モジュールワークフロー
+
+| ワークフロー | 用途 | 呼び出し方法 |
+|-------------|------|-------------|
+| test-backend.yml | バックエンドテスト | workflow_call |
+| test-frontend.yml | フロントエンドテスト | workflow_call |
+| test-scraper.yml | Pythonスクレイパーテスト | workflow_call |
+| test-e2e.yml | E2Eテスト | workflow_call |
+| build.yml | フロントエンドビルド | workflow_call |
+| deploy-azure-functions.yml | Azure Functionsデプロイ | workflow_call |
+| deploy-static-web-app.yml | Static Web Appデプロイ | workflow_call |
 
 ## 📊 パイプライン詳細
 
@@ -32,8 +57,8 @@ mainブランチへのプッシュ時に、すべてのテストを実行し、�
 | scraper-test | ✅ | Pythonスクレイパーテスト |
 | e2e-test | ❌ | E2Eテスト（固定データ戦略） |
 | build | ❌ | テスト成功後にビルド実行 |
-| integration-test | ❌ | API統合テスト |
-| deploy-staging | ❌ | Azureデプロイ（プレースホルダー） |
+| deploy-functions | ❌ | Azure Functionsデプロイ |
+| deploy-static-web-app | ❌ | Static Web Appデプロイ |
 | ci-summary | ✅ | 実行結果サマリー |
 
 ### 実行フロー
@@ -45,13 +70,11 @@ mainブランチへのプッシュ時に、すべてのテストを実行し、�
 ├─ Frontend Tests (Node 18.x, 20.x)
 └─ Scraper Tests (Python 3.9, 3.11)
     ↓
-E2E Tests (Playwright/TypeScript)
+Build Application + E2E Tests
     ↓
-Build Application
-    ↓
-Integration Tests
-    ↓
-Deploy to Staging (mainブランチのみ)
+[デプロイ - mainブランチのみ]
+├─ Deploy Azure Functions
+└─ Deploy Static Web App
     ↓
 CI Summary Report
 ```
@@ -169,16 +192,20 @@ cd frontend && npm test -- --coverage
 - ✅ マトリックステスト
 - ✅ 統合テスト
 - ✅ サマリーレポート
+- ✅ モジュール化されたワークフロー構造
+- ✅ 再利用可能なワークフローコンポーネント
 
-### Phase 2（計画中）
-- ⏳ Azure本番デプロイ設定
-- ⏳ 環境別デプロイ（staging/production）
+### Phase 2（実装済み）
+- ✅ Azure Functions デプロイワークフロー
+- ✅ Static Web App デプロイワークフロー
+- ✅ workflow_dispatch による手動実行サポート
+
+### Phase 3（計画中）
+- ⏳ 環境別デプロイ最適化（staging/production）
 - ⏳ ロールバック機能
-
-### Phase 3（将来）
-- 📋 パフォーマンステスト（Lighthouse）
-- 📋 セキュリティスキャン（CodeQL）
-- 📋 Slack/Teams通知統合
+- ⏳ パフォーマンステスト（Lighthouse）
+- ⏳ セキュリティスキャン（CodeQL）
+- ⏳ Slack/Teams通知統合
 
 ---
-*最終更新: 2025-08-21 - E2Eテスト・Pythonスクレイパーテスト追加*
+*最終更新: 2025-08-27 - ワークフローモジュール化実装*

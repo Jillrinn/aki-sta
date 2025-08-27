@@ -1,0 +1,57 @@
+name: Build Application
+
+on:
+  workflow_call:
+    outputs:
+      frontend-build-artifact:
+        description: 'Name of the frontend build artifact'
+        value: ${{ jobs.build.outputs.artifact-name }}
+
+jobs:
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.artifact.outputs.name }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      run: npm ci
+      working-directory: ./frontend
+    
+    - name: Build frontend
+      run: npm run build
+      working-directory: ./frontend
+      env:
+        CI: true
+    
+    - name: Set artifact name
+      id: artifact
+      run: echo "name=frontend-build-${{ github.sha }}" >> $GITHUB_OUTPUT
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.artifact.outputs.name }}
+        path: frontend/build/
+        retention-days: 7
+    
+    - name: Verify build
+      run: |
+        if [ -d "frontend/build/static" ]; then
+          echo "✅ Frontend build successful"
+          ls -la frontend/build/
+        else
+          echo "❌ Frontend build failed"
+          exit 1
+        fi
