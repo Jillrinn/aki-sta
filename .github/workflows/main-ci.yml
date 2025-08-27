@@ -89,7 +89,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    uses: ./.github/workflows/main_aki-sta-func.yml
+    uses: ./.github/workflows/deploy-functions.yml
     secrets: inherit
 
   # ============================================
@@ -104,7 +104,7 @@ jobs:
       needs.build.result == 'success' &&
       needs.e2e-test.result == 'success' &&
       needs.scraper-test.result == 'success'
-    uses: ./.github/workflows/azure-static-web-apps-proud-glacier-046b3f300.yml
+    uses: ./.github/workflows/deploy-frontend.yml
     secrets: inherit
 
   # ============================================
