@@ -109,7 +109,6 @@ jobs:
       build-artifact: ${{ needs.build.outputs.frontend-build-artifact }}
     secrets:
       AZURE_STATIC_WEB_APPS_API_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROUD_GLACIER_046B3F300 }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ============================================
   # Deploy Production (Legacy - Scraper など)
