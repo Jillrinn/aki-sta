@@ -51,12 +51,11 @@ jobs:
   # ============================================
   build:
     name: Build Application
-    needs: [backend-test, frontend-test]
-    # ビルドはテストが成功またはスキップされた場合のみ実行
+    needs: [frontend-test]
+    # ビルドはフロントエンドテストが成功またはスキップされた場合のみ実行
     if: |
       !cancelled() && 
       (github.event_name != 'workflow_dispatch' || !inputs.deploy-only) && 
-      (needs.backend-test.result == 'success' || needs.backend-test.result == 'skipped') &&
       (needs.frontend-test.result == 'success' || needs.frontend-test.result == 'skipped')
     uses: ./.github/workflows/build.yml
 
@@ -65,12 +64,14 @@ jobs:
   # ============================================
   e2e-test:
     name: E2E Tests
-    needs: [backend-test, frontend-test]
+    needs: [backend-test, frontend-test, scraper-test, build]
     if: |
       !cancelled() && 
       (github.event_name != 'workflow_dispatch' || (!inputs.skip-tests && !inputs.deploy-only)) && 
       (needs.backend-test.result == 'success' || needs.backend-test.result == 'skipped') &&
-      (needs.frontend-test.result == 'success' || needs.frontend-test.result == 'skipped')
+      (needs.frontend-test.result == 'success' || needs.frontend-test.result == 'skipped') &&
+      (needs.scraper-test.result == 'success' || needs.scraper-test.result == 'skipped') &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
     uses: ./.github/workflows/test-e2e.yml
     secrets: inherit
 
@@ -79,13 +80,11 @@ jobs:
   # ============================================
   deploy-azure-functions:
     name: Deploy Azure Functions
-    needs: [build, e2e-test, scraper-test]
+    needs: [e2e-test]
     if: |
       github.event_name == 'push' && 
       github.ref == 'refs/heads/main' &&
-      needs.build.result == 'success' &&
-      needs.e2e-test.result == 'success' &&
-      needs.scraper-test.result == 'success'
+      needs.e2e-test.result == 'success'
     permissions:
       id-token: write
       contents: read
@@ -97,13 +96,11 @@ jobs:
   # ============================================
   deploy-static-web-app:
     name: Deploy Static Web App
-    needs: [build, e2e-test, scraper-test]
+    needs: [e2e-test]
     if: |
       github.event_name == 'push' && 
       github.ref == 'refs/heads/main' &&
-      needs.build.result == 'success' &&
-      needs.e2e-test.result == 'success' &&
-      needs.scraper-test.result == 'success'
+      needs.e2e-test.result == 'success'
     uses: ./.github/workflows/deploy-frontend.yml
     secrets: inherit
 
