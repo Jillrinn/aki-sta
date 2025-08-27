@@ -14,9 +14,8 @@ GitHub ActionsからAzureリソースにアクセスするために必要なSecr
 | `AZURE_FUNCTIONAPP_NAME` | Functions App名 | 固定値: `func-aki-sta-prod` | Functions デプロイ |
 | `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` | Functions発行プロファイル | Azure Portal/CLI | Functions デプロイ |
 | `AZURE_STATIC_WEB_APPS_API_TOKEN` | Static Web Apps APIトークン | Azure Portal | Frontend デプロイ |
-| `AZURE_CONTAINER_REGISTRY_SERVER` | ACRサーバーURL | Azure Portal/CLI | Docker イメージプッシュ |
-| `AZURE_CONTAINER_REGISTRY_USERNAME` | ACRユーザー名 | Azure Portal/CLI | Docker 認証 |
-| `AZURE_CONTAINER_REGISTRY_PASSWORD` | ACRパスワード | Azure Portal/CLI | Docker 認証 |
+| `AZURE_WEBAPP_NAME` | Web App名 | 固定値: `webapp-scraper-prod` | Scraper デプロイ |
+| `AZURE_WEBAPP_PUBLISH_PROFILE` | Web App発行プロファイル | Azure Portal/CLI | Scraper デプロイ |
 | `COSMOS_ENDPOINT` | Cosmos DBエンドポイント | Azure Portal/CLI | データベース接続 |
 | `COSMOS_KEY` | Cosmos DBプライマリキー | Azure Portal/CLI | データベース認証 |
 | `COSMOS_DATABASE` | データベース名 | 固定値: `studio-reservations` | データベース接続 |
@@ -44,8 +43,8 @@ az login
 RESOURCE_GROUP="rg-aki-sta-prod-japaneast"
 COSMOS_ACCOUNT="cosmos-aki-sta-prod"
 FUNCTION_APP="func-aki-sta-prod"
-CONTAINER_REGISTRY="acraksprod"
 STATIC_WEB_APP="swa-aki-sta-prod"
+WEB_APP_SCRAPER="webapp-scraper-prod"
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 ```
 
@@ -144,41 +143,36 @@ az staticwebapp secrets list \
 - Name: `AZURE_STATIC_WEB_APPS_API_TOKEN`
 - Value: 取得したトークン
 
-### 6. Container Registry関連 (3つ)
-**用途**: Dockerイメージのプッシュ/プル用認証
-
-```bash
-# ACRログインサーバーの取得
-ACR_SERVER=$(az acr show \
-  --name $CONTAINER_REGISTRY \
-  --resource-group $RESOURCE_GROUP \
-  --query loginServer -o tsv)
-echo "Server: $ACR_SERVER"
-
-# ACRユーザー名の取得
-ACR_USERNAME=$(az acr credential show \
-  --name $CONTAINER_REGISTRY \
-  --resource-group $RESOURCE_GROUP \
-  --query username -o tsv)
-echo "Username: $ACR_USERNAME"
-
-# ACRパスワードの取得
-ACR_PASSWORD=$(az acr credential show \
-  --name $CONTAINER_REGISTRY \
-  --resource-group $RESOURCE_GROUP \
-  --query passwords[0].value -o tsv)
-echo "Password: $ACR_PASSWORD"
-```
+### 6. AZURE_WEBAPP_NAME
+**用途**: Web App (Scraper) のアプリ名
 
 **GitHub設定**:
-- Name: `AZURE_CONTAINER_REGISTRY_SERVER`
-  - Value: `acraksprod.azurecr.io`
-- Name: `AZURE_CONTAINER_REGISTRY_USERNAME`
-  - Value: 取得したユーザー名
-- Name: `AZURE_CONTAINER_REGISTRY_PASSWORD`
-  - Value: 取得したパスワード
+- Name: `AZURE_WEBAPP_NAME`
+- Value: `webapp-scraper-prod`
 
-### 7. Cosmos DB関連 (3つ)
+### 7. AZURE_WEBAPP_PUBLISH_PROFILE
+**用途**: Web Appへの直接デプロイ用認証情報
+
+#### Azure CLIでの取得方法:
+```bash
+# 発行プロファイルの取得
+az webapp deployment list-publishing-profiles \
+  --name $WEB_APP_SCRAPER \
+  --resource-group $RESOURCE_GROUP \
+  --xml
+```
+
+#### Azure Portalでの取得方法:
+1. Azure Portalにログイン
+2. Web App「webapp-scraper-prod」を開く
+3. 「概要」ページの上部メニューから「発行プロファイルの取得」をクリック
+4. ダウンロードされたファイルの内容全体をコピー
+
+**GitHub設定**:
+- Name: `AZURE_WEBAPP_PUBLISH_PROFILE`
+- Value: XML全体をコピー&ペースト
+
+### 8. Cosmos DB関連 (3つ)
 **用途**: データベース接続用認証情報
 
 ```bash
@@ -230,13 +224,13 @@ az ad sp credential reset \
   --json-auth
 ```
 
-### Container Registryパスワードの再生成
+### Web App発行プロファイルの再取得
 ```bash
-# パスワードの再生成
-az acr credential renew \
-  --name $CONTAINER_REGISTRY \
+# 発行プロファイルの再取得
+az webapp deployment list-publishing-profiles \
+  --name $WEB_APP_SCRAPER \
   --resource-group $RESOURCE_GROUP \
-  --password-name password
+  --xml
 ```
 
 ### Cosmos DBキーの再生成
@@ -300,4 +294,4 @@ az cosmosdb keys regenerate \
 
 ---
 
-最終更新: 2025-08-26
+最終更新: 2025-08-27
