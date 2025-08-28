@@ -29,6 +29,7 @@ coverage/
 # Environment variables
 .env
 functions/local.settings.json
+api/local.settings.json
 .env.local
 .env.development.local
 .env.test.local
