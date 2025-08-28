@@ -29,9 +29,14 @@ jobs:
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
           app_location: "./frontend" # App source code path
-          api_location: "" # Api source code path - optional
+          api_location: "./functions" # Api source code path - optional
           output_location: "build" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
+        env:
+          # Cosmos DB connection settings for Managed Functions
+          COSMOS_ENDPOINT: ${{ secrets.COSMOS_ENDPOINT }}
+          COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
+          COSMOS_DATABASE: ${{ secrets.COSMOS_DATABASE }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
