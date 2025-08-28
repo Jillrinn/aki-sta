@@ -61,6 +61,29 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5B64C3AA0E774E3786D3BE05F0B329B8 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F3A8046D56004FC3A9C957C0CA9ACD66 }}
 
+      - name: Configure Azure Function App Settings
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: 'aki-sta-func'
+          app-settings-json: |
+            [
+              {
+                "name": "COSMOS_ENDPOINT",
+                "value": "${{ secrets.COSMOS_ENDPOINT }}",
+                "slotSetting": false
+              },
+              {
+                "name": "COSMOS_KEY",
+                "value": "${{ secrets.COSMOS_KEY }}",
+                "slotSetting": false
+              },
+              {
+                "name": "COSMOS_DATABASE",
+                "value": "${{ secrets.COSMOS_DATABASE }}",
+                "slotSetting": false
+              }
+            ]
+
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         id: fa
