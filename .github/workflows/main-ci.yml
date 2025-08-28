@@ -92,26 +92,13 @@ jobs:
     secrets: inherit
 
   # ============================================
-  # Deploy Static Web App
-  # ============================================
-  deploy-static-web-app:
-    name: Deploy Static Web App
-    needs: [e2e-test]
-    if: |
-      github.event_name == 'push' && 
-      github.ref == 'refs/heads/main' &&
-      needs.e2e-test.result == 'success'
-    uses: ./.github/workflows/deploy-frontend.yml
-    secrets: inherit
-
-  # ============================================
   # Summary
   # ============================================
   ci-summary:
     name: CI/CD Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: [backend-test, frontend-test, scraper-test, build, e2e-test, deploy-azure-functions, deploy-static-web-app]
+    needs: [backend-test, frontend-test, scraper-test, build, e2e-test, deploy-azure-functions]
     
     steps:
     - name: Generate Summary
@@ -134,7 +121,6 @@ jobs:
         echo "| Build | ${{ needs.build.result == 'success' && '✅ Passed' || needs.build.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| E2E Tests | ${{ needs.e2e-test.result == 'success' && '✅ Passed' || needs.e2e-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Deploy Azure Functions | ${{ needs.deploy-azure-functions.result == 'success' && '✅ Deployed' || needs.deploy-azure-functions.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Deploy Static Web App | ${{ needs.deploy-static-web-app.result == 'success' && '✅ Deployed' || needs.deploy-static-web-app.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Overall status
