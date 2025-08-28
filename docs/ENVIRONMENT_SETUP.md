@@ -36,23 +36,28 @@ REACT_APP_API_URL=http://localhost:7071/api
 - 設定不要
 - `/api`は自動的にAzure FunctionsのAPIにルーティングされます
 - `staticwebapp.config.json`で設定済み
+- **注意**: Azure Static Web AppsとAzure Functionsを同じリソースグループでリンクする必要があります
 
-#### 方法2: 環境変数を使用
+#### 方法2: 環境変数を使用（Functions URLが異なる場合）
 Azure PortalまたはGitHub Actionsで設定：
 
 **Azure Portal**:
 1. Static Web Apps リソースに移動
-2. 「設定」→「環境変数」
-3. 以下を追加：
+2. 「設定」→「構成」→「アプリケーション設定」
+3. 「+ 追加」をクリック
+4. 以下を入力：
    - 名前: `REACT_APP_API_URL`
-   - 値: `https://aki-sta-func.azurewebsites.net/api`
+   - 値: `https://aki-sta-func-chdxb5hgayf6g4az.eastasia-01.azurewebsites.net/api`
+5. 「保存」をクリック
 
 **GitHub Actions**:
 1. リポジトリの Settings → Secrets and variables → Actions
-2. 新しいSecretを追加：
-   - 名前: `REACT_APP_API_URL`
-   - 値: `https://aki-sta-func.azurewebsites.net/api`
-3. ワークフローファイルで使用：
+2. 「New repository secret」をクリック
+3. 以下を入力：
+   - Name: `REACT_APP_API_URL`
+   - Secret: `https://aki-sta-func-chdxb5hgayf6g4az.eastasia-01.azurewebsites.net/api`
+4. 「Add secret」をクリック
+5. ワークフローファイル（`.github/workflows/azure-static-web-apps-*.yml`）を更新：
    ```yaml
    env:
      REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
