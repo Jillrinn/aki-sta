@@ -35,6 +35,9 @@ jobs:
           ###### End of Repository/Build Configurations ######
         env:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          COSMOS_ENDPOINT: ${{ secrets.COSMOS_ENDPOINT }}
+          COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
+          COSMOS_DATABASE: ${{ secrets.COSMOS_DATABASE }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
