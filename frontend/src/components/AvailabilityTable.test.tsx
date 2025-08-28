@@ -359,4 +359,83 @@ describe('AvailabilityTable', () => {
     
     consoleErrorSpy.mockRestore();
   });
+
+  it('handles invalid API response structure gracefully', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // 不正なレスポンス（配列ではなくオブジェクト）
+    const invalidData = {
+      '2025-11-15': {
+        invalid: 'structure'
+      }
+    };
+    
+    (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(invalidData);
+    
+    await act(async () => {
+      render(<AvailabilityTable />);
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('データの取得に失敗しました')).toBeInTheDocument();
+      expect(screen.getByText(/Invalid API response structure/i)).toBeInTheDocument();
+    });
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('handles response with missing facility fields', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // 必須フィールドが欠けているレスポンス
+    const incompleteData = {
+      '2025-11-15': [
+        {
+          facilityName: 'Test Facility'
+          // timeSlots と lastUpdated が欠落
+        }
+      ]
+    };
+    
+    (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(incompleteData);
+    
+    await act(async () => {
+      render(<AvailabilityTable />);
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('データの取得に失敗しました')).toBeInTheDocument();
+      expect(screen.getByText(/Invalid API response structure/i)).toBeInTheDocument();
+    });
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('handles response with invalid timeSlots type', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // timeSlotsが文字列になっている不正なレスポンス
+    const invalidTimeSlots = {
+      '2025-11-15': [
+        {
+          facilityName: 'Test Facility',
+          timeSlots: 'invalid string',
+          lastUpdated: '2025-08-24T14:18:03Z'
+        }
+      ]
+    };
+    
+    (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(invalidTimeSlots);
+    
+    await act(async () => {
+      render(<AvailabilityTable />);
+    });
+    
+    await waitFor(() => {
+      expect(screen.getByText('データの取得に失敗しました')).toBeInTheDocument();
+      expect(screen.getByText(/Invalid API response structure/i)).toBeInTheDocument();
+    });
+    
+    consoleErrorSpy.mockRestore();
+  });
 });

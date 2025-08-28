@@ -3,6 +3,23 @@ import { availabilityApi } from '../services/api';
 import { AllAvailabilityResponse } from '../types/availability';
 import { ErrorDetails } from '../components/availability';
 
+const validateResponse = (response: any): boolean => {
+  if (!response || typeof response !== 'object') return false;
+  
+  for (const date in response) {
+    if (!Array.isArray(response[date])) return false;
+    
+    for (const facility of response[date]) {
+      if (!facility.facilityName || 
+          typeof facility.timeSlots !== 'object' || 
+          !facility.lastUpdated) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
 export const useAvailabilityData = () => {
   const [data, setData] = useState<AllAvailabilityResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -13,6 +30,11 @@ export const useAvailabilityData = () => {
       try {
         setLoading(true);
         const response = await availabilityApi.getAllAvailability();
+        
+        if (!validateResponse(response)) {
+          throw new Error('Invalid API response structure');
+        }
+        
         setData(response);
         setError(null);
       } catch (err: any) {

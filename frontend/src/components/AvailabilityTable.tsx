@@ -67,7 +67,7 @@ const AvailabilityTable: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {data[date].map((facility: Facility, facilityIndex: number) => (
+                {(data[date] || []).map((facility: Facility, facilityIndex: number) => (
                   <AvailabilityTableRow 
                     key={facilityIndex} 
                     facility={facility} 
