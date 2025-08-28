@@ -1,0 +1,19 @@
+{
+  "name": "aki-sta-api-v4",
+  "version": "1.0.0",
+  "description": "Azure Static Web Apps Managed Functions v4",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "@azure/cosmos": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "jest": "^30.0.5",
+    "azure-functions-core-tools": "^4.x"
+  }
+}
