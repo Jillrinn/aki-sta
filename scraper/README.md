@@ -31,6 +31,48 @@ cp .env.example .env  # .envファイルを作成
 
 ## 使用方法
 
+### Web APIサーバーとして起動
+
+Scraperは Flask ベースの Web API サーバーとして起動できます。これにより HTTP エンドポイント経由でスクレイピングを実行できます。
+
+#### ローカル起動
+
+```bash
+# 仮想環境をアクティベート
+source venv/bin/activate
+
+# Flask開発サーバーで起動（ポート8000）
+python app.py
+
+# または Gunicorn を使用（本番環境推奨）
+gunicorn --bind 0.0.0.0:8000 --timeout 600 app:app
+```
+
+#### 利用可能なエンドポイント
+
+```bash
+# ヘルスチェック
+curl http://localhost:8000/health
+
+# スクレイピング実行（単一日付）
+curl -X POST http://localhost:8000/scrape?date=2025-11-15
+
+# スクレイピング実行（複数日付、JSONペイロード）
+curl -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"dates": ["2025-11-15", "2025-11-16"]}'
+
+# Logic Apps や Azure Scheduler からの実行例
+curl -X POST https://webapp-scraper-prod.azurewebsites.net/scrape \
+  -H "Content-Type: application/json" \
+  -d '{
+    "triggeredBy": "scheduler",
+    "dates": ["2025-11-15", "2025-11-16"]
+  }'
+```
+
+詳細なAPI仕様は [API_SPEC.md](API_SPEC.md) を参照してください。
+
 ### run-playwright.sh スクリプトを使用（推奨）
 
 `run-playwright.sh`は、Playwright環境を適切に設定してPythonスクリプトを実行するラッパースクリプトです。
@@ -148,32 +190,39 @@ flake8 src/ tests/
 
 ## データストレージ
 
-### 🌟 現在の動作（Cosmos DB統合済み）
+### 🌟 現在の動作（JSON + Cosmos DB 統合）
 
-スクレイパーは以下の順序でデータを保存します：
+**JSONファイル保存が主要機能**として動作し、Cosmos DBは追加機能として利用できます：
 
-1. **優先保存先：Cosmos DB**
-   - 環境変数から接続情報を読み込み
+1. **主要保存先：JSONファイル**
+   - `shared-data/availability.json`に常に保存
+   - 従来の形式を維持（下位互換性）
+   - ローカル開発やファイルベースの処理に対応
+
+2. **追加保存先：Cosmos DB**（オプション）
+   - 環境変数設定時のみ有効
    - Azure Cosmos DBにリアルタイムで保存
    - upsert機能で既存データを更新
+   - 本番環境での高可用性・検索機能を提供
 
-2. **フォールバック：JSONファイル**
-   - Cosmos DB接続失敗時に自動的にJSONファイルに保存
-   - 移行期間中は両方に並行保存
+3. **並行保存方式**
+   - 環境変数設定時は**両方**に保存
+   - Cosmos DB失敗時もJSONファイルへの保存は継続
+   - データ損失を防ぐ安全な設計
 
 ### 📁 ファイル保存とDB保存の使い分け
 
 #### 🔹 デフォルト動作（推奨）
 
 ```bash
-# Cosmos DB + JSONファイル並行保存
+# JSONファイル + Cosmos DB 並行保存
 ./run-playwright.sh src/main.py --date 2025-11-15
 ```
 
 **動作:**
-1. Cosmos DBに保存を試行 ✅
-2. 成功時もJSONファイルに同時保存 ✅ 
-3. Cosmos DB失敗時はJSONファイルのみ ⚠️
+1. JSONファイルに保存 ✅（常に実行）
+2. 環境変数があればCosmos DBにも保存 ✅
+3. Cosmos DB失敗時もJSONファイル保存は成功 ✅
 
 #### 🔹 JSONファイルのみ保存
 
@@ -184,8 +233,9 @@ unset COSMOS_ENDPOINT COSMOS_KEY COSMOS_DATABASE
 ```
 
 **動作:**
-1. Cosmos DB接続情報なし → スキップ
-2. JSONファイルのみに保存
+1. JSONファイルに保存 ✅
+2. Cosmos DB接続情報なし → スキップ
+3. **従来通りの単一ファイル保存動作**
 
 #### 🔹 プログラムから制御
 
@@ -218,13 +268,13 @@ COSMOS_DATABASE=your-database-name
 ```
 スクレイピング実行
     ↓
+JSONファイルに保存（常に実行）
+    ↓ 成功
 Cosmos DB環境変数あり？
     ↓ Yes              ↓ No
-Cosmos DBに保存      JSONファイルに保存のみ
-    ↓ 成功      ↓ 失敗      ↓
-JSONにも保存  JSONに保存   完了
-    ↓           ↓
-   完了        完了
+Cosmos DBに保存      完了
+    ↓ 成功  ↓ 失敗      
+   完了    完了（JSON保存済みなので安全）
 ```
 
 ### 🗂️ データ形式
