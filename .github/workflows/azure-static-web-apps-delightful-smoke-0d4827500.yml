@@ -38,6 +38,8 @@ jobs:
           COSMOS_ENDPOINT: ${{ secrets.COSMOS_ENDPOINT }}
           COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
           COSMOS_DATABASE: ${{ secrets.COSMOS_DATABASE }}
+          FUNCTIONS_WORKER_RUNTIME: node
+          AzureWebJobsFeatureFlags: EnableWorkerIndexing
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
