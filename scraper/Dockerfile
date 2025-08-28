@@ -50,26 +50,19 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers (webkit only for ensemble studio)
-RUN playwright install webkit
-RUN playwright install-deps webkit
+# Install Playwright browsers (Chromium only for size optimization)
+RUN playwright install chromium
+RUN playwright install-deps chromium
 
 # Copy application code
-COPY src/ ./src/
-COPY tests/ ./tests/
+COPY . .
 
-# Copy environment configuration
-COPY .env.playwright ./.env.playwright
-
-# Set environment variables for Playwright
+# Set environment variables
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PYTHONUNBUFFERED=1
 
-# Create non-root user for security
-RUN useradd -m -s /bin/bash scraper && \
-    chown -R scraper:scraper /app
+# Azure Web Apps expects port 8000 by default
+EXPOSE 8000
 
-USER scraper
-
-# Default command to run container scraper
-CMD ["python", "-u", "src/container_runner.py"]
+# Start Flask app with Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "600", "--workers", "1", "app:app"]

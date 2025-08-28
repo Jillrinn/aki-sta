@@ -1,0 +1,73 @@
+name: Deploy Scraper to Azure Web Apps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scraper/**'
+      - '.github/workflows/deploy-scraper.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Manual deployment reason'
+        required: false
+        default: 'Manual deployment'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/aki-sta-scraper
+  AZURE_WEBAPP_NAME: webapp-scraper-prod
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{date 'YYYYMMDD-HHmmss'}}-
+          type=raw,value=latest
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./scraper
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+        cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    
+    steps:
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        images: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
