@@ -8,7 +8,7 @@ on:
   workflow_call:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'functions' # set this to the path to your web app project, defaults to the repository root
   NODE_VERSION: '20.x' # set this to the node version to use (supports 8.x, 10.x, 12.x)
 
 jobs:
@@ -30,25 +30,15 @@ jobs:
         shell: pwsh
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          # Install root dependencies first if package.json exists
-          if (Test-Path "package.json") {
-            npm install
-          }
-          # Install functions dependencies
-          if (Test-Path "functions/package.json") {
-            pushd './functions'
-            npm install
-            popd
-          }
-          # Skip tests as they require environment setup
-          npm run build --if-present
+          # Install only production dependencies for deployment
+          npm ci --production
           popd
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: functions
 
   deploy:
     runs-on: windows-latest

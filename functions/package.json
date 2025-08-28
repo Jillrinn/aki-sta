@@ -13,11 +13,11 @@
   "description": "",
   "devDependencies": {
     "axios": "^1.11.0",
-    "jest": "^30.0.5"
+    "jest": "^30.0.5",
+    "azure-functions-core-tools": "^4.2.1"
   },
   "dependencies": {
     "@azure/cosmos": "^4.5.0",
-    "azure-functions-core-tools": "^4.2.1",
     "dotenv": "^17.2.1"
   }
 }
