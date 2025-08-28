@@ -32,25 +32,21 @@ REACT_APP_API_URL=http://localhost:7071/api
 
 ### 本番環境（Azure Static Web Apps）
 
-#### 方法1: Azure Static Web Appsのバックエンド統合（推奨）
+#### 方法1: Azure Static Web Appsのバックエンド統合
 - 設定不要
 - `/api`は自動的にAzure FunctionsのAPIにルーティングされます
 - `staticwebapp.config.json`で設定済み
 - **注意**: Azure Static Web AppsとAzure Functionsを同じリソースグループでリンクする必要があります
+- **制限**: 統合されたFunctions APIのみサポート（別途デプロイされたAzure Functionsは使用不可）
 
-#### 方法2: 環境変数を使用（Functions URLが異なる場合）
-Azure PortalまたはGitHub Actionsで設定：
+#### 方法2: 環境変数を使用（別途デプロイされたFunctions使用時・推奨）
+別途デプロイされたAzure FunctionsのAPIを使用する場合は、GitHub Secretsで設定する必要があります。
 
-**Azure Portal**:
-1. Static Web Apps リソースに移動
-2. 「設定」→「構成」→「アプリケーション設定」
-3. 「+ 追加」をクリック
-4. 以下を入力：
-   - 名前: `REACT_APP_API_URL`
-   - 値: `https://aki-sta-func-chdxb5hgayf6g4az.eastasia-01.azurewebsites.net/api`
-5. 「保存」をクリック
+**現在の設定状況**:
+- Frontend: `https://delightful-smoke-0d4827500.1.azurestaticapps.net/`
+- API: `https://aki-sta-func-chdxb5hgayf6g4az.eastasia-01.azurewebsites.net/api`
 
-**GitHub Actions**:
+**GitHub Secrets設定（必須）**:
 1. リポジトリの Settings → Secrets and variables → Actions
 2. 「New repository secret」をクリック
 3. 以下を入力：
@@ -59,9 +55,20 @@ Azure PortalまたはGitHub Actionsで設定：
 4. 「Add secret」をクリック
 5. ワークフローファイル（`.github/workflows/azure-static-web-apps-*.yml`）を更新：
    ```yaml
-   env:
-     REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+   - name: Build And Deploy
+     id: builddeploy
+     uses: Azure/static-web-apps-deploy@v1
+     with:
+       azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_* }}
+       repo_token: ${{ secrets.GITHUB_TOKEN }}
+       action: "upload"
+       app_location: "./frontend"
+       api_location: ""
+       output_location: "build"
+     env:
+       REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
    ```
+   **重要**: 環境変数は`env`セクションでビルド時に注入する必要があります
 
 ### 環境変数ファイル
 
