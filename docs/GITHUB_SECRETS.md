@@ -9,16 +9,14 @@ GitHub ActionsからAzureリソースにアクセスするために必要なSecr
 
 | Secret名 | 説明 | 取得方法 | 使用場所 |
 |---|---|---|---|
-| `AZURE_CREDENTIALS` | Azureサービスプリンシパル認証情報 | Azure CLI | 全体的なAzure認証 |
-| `AZURE_SUBSCRIPTION_ID` | AzureサブスクリプションID | Azure Portal/CLI | リソース管理 |
-| `AZURE_FUNCTIONAPP_NAME` | Functions App名 | 固定値: `func-aki-sta-prod` | Functions デプロイ |
-| `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` | Functions発行プロファイル | Azure Portal/CLI | Functions デプロイ |
-| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Static Web Apps APIトークン | Azure Portal | Frontend デプロイ |
-| `AZURE_WEBAPP_NAME` | Web App名 | 固定値: `webapp-scraper-prod` | Scraper デプロイ |
-| `AZURE_WEBAPP_PUBLISH_PROFILE` | Web App発行プロファイル | Azure Portal/CLI | Scraper デプロイ |
+| `AZUREAPPSERVICE_CLIENTID_*` | Azure App Service ClientID | Azure Portal (自動生成) | Functions OIDC認証 |
+| `AZUREAPPSERVICE_TENANTID_*` | Azure App Service TenantID | Azure Portal (自動生成) | Functions OIDC認証 |
+| `AZUREAPPSERVICE_SUBSCRIPTIONID_*` | Azure App Service SubscriptionID | Azure Portal (自動生成) | Functions OIDC認証 |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN_DELIGHTFUL_SMOKE_*` | Static Web Apps APIトークン | Azure Portal (自動生成) | Frontend デプロイ |
+| `REACT_APP_API_URL` | Frontend API エンドポイント | 固定値: `https://aki-sta-func-*.azurewebsites.net/api` | Frontend ビルド |
 | `COSMOS_ENDPOINT` | Cosmos DBエンドポイント | Azure Portal/CLI | データベース接続 |
 | `COSMOS_KEY` | Cosmos DBプライマリキー | Azure Portal/CLI | データベース認証 |
-| `COSMOS_DATABASE` | データベース名 | 固定値: `studio-reservations` | データベース接続 |
+| `COSMOS_DATABASE` | データベース名 | 固定値: `akista-db` | データベース接続 |
 
 ## 📍 GitHub Secretsの設定手順
 
@@ -39,18 +37,24 @@ GitHub ActionsからAzureリソースにアクセスするために必要なSecr
 # Azure CLIにログイン
 az login
 
-# 変数設定
-RESOURCE_GROUP="rg-aki-sta-prod-japaneast"
-COSMOS_ACCOUNT="cosmos-aki-sta-prod"
-FUNCTION_APP="func-aki-sta-prod"
-STATIC_WEB_APP="swa-aki-sta-prod"
-WEB_APP_SCRAPER="webapp-scraper-prod"
+# 変数設定（実際のリソース名に基づく）
+RESOURCE_GROUP="<your-resource-group>"
+COSMOS_ACCOUNT="aki-sta-cosmos"
+FUNCTION_APP="aki-sta-func"
+STATIC_WEB_APP="delightful-smoke-0d4827500"
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 ```
 
-### 1. AZURE_CREDENTIALS
-**用途**: GitHub ActionsからAzureリソース全体にアクセスするための認証情報
+### 1. Azure App Service認証設定（OIDC）
+**用途**: Azure FunctionsへのOIDC（OpenID Connect）認証
 
+**注意**: これらのSecretsは、Azure PortalでFunction Appのデプロイメントセンターを設定した際に自動的に作成されます。
+
+- `AZUREAPPSERVICE_CLIENTID_E327A028D14545AC8D7AC6EDC03A0441`
+- `AZUREAPPSERVICE_TENANTID_5B64C3AA0E774E3786D3BE05F0B329B8`
+- `AZUREAPPSERVICE_SUBSCRIPTIONID_F3A8046D56004FC3A9C957C0CA9ACD66`
+
+手動で設定が必要な場合：
 ```bash
 # サービスプリンシパルの作成
 az ad sp create-for-rbac \
@@ -80,8 +84,12 @@ az ad sp create-for-rbac \
 - Name: `AZURE_CREDENTIALS`
 - Value: 上記のJSON全体をコピー&ペースト
 
-### 2. AZURE_SUBSCRIPTION_ID
-**用途**: Azureサブスクリプションの識別
+### 2. Static Web Apps APIトークン
+**用途**: Azure Static Web Appsへのデプロイ認証
+
+**Secret名**: `AZURE_STATIC_WEB_APPS_API_TOKEN_DELIGHTFUL_SMOKE_0D4827500`
+
+**注意**: このトークンは、Azure PortalでStatic Web Appを作成した際に自動的にGitHub Secretsに追加されます。
 
 ```bash
 # サブスクリプションIDの取得
@@ -92,95 +100,19 @@ az account show --query id -o tsv
 - Name: `AZURE_SUBSCRIPTION_ID`
 - Value: 出力されたID（例: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx）
 
-### 3. AZURE_FUNCTIONAPP_NAME
-**用途**: Functions App名
+### 3. Frontend API エンドポイント
+**用途**: ReactアプリケーションがAPIにアクセスするためのURL
 
 **GitHub設定**:
-- Name: `AZURE_FUNCTIONAPP_NAME`
-- Value: `func-aki-sta-prod`
+- Name: `REACT_APP_API_URL`
+- Value: `https://aki-sta-func-chdxb5hgayf6g4az.eastasia-01.azurewebsites.net/api`
 
-### 4. AZURE_FUNCTIONAPP_PUBLISH_PROFILE
-**用途**: Functions Appへの直接デプロイ用認証情報
-
-#### Azure CLIでの取得方法:
-```bash
-# 発行プロファイルの取得
-az functionapp deployment list-publishing-profiles \
-  --name $FUNCTION_APP \
-  --resource-group $RESOURCE_GROUP \
-  --xml
-```
-
-#### Azure Portalでの取得方法:
-1. Azure Portalにログイン
-2. Function App「func-aki-sta-prod」を開く
-3. 「概要」ページの上部メニューから「発行プロファイルの取得」をクリック
-4. ダウンロードされたファイルの内容全体をコピー
-
-**GitHub設定**:
-- Name: `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`
-- Value: XML全体をコピー&ペースト
-
-### 5. AZURE_STATIC_WEB_APPS_API_TOKEN
-**用途**: Static Web Appsへのデプロイ認証
-
-#### Azure Portalでの取得方法:
-1. Azure Portalにログイン
-2. Static Web App「swa-aki-sta-prod」を開く
-3. 「デプロイトークンの管理」をクリック
-4. トークンをコピー
-
-#### Azure CLIでの取得方法:
-```bash
-# Static Web Apps APIトークンの取得
-az staticwebapp secrets list \
-  --name $STATIC_WEB_APP \
-  --resource-group $RESOURCE_GROUP \
-  --query "properties.apiKey" -o tsv
-```
-
-**GitHub設定**:
-- Name: `AZURE_STATIC_WEB_APPS_API_TOKEN`
-- Value: 取得したトークン
-
-### 6. AZURE_WEBAPP_NAME
-**用途**: Web App (Scraper) のアプリ名
-
-**GitHub設定**:
-- Name: `AZURE_WEBAPP_NAME`
-- Value: `webapp-scraper-prod`
-
-### 7. AZURE_WEBAPP_PUBLISH_PROFILE
-**用途**: Web Appへの直接デプロイ用認証情報
-
-#### Azure CLIでの取得方法:
-```bash
-# 発行プロファイルの取得
-az webapp deployment list-publishing-profiles \
-  --name $WEB_APP_SCRAPER \
-  --resource-group $RESOURCE_GROUP \
-  --xml
-```
-
-#### Azure Portalでの取得方法:
-1. Azure Portalにログイン
-2. Web App「webapp-scraper-prod」を開く
-3. 「概要」ページの上部メニューから「発行プロファイルの取得」をクリック
-4. ダウンロードされたファイルの内容全体をコピー
-
-**GitHub設定**:
-- Name: `AZURE_WEBAPP_PUBLISH_PROFILE`
-- Value: XML全体をコピー&ペースト
-
-### 8. Cosmos DB関連 (3つ)
+### 4. Cosmos DB接続設定
 **用途**: データベース接続用認証情報
 
 ```bash
 # Cosmos DBエンドポイントの取得
-COSMOS_ENDPOINT=$(az cosmosdb show \
-  --name $COSMOS_ACCOUNT \
-  --resource-group $RESOURCE_GROUP \
-  --query documentEndpoint -o tsv)
+COSMOS_ENDPOINT="https://aki-sta-cosmos.documents.azure.com:443/"
 echo "Endpoint: $COSMOS_ENDPOINT"
 
 # Cosmos DBプライマリキーの取得
@@ -193,26 +125,27 @@ echo "Key: $COSMOS_KEY"
 
 **GitHub設定**:
 - Name: `COSMOS_ENDPOINT`
-  - Value: 取得したエンドポイント（例: https://cosmos-aki-sta-prod.documents.azure.com:443/）
+  - Value: `https://aki-sta-cosmos.documents.azure.com:443/`
 - Name: `COSMOS_KEY`
   - Value: 取得したプライマリキー
 - Name: `COSMOS_DATABASE`
-  - Value: `studio-reservations`
+  - Value: `akista-db`
 
 ## ✅ 設定確認チェックリスト
 
 すべてのSecretsが正しく設定されているか確認してください：
 
-- [ ] `AZURE_CREDENTIALS` - JSON形式のサービスプリンシパル
-- [ ] `AZURE_SUBSCRIPTION_ID` - UUID形式
-- [ ] `AZURE_FUNCTIONAPP_NAME` - `func-aki-sta-prod`
-- [ ] `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` - XML形式
-- [ ] `AZURE_STATIC_WEB_APPS_API_TOKEN` - APIトークン文字列
-- [ ] `AZURE_WEBAPP_NAME` - `webapp-scraper-prod`
-- [ ] `AZURE_WEBAPP_PUBLISH_PROFILE` - XML形式
-- [ ] `COSMOS_ENDPOINT` - https://で始まるURL
+### 自動生成されるSecrets（Azure Portal経由）
+- [ ] `AZUREAPPSERVICE_CLIENTID_E327A028D14545AC8D7AC6EDC03A0441` - UUID形式
+- [ ] `AZUREAPPSERVICE_TENANTID_5B64C3AA0E774E3786D3BE05F0B329B8` - UUID形式
+- [ ] `AZUREAPPSERVICE_SUBSCRIPTIONID_F3A8046D56004FC3A9C957C0CA9ACD66` - UUID形式
+- [ ] `AZURE_STATIC_WEB_APPS_API_TOKEN_DELIGHTFUL_SMOKE_0D4827500` - APIトークン文字列
+
+### 手動設定が必要なSecrets
+- [ ] `REACT_APP_API_URL` - `https://aki-sta-func-chdxb5hgayf6g4az.eastasia-01.azurewebsites.net/api`
+- [ ] `COSMOS_ENDPOINT` - `https://aki-sta-cosmos.documents.azure.com:443/`
 - [ ] `COSMOS_KEY` - Base64文字列
-- [ ] `COSMOS_DATABASE` - `studio-reservations`
+- [ ] `COSMOS_DATABASE` - `akista-db`
 
 ## 🔄 Secrets更新手順
 
@@ -283,7 +216,9 @@ az cosmosdb keys regenerate \
 ## 📝 次のステップ
 
 1. すべてのSecretsを設定完了
-2. [デプロイワークフロー](../.github/workflows/deploy-production.yml)の実行
+2. GitHub Actionsワークフローの実行
+   - Functions: `.github/workflows/deploy-functions.yml`
+   - Frontend: `.github/workflows/azure-static-web-apps-delightful-smoke-0d4827500.yml`
 3. デプロイ結果の確認
 
 ## 🔗 関連ドキュメント
@@ -294,4 +229,4 @@ az cosmosdb keys regenerate \
 
 ---
 
-最終更新: 2025-08-27
+最終更新: 2025-08-28
