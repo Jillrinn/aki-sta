@@ -25,7 +25,10 @@ describe('Availability API', () => {
       bindingData: {},
       res: null
     };
-    request = {};
+    request = {
+      headers: {},
+      method: 'GET'
+    };
     // モックをリセット
     jest.clearAllMocks();
     // console.errorをモック化
@@ -79,7 +82,7 @@ describe('Availability API', () => {
     
     expect(context.res.status).toBe(200);
     expect(context.res.body).toEqual(mockAllData);
-    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('https://delightful-smoke-0d4827500.1.azurestaticapps.net');
   });
 
   test('should return 503 when getAllAvailabilityData throws error', async () => {
@@ -127,14 +130,20 @@ describe('Availability API', () => {
     
     await httpFunction(context, request);
     
-    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('https://delightful-smoke-0d4827500.1.azurestaticapps.net');
+    expect(context.res.headers['Access-Control-Allow-Methods']).toBe('GET, OPTIONS');
+    expect(context.res.headers['Access-Control-Allow-Headers']).toBe('Content-Type, Authorization');
     expect(context.res.headers['Content-Type']).toBe('application/json');
     
-    // エラーケース
+    // エラーケース - getAllAvailabilityDataをモック
     context.bindingData.date = null;
+    availabilityRepository.getAllAvailabilityData.mockRejectedValueOnce(new Error('Test error'));
+    
     await httpFunction(context, request);
     
-    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(context.res.status).toBe(503);
+    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('https://delightful-smoke-0d4827500.1.azurestaticapps.net');
+    expect(context.res.headers['Access-Control-Allow-Methods']).toBe('GET, OPTIONS');
     expect(context.res.headers['Content-Type']).toBe('application/json');
   });
 
@@ -167,5 +176,18 @@ describe('Availability API', () => {
     
     // Cosmos DBリポジトリが呼ばれたことを確認
     expect(availabilityRepository.getAvailabilityData).toHaveBeenCalledWith('2025-11-15');
+  });
+
+  test('should handle OPTIONS request for CORS preflight', async () => {
+    request.method = 'OPTIONS';
+    
+    await httpFunction(context, request);
+    
+    expect(context.res.status).toBe(200);
+    expect(context.res.headers['Access-Control-Allow-Origin']).toBe('https://delightful-smoke-0d4827500.1.azurestaticapps.net');
+    expect(context.res.headers['Access-Control-Allow-Methods']).toBe('GET, OPTIONS');
+    expect(context.res.headers['Access-Control-Allow-Headers']).toBe('Content-Type, Authorization');
+    expect(context.res.headers['Access-Control-Max-Age']).toBe('86400');
+    expect(context.res.body).toBeNull();
   });
 });
