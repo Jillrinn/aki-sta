@@ -2,6 +2,7 @@
   "name": "aki-sta-api-v4",
   "version": "1.0.0",
   "description": "Azure Static Web Apps Managed Functions v4",
+  "main": "src/functions/*.js",
   "scripts": {
     "start": "func start",
     "test": "jest"
