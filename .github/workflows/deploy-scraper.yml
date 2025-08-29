@@ -15,7 +15,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/aki-sta-scraper
+  IMAGE_NAME: jillrinn/aki-sta-scraper  # 小文字に固定（Dockerレジストリ要件）
   AZURE_WEBAPP_NAME: webapp-scraper-prod
 
 jobs:
