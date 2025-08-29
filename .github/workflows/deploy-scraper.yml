@@ -16,7 +16,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: jillrinn/aki-sta-scraper  # 小文字に固定（Dockerレジストリ要件）
-  AZURE_WEBAPP_NAME: webapp-scraper-prod
+  AZURE_WEBAPP_NAME: aki-sta-scraper     # Azure Portalの実際のWeb App名
 
 jobs:
   build-and-push:
