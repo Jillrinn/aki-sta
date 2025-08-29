@@ -402,24 +402,84 @@ class EnsembleStudioScraper:
             date: "YYYY-MM-DD"形式の日付文字列
         
         Returns:
-            保存したデータ
+            結果を含む辞書（status, data, message, error_type）
         """
-        # スクレイピング実行
-        facilities = self.scrape_availability(date)
-        
-        # Cosmos DBに保存（専用）
         try:
-            from .cosmos_writer import CosmosWriter
-            writer = CosmosWriter()
-            if writer.save_availability(date, facilities):
-                print(f"\n保存先:")
-                print(f"  ✅ Cosmos DB: {date}")
-                print(f"\nスクレイピング完了")
-            else:
-                raise Exception("Cosmos DB保存に失敗しました")
+            # 日付フォーマット検証
+            try:
+                datetime.strptime(date, '%Y-%m-%d')
+            except ValueError:
+                return {
+                    "status": "error",
+                    "message": f"Invalid date format: {date}. Expected YYYY-MM-DD",
+                    "error_type": "VALIDATION_ERROR"
+                }
+            
+            # スクレイピング実行
+            print(f"\nスクレイピング開始: {date}")
+            facilities = self.scrape_availability(date)
+            
+            if not facilities:
+                return {
+                    "status": "error",
+                    "message": f"No data found for date: {date}",
+                    "error_type": "NO_DATA_FOUND"
+                }
+            
+            # Cosmos DBに保存
+            try:
+                from .cosmos_writer import CosmosWriter
+                writer = CosmosWriter()
+                if writer.save_availability(date, facilities):
+                    print(f"\n保存先:")
+                    print(f"  ✅ Cosmos DB: {date}")
+                    print(f"\nスクレイピング完了")
+                    return {
+                        "status": "success",
+                        "data": {date: facilities}
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Failed to save to Cosmos DB",
+                        "error_type": "DATABASE_ERROR"
+                    }
+            except ImportError as e:
+                return {
+                    "status": "error",
+                    "message": "Cosmos DB module not found",
+                    "error_type": "CONFIGURATION_ERROR",
+                    "details": str(e)
+                }
+            except Exception as e:
+                print(f"\n❌ エラー: Cosmos DB保存失敗")
+                print(f"   理由: {e}")
+                return {
+                    "status": "error",
+                    "message": f"Database error: {str(e)}",
+                    "error_type": "DATABASE_ERROR",
+                    "details": str(e)
+                }
+                
+        except ConnectionError as e:
+            return {
+                "status": "error",
+                "message": "Failed to connect to website",
+                "error_type": "NETWORK_ERROR",
+                "details": str(e)
+            }
+        except TimeoutError as e:
+            return {
+                "status": "error",
+                "message": "Website request timed out",
+                "error_type": "TIMEOUT_ERROR",
+                "details": str(e)
+            }
         except Exception as e:
-            print(f"\n❌ エラー: Cosmos DB保存失敗")
-            print(f"   理由: {e}")
-            raise
-        
-        return {"data": {date: facilities}}
+            print(f"\n❌ スクレイピングエラー: {e}")
+            return {
+                "status": "error",
+                "message": f"Scraping failed: {str(e)}",
+                "error_type": "SCRAPING_ERROR",
+                "details": str(e)
+            }

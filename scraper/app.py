@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import logging
+import traceback
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, request, jsonify
@@ -103,6 +104,12 @@ def scrape():
         
         for date in dates:
             try:
+                # 日付フォーマット検証
+                try:
+                    datetime.strptime(date, '%Y-%m-%d')
+                except ValueError:
+                    raise ValueError(f"Date must be in YYYY-MM-DD format, got: {date}")
+                
                 logger.info(f"Scraping date: {date}")
                 result = scraper.scrape_and_save(date)
                 
@@ -115,20 +122,55 @@ def scrape():
                     })
                 else:
                     error_count += 1
-                    results.append({
+                    error_info = {
                         'date': date,
                         'status': 'error',
+                        'error_type': result.get('error_type', 'SCRAPING_ERROR'),
                         'message': result.get('message', 'Unknown error')
-                    })
+                    }
+                    if result.get('details'):
+                        error_info['details'] = result.get('details')
+                    results.append(error_info)
                     
-            except Exception as e:
-                logger.error(f"Error scraping {date}: {str(e)}")
+            except ValueError as e:
+                # 日付フォーマットエラー
+                logger.error(f"Invalid date format {date}: {str(e)}")
                 error_count += 1
                 results.append({
                     'date': date,
                     'status': 'error',
-                    'message': str(e)
+                    'error_type': 'INVALID_DATE_FORMAT',
+                    'message': f'Invalid date format. Expected YYYY-MM-DD, got: {date}',
+                    'details': str(e)
                 })
+            except ConnectionError as e:
+                # ネットワークエラー
+                logger.error(f"Network error for {date}: {str(e)}")
+                error_count += 1
+                results.append({
+                    'date': date,
+                    'status': 'error',
+                    'error_type': 'NETWORK_ERROR',
+                    'message': 'Failed to connect to target website',
+                    'details': str(e)
+                })
+            except Exception as e:
+                # その他のエラー
+                logger.error(f"Error scraping {date}: {str(e)}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                error_count += 1
+                error_details = {
+                    'date': date,
+                    'status': 'error',
+                    'error_type': 'SCRAPING_ERROR',
+                    'message': 'Failed to scrape data',
+                    'details': str(e),
+                    'error_class': e.__class__.__name__
+                }
+                # デバッグモードの場合はトレースバックを含める
+                if app.debug or os.environ.get('DEBUG', '').lower() == 'true':
+                    error_details['traceback'] = traceback.format_exc()
+                results.append(error_details)
         
         # Summary response
         response = {
@@ -143,7 +185,18 @@ def scrape():
         
         logger.info(f"Scraping completed: {success_count}/{len(dates)} successful")
         
-        return jsonify(response), 200
+        # HTTPステータスコードの決定
+        if error_count == len(dates):
+            # 全て失敗した場合
+            status_code = 500
+        elif any(r.get('error_type') == 'INVALID_DATE_FORMAT' for r in results):
+            # バリデーションエラーがある場合
+            status_code = 400
+        else:
+            # 成功または部分的成功
+            status_code = 200
+            
+        return jsonify(response), status_code
         
     except Exception as e:
         logger.error(f"Fatal error in scrape endpoint: {str(e)}")
