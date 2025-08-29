@@ -5,7 +5,9 @@
   "main": "src/functions/*.js",
   "scripts": {
     "start": "func start",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@azure/cosmos": "^4.0.0",
