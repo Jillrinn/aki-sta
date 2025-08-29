@@ -48,3 +48,4 @@ app.http('availability', {
 });
 
 module.exports = app;
+module.exports.availabilityHandler = availabilityHandler;

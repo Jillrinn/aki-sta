@@ -54,8 +54,8 @@ export const useAvailabilityData = () => {
             errorDetails.message = `サーバーエラーが発生しました`;
           }
           
-          if (err.response.data?.error) {
-            errorDetails.originalError = err.response.data.error;
+          if (err.response.data?.error || err.response.data?.details) {
+            errorDetails.originalError = err.response.data.error || err.response.data.details;
           }
         } else if (err.request) {
           errorDetails.message = 'ネットワーク接続エラー: サーバーに接続できません';

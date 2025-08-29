@@ -20,7 +20,10 @@ class CosmosDBClient {
     const databaseId = process.env.COSMOS_DATABASE || 'studio-reservations';
 
     if (!endpoint || !key) {
-      throw new Error('Cosmos DB connection settings are missing');
+      const missingVars = [];
+      if (!endpoint) missingVars.push('COSMOS_ENDPOINT');
+      if (!key) missingVars.push('COSMOS_KEY');
+      throw new Error(`Missing environment variables: ${missingVars.join(', ')}`);
     }
 
     this.client = new CosmosClient({ endpoint, key });

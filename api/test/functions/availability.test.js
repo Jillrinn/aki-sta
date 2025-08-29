@@ -1,5 +1,5 @@
-const app = require('../../src/functions/availability');
-const mockFallbackData = require('../../../functions/src/repositories/fallback-data.json');
+const { availabilityHandler } = require('../../src/functions/availability');
+const mockFallbackData = require('../../src/repositories/fallback-data.json');
 
 // Cosmos DBリポジトリをモック化
 jest.mock('../../src/repositories/availability-repository', () => ({
@@ -9,7 +9,7 @@ jest.mock('../../src/repositories/availability-repository', () => ({
 
 const availabilityRepository = require('../../src/repositories/availability-repository');
 
-describe('Availability API v4', () => {
+describe('Availability API', () => {
   let context;
   let request;
   let consoleErrorSpy;
@@ -42,8 +42,7 @@ describe('Availability API v4', () => {
     
     request.params.date = '2025-11-15';
     
-    // availability関数を直接呼び出し（v4では関数を手動でテスト）
-    const availabilityHandler = app._registrations.find(r => r.functionName === 'availability').handler;
+    // availability関数を直接呼び出し
     const response = await availabilityHandler(request, context);
     
     expect(response.status).toBe(200);
@@ -59,7 +58,6 @@ describe('Availability API v4', () => {
     
     request.params.date = '2025-12-01';
     
-    const availabilityHandler = app._registrations.find(r => r.functionName === 'availability').handler;
     const response = await availabilityHandler(request, context);
     
     expect(response.status).toBe(200);
@@ -77,7 +75,6 @@ describe('Availability API v4', () => {
     
     // dateパラメータを設定しない（undefined）
     
-    const availabilityHandler = app._registrations.find(r => r.functionName === 'availability').handler;
     const response = await availabilityHandler(request, context);
     
     expect(response.status).toBe(200);
@@ -92,7 +89,6 @@ describe('Availability API v4', () => {
     
     // dateパラメータを設定しない（undefined）
     
-    const availabilityHandler = app._registrations.find(r => r.functionName === 'availability').handler;
     const response = await availabilityHandler(request, context);
     
     expect(response.status).toBe(503);
@@ -111,7 +107,6 @@ describe('Availability API v4', () => {
     
     request.params.date = '2025-11-15';
     
-    const availabilityHandler = app._registrations.find(r => r.functionName === 'availability').handler;
     const response = await availabilityHandler(request, context);
     
     expect(response.status).toBe(503);
@@ -128,7 +123,6 @@ describe('Availability API v4', () => {
     
     request.params.date = '2025-11-15';
     
-    const availabilityHandler = app._registrations.find(r => r.functionName === 'availability').handler;
     const response = await availabilityHandler(request, context);
     
     expect(response.status).toBe(200);
