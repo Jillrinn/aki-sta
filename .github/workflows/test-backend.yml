@@ -28,11 +28,11 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        cache-dependency-path: functions/package-lock.json
+        cache-dependency-path: api/package-lock.json
     
     - name: Create local.settings.json
       run: |
-        cat > functions/local.settings.json << EOF
+        cat > api/local.settings.json << EOF
         {
           "IsEncrypted": false,
           "Values": {
@@ -51,21 +51,21 @@ jobs:
     
     - name: Install dependencies
       run: npm ci
-      working-directory: ./functions
+      working-directory: ./api
     
     - name: Run tests
       run: npm test
-      working-directory: ./functions
+      working-directory: ./api
     
     - name: Run tests with coverage
       if: matrix.node-version == '20.x'
       run: npm run test:coverage
-      working-directory: ./functions
+      working-directory: ./api
     
     - name: Check coverage threshold
       if: matrix.node-version == '20.x'
       run: |
-        cd functions
+        cd api
         COVERAGE=$(npx jest --coverage --silent 2>&1 | grep "All files" | awk '{print $10}' | sed 's/%//')
         echo "Backend test coverage: $COVERAGE%"
         
@@ -92,5 +92,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: backend-coverage
-        path: functions/coverage/
+        path: api/coverage/
         retention-days: 7

@@ -28,7 +28,7 @@ jobs:
     
     - name: Create local.settings.json for E2E
       run: |
-        cat > functions/local.settings.json << EOF
+        cat > api/local.settings.json << EOF
         {
           "IsEncrypted": false,
           "Values": {
@@ -47,7 +47,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        cd functions && npm ci
+        cd api && npm ci
         cd ../frontend && npm ci
         cd ../e2e && npm ci
     
@@ -61,7 +61,7 @@ jobs:
     
     - name: Start Azure Functions
       run: |
-        cd functions
+        cd api
         # Start Azure Functions in background with nohup using npx
         nohup npx func start --port 7071 > azure-functions.log 2>&1 &
         echo $! > azure-functions.pid

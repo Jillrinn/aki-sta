@@ -39,7 +39,7 @@ async function availabilityHandler(request, context) {
   }
 }
 
-// 関数登録（v4形式）
+// 関数登録
 app.http('availability', {
   methods: ['GET', 'OPTIONS'],
   route: 'availability/{date?}',

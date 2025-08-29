@@ -26,13 +26,12 @@
 
 ```
 aki-sta/
-├── functions/          # Azure Functions API（標準構造）
-│   ├── availability-api/         # 各関数は独立ディレクトリ
-│   │   ├── index.js              # 関数実装
-│   │   └── function.json         # 関数設定
-│   ├── src/                      # 共通コード専用
-│   │   └── repositories/         # データアクセス層
-│   └── test/                     # テスト
+├── api/               # Azure Functions バックエンド
+│   ├── src/
+│   │   ├── functions/   # 関数実装
+│   │   └── repositories/ # データアクセス層
+│   ├── test/            # テスト
+│   └── scripts/         # ユーティリティスクリプト
 ├── frontend/          # React TypeScript
 │   └── src/
 │       ├── components/  # UIコンポーネント
@@ -53,17 +52,17 @@ aki-sta/
 npm start
 
 # または個別起動
-cd functions && npm start  # Terminal 1
+cd api && func start       # Terminal 1
 cd frontend && npm start   # Terminal 2
 ```
 
 ### テスト実行
 ```bash
-# 一括テスト（backend + frontend + scraper）
+# 一括テスト（backend + frontend + scraper + e2e）
 npm test
 
 # Backend個別
-cd functions && npm test
+cd api && npm test
 
 # Frontend個別
 cd frontend && npm test -- --coverage --watchAll=false
@@ -87,12 +86,11 @@ lsof -i :7071  # Azure Functions
 
 ## 🐛 既知の問題と解決策
 
-### Azure Functions構造（2025-08-26更新）
-**現在の構造**: Azure Functions標準構造を採用
-- functions/availability-api/index.js（関数実装）
-- functions/availability-api/function.json（関数設定）
-- functions/src/（共通コード専用）
-- package.jsonのmainフィールドは削除済み
+### Azure Functions構造（2025-08-29更新）
+**現在の構造**: apiディレクトリに統合
+- api/src/functions/availability.js（関数実装）
+- api/src/repositories/（データアクセス層）
+- api/test/（テストコード）
 
 ### Playwrightバージョン競合問題（解決済み）
 **原因**: Python（スクレイパー）とNode.js（E2E）で異なるPlaywrightバージョンを使用
@@ -136,15 +134,15 @@ await act(async () => {
 3. 型安全性の確保 > 実装スピード
 
 ### API変更時の対応
-1. functions/availability-api/index.js を更新
+1. api/src/functions/availability.js を更新
 2. frontend/src/types/availability.ts の型を更新
 3. 両方のテストを更新・実行
 4. 統合動作確認
 
 ### 新しいAPI追加時の手順
-1. functions/に新しい関数ディレクトリを作成（例: user-api/）
-2. index.jsとfunction.jsonを配置
-3. 共通コードはsrc/に配置
+1. api/src/functions/に新しい関数ファイルを作成
+2. @azure/functionsを使用して関数を登録
+3. 共通コードはapi/src/repositories/に配置
 
 ## 📊 現在の状態（自動更新対象）
 
@@ -243,10 +241,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### Azure Functions起動エラー
 ```bash
 # "Worker was unable to load entry point"の場合
-# 1. package.jsonにmainフィールドがないことを確認
-# 2. 各関数ディレクトリ構造を確認
-ls functions/availability-api/index.js
-ls functions/availability-api/function.json
+# 1. api/src/functions/に関数ファイルがあることを確認
+# 2. @azure/functionsでapp.httpが正しく登録されているか確認
+ls api/src/functions/availability.js
 ```
 
 ### GitHub Actionsエラー
@@ -255,5 +252,5 @@ ls functions/availability-api/function.json
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
 
 ---
-*最終更新: 2025-08-25 - MVP v3.0完了、Pure Cosmos DBアーキテクチャ実装*
+*最終更新: 2025-08-29 - functionsディレクトリ削除、apiディレクトリ統合完了*
 - testを実行して成功することを確認して初めてcommitするようにしてください

@@ -4,23 +4,18 @@
   "private": true,
   "description": "空きスタサーチくん - モノリポ管理用",
   "scripts": {
-    "setup": "node functions/scripts/sync-env.js",
+    "setup": "node api/scripts/sync-env.js",
     "start": "npm run setup && concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run start:backend\" \"npm run start:frontend\"",
-    "start:backend": "cd functions && npm start",
+    "start:backend": "cd api && func start",
     "start:frontend": "wait-on http://localhost:7071 && cd frontend && npm start",
-    "start:v4": "npm run setup && concurrently -n \"api-v4,frontend\" -c \"cyan,green\" \"npm run start:api-v4\" \"npm run start:frontend\"",
-    "start:api-v4": "cd api && func start",
     "test": "npm run setup && npm run test:backend && npm run test:frontend && npm run test:scraper && npm run test:e2e",
-    "test:backend": "cd functions && npm test",
-    "test:api-v4": "cd api && npm test",
+    "test:backend": "cd api && npm test",
     "test:frontend": "cd frontend && npm test -- --watchAll=false",
     "test:scraper": "cd scraper && ./test.sh",
     "test:e2e": "cd e2e && npm test",
     "test:all": "concurrently -n \"backend,frontend,scraper,e2e\" -c \"blue,green,yellow,magenta\" \"npm run test:backend\" \"npm run test:frontend\" \"npm run test:scraper\" \"npm run test:e2e\"",
-    "test:all-v4": "concurrently -n \"api-v4,frontend,scraper,e2e\" -c \"cyan,green,yellow,magenta\" \"npm run test:api-v4\" \"npm run test:frontend\" \"npm run test:scraper\" \"npm run test:e2e\"",
     "scraper": "cd scraper && ./run-playwright.sh src/main.py",
-    "scraper:date": "cd scraper && ./run-playwright.sh src/main.py --date",
-    "cosmos:test": "cd functions && node test-cosmos-connection.js"
+    "scraper:date": "cd scraper && ./run-playwright.sh src/main.py --date"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

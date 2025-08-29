@@ -24,7 +24,7 @@ const colors = {
 function syncEnvToLocalSettings() {
   console.log(`${colors.blue}🔄 環境変数の同期を開始します...${colors.reset}\n`);
 
-  // .envファイルのパスを解決（functionsディレクトリまたはルートから実行可能）
+  // .envファイルのパスを解決（apiディレクトリまたはルートから実行可能）
   const envPaths = [
     path.join(process.cwd(), '.env'),
     path.join(process.cwd(), '..', '.env'),
@@ -145,9 +145,9 @@ function syncEnvToLocalSettings() {
 
   console.log(`\n${colors.green}✨ 同期完了!${colors.reset}`);
   console.log(`\n次のステップ:`);
-  console.log(`  1. ${colors.blue}cd functions${colors.reset}`);
-  console.log(`  2. ${colors.blue}node test-cosmos-connection.js${colors.reset} で接続テスト`);
-  console.log(`  3. ${colors.blue}npm start${colors.reset} でAzure Functions起動`);
+  console.log(`  1. ${colors.blue}cd api${colors.reset}`);
+  console.log(`  2. ${colors.blue}npm test${colors.reset} でテスト実行`);
+  console.log(`  3. ${colors.blue}func start${colors.reset} でAzure Functions起動`);
 }
 
 // メイン実行

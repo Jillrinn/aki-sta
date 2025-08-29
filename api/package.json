@@ -1,7 +1,7 @@
 {
-  "name": "aki-sta-api-v4",
+  "name": "aki-sta-api",
   "version": "1.0.0",
-  "description": "Azure Static Web Apps Managed Functions v4",
+  "description": "Azure Functions Backend for 空きスタサーチくん",
   "main": "src/functions/*.js",
   "scripts": {
     "start": "func start",

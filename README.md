@@ -43,7 +43,7 @@
 - ⏳ Timer Trigger自動実行システム
 
 ## 🔧 技術スタック
-- **バックエンド**: Azure Static Web Apps Managed Functions v4 (Node.js)
+- **バックエンド**: Azure Functions (Node.js)
 - **フロントエンド**: React + TypeScript
 - **データベース**: Azure Cosmos DB (NoSQL)
 - **テスト**: Jest + React Testing Library + Playwright
@@ -87,7 +87,7 @@ git clone <repository-url>
 cd aki-sta
 
 # バックエンドの依存関係インストール
-cd functions
+cd api
 npm install
 cd ..
 
@@ -100,7 +100,7 @@ cd ..
 ### Cosmos DBセットアップ
 ```bash
 # 1. Azure PortalでCosmos DBアカウント作成（無料枠適用）
-# 2. functions/.envファイルに接続情報を設定
+# 2. .envファイルに接続情報を設定
 COSMOS_ENDPOINT=https://your-account.documents.azure.com:443/
 COSMOS_KEY=your-primary-key
 COSMOS_DATABASE=akista-db
@@ -122,19 +122,10 @@ npm run cosmos:migrate # データマイグレーション
 npm start
 ```
 
-#### 方法2: v4 Managed Functions（推奨）
+#### 方法2: 個別起動
 ```bash
-# v4 APIとフロントエンドを同時起動
-npm run start:v4
-```
-
-#### 方法3: 個別起動
-```bash
-# v3 Functions
-cd functions && npm start  # ポート7071
-
-# v4 Managed Functions  
-cd api && func start       # ポート7071
+# バックエンド
+cd api && func start  # ポート7071
 
 # フロントエンド
 cd frontend && npm start   # ポート3300
@@ -149,11 +140,8 @@ cd frontend && npm start   # ポート3300
 
 ### 一括テスト
 ```bash
-# v3 Functions版テスト
+# 全テスト実行（Backend + Frontend + Scraper + E2E）
 npm test
-
-# v4 Managed Functions版テスト
-npm run test:all-v4
 
 # 並列実行（高速）
 npm run test:all
@@ -162,14 +150,7 @@ npm run test:all
 ### 個別テスト
 #### バックエンドテスト
 ```bash
-# v3 Functions
-cd functions
-npm test                    # テスト実行
-npm run test:coverage       # カバレッジ付きテスト
-npm run test:watch          # ウォッチモード
-
-# v4 Managed Functions
-cd api  
+cd api
 npm test                    # テスト実行
 ```
 
@@ -277,27 +258,17 @@ git push origin main
 ## 📁 プロジェクト構造
 ```
 aki-sta/
-├── api/                           # Azure Static Web Apps Managed Functions v4（新規）
+├── api/                            # Azure Functions バックエンド
 │   ├── src/
 │   │   ├── functions/
-│   │   │   └── availability.js    # v4関数実装（コードファースト）
-│   │   └── repositories/          # データアクセス層（共有）
-│   │       ├── availability-repository.js
-│   │       └── cosmos-client.js
-│   ├── test/                       # v4テストコード
-│   ├── host.json                  # v4設定
-│   ├── local.settings.json        # ローカル設定（gitignore）
-│   └── package.json               # @azure/functions v4依存関係
-├── functions/                      # Azure Functions v3（既存・並行運用）
-│   ├── availability-api/           # 空き状況取得API
-│   │   ├── index.js               # 関数実装
-│   │   └── function.json          # 関数設定
-│   ├── src/                        # 共通コード専用
+│   │   │   └── availability.js    # 関数実装
 │   │   └── repositories/          # データアクセス層
 │   │       ├── availability-repository.js
 │   │       └── cosmos-client.js
 │   ├── test/                       # テストコード
-│   ├── host.json                  # Azure Functions全体設定
+│   ├── scripts/                    # ユーティリティスクリプト
+│   │   └── sync-env.js            # 環境変数同期
+│   ├── host.json                  # Azure Functions設定
 │   ├── local.settings.json        # ローカル設定（gitignore）
 │   └── package.json               # 依存関係・スクリプト
 ├── frontend/                       # React TypeScript アプリ
