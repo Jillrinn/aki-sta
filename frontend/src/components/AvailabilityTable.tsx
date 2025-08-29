@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Facility } from '../types/availability';
 import { useAvailabilityData } from '../hooks/useAvailabilityData';
 import { formatUpdateTime } from '../utils/dateFormatter';
@@ -8,11 +8,24 @@ import {
   ErrorState,
   EmptyState,
   LegendSection,
-  AvailabilityTableRow
+  AvailabilityTableRow,
+  MobileCardView
 } from './availability';
 
 const AvailabilityTable: React.FC = () => {
   const { data, loading, error } = useAvailabilityData();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (loading) {
     return <LoadingState />;
@@ -29,8 +42,8 @@ const AvailabilityTable: React.FC = () => {
   const sortedDates = Object.keys(data).sort();
 
   return (
-    <div className="max-w-6xl mx-auto p-5 font-sans">
-      <h1 className="text-3xl text-gray-800 text-center mb-2 font-bold">空きスタサーチくん</h1>
+    <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
+      <h1 className="text-2xl sm:text-3xl text-gray-800 text-center mb-2 font-bold">空きスタサーチくん</h1>
       <p className="text-center text-gray-600 mb-8">施設空き状況一覧</p>
       
       {sortedDates.map((date, dateIndex) => (
@@ -42,41 +55,53 @@ const AvailabilityTable: React.FC = () => {
             {date}の空き状況
           </h2>
           
-          <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
-            <table 
-              className="w-full border-collapse bg-white"
-              role="table"
-              aria-label={`${date}の施設空き状況`}
-            >
-              <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                <tr>
-                  <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
-                    施設名
-                  </th>
-                  {TIME_SLOTS.map((slot) => (
-                    <th 
-                      key={slot}
-                      className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[100px]"
-                    >
-                      {slot}
+          {isMobile ? (
+            <div className="space-y-4">
+              {(data[date] || []).map((facility: Facility, facilityIndex: number) => (
+                <MobileCardView
+                  key={facilityIndex}
+                  facility={facility}
+                  formatUpdateTime={formatUpdateTime}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
+              <table 
+                className="w-full border-collapse bg-white"
+                role="table"
+                aria-label={`${date}の施設空き状況`}
+              >
+                <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                  <tr>
+                    <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
+                      施設名
                     </th>
+                    {TIME_SLOTS.map((slot) => (
+                      <th 
+                        key={slot}
+                        className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[100px]"
+                      >
+                        {slot}
+                      </th>
+                    ))}
+                    <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[140px]">
+                      更新日時
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(data[date] || []).map((facility: Facility, facilityIndex: number) => (
+                    <AvailabilityTableRow 
+                      key={facilityIndex} 
+                      facility={facility} 
+                      formatUpdateTime={formatUpdateTime}
+                    />
                   ))}
-                  <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[140px]">
-                    更新日時
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {(data[date] || []).map((facility: Facility, facilityIndex: number) => (
-                  <AvailabilityTableRow 
-                    key={facilityIndex} 
-                    facility={facility} 
-                    formatUpdateTime={formatUpdateTime}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       ))}
       

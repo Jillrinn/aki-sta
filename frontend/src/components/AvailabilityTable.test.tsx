@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AvailabilityTable from './AvailabilityTable';
 import { availabilityApi } from '../services/api';
@@ -9,6 +9,12 @@ jest.mock('../services/api');
 describe('AvailabilityTable', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset window size to desktop by default
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1024
+    });
   });
 
   it('renders loading state initially', () => {
@@ -437,5 +443,384 @@ describe('AvailabilityTable', () => {
     });
     
     consoleErrorSpy.mockRestore();
+  });
+
+  describe('Mobile Responsive Tests', () => {
+    it('renders mobile card view when screen width is less than 640px', async () => {
+      // Set mobile screen size
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 375
+      });
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'あんさんぶるStudio和(本郷)',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'booked',
+              '18-21': 'unknown'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      await act(async () => {
+        render(<AvailabilityTable />);
+      });
+
+      await waitFor(() => {
+        // Check that tables are NOT rendered
+        const tables = screen.queryAllByRole('table');
+        expect(tables).toHaveLength(0);
+
+        // Check that mobile card elements are rendered
+        expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
+        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        expect(screen.getByText('13-17時')).toBeInTheDocument();
+        expect(screen.getByText('18-21時')).toBeInTheDocument();
+        
+        // Check status text - using getAllByText since there are multiple instances
+        const availableTexts = screen.getAllByText('空き');
+        const bookedTexts = screen.getAllByText('予約済み');
+        const unknownTexts = screen.getAllByText('不明');
+        expect(availableTexts.length).toBeGreaterThan(0);
+        expect(bookedTexts.length).toBeGreaterThan(0);
+        expect(unknownTexts.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('renders desktop table view when screen width is 640px or more', async () => {
+      // Ensure desktop screen size
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1024
+      });
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'あんさんぶるStudio和(本郷)',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'booked',
+              '18-21': 'unknown'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      await act(async () => {
+        render(<AvailabilityTable />);
+      });
+
+      await waitFor(() => {
+        // Check that table IS rendered
+        const tables = screen.getAllByRole('table');
+        expect(tables).toHaveLength(1);
+
+        // Check that time slot headers are in table format
+        expect(screen.getByText('9-12')).toBeInTheDocument();
+        expect(screen.getByText('13-17')).toBeInTheDocument();
+        expect(screen.getByText('18-21')).toBeInTheDocument();
+
+        // Mobile-specific time labels should NOT be present
+        expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+        expect(screen.queryByText('13-17時')).not.toBeInTheDocument();
+        expect(screen.queryByText('18-21時')).not.toBeInTheDocument();
+      });
+    });
+
+    it('switches from desktop to mobile view on window resize', async () => {
+      // Start with desktop size
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1024
+      });
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'テスト施設',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'available',
+              '18-21': 'available'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      await act(async () => {
+        render(<AvailabilityTable />);
+      });
+
+      // Initially should show table
+      await waitFor(() => {
+        expect(screen.getAllByRole('table')).toHaveLength(1);
+      });
+
+      // Resize to mobile
+      await act(async () => {
+        Object.defineProperty(window, 'innerWidth', {
+          writable: true,
+          configurable: true,
+          value: 375
+        });
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      // Should now show mobile cards
+      await waitFor(() => {
+        expect(screen.queryAllByRole('table')).toHaveLength(0);
+        expect(screen.getByText('9-12時')).toBeInTheDocument();
+      });
+    });
+
+    it('switches from mobile to desktop view on window resize', async () => {
+      // Start with mobile size
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 375
+      });
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'テスト施設',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'available',
+              '18-21': 'available'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      await act(async () => {
+        render(<AvailabilityTable />);
+      });
+
+      // Initially should show mobile cards
+      await waitFor(() => {
+        expect(screen.queryAllByRole('table')).toHaveLength(0);
+        expect(screen.getByText('9-12時')).toBeInTheDocument();
+      });
+
+      // Resize to desktop
+      await act(async () => {
+        Object.defineProperty(window, 'innerWidth', {
+          writable: true,
+          configurable: true,
+          value: 1024
+        });
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      // Should now show table
+      await waitFor(() => {
+        expect(screen.getAllByRole('table')).toHaveLength(1);
+        expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+      });
+    });
+
+    it('renders multiple facility cards in mobile view', async () => {
+      // Set mobile screen size
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 375
+      });
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'あんさんぶるStudio和(本郷)',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'booked',
+              '18-21': 'unknown'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+          {
+            facilityName: 'あんさんぶるStudio音(初台)',
+            timeSlots: { 
+              '9-12': 'booked',
+              '13-17': 'available',
+              '18-21': 'available'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      await act(async () => {
+        render(<AvailabilityTable />);
+      });
+
+      await waitFor(() => {
+        // Both facilities should be visible
+        expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
+        expect(screen.getByText('あんさんぶるStudio音(初台)')).toBeInTheDocument();
+
+        // Check that mobile-specific time labels appear for both
+        const morningSlots = screen.getAllByText('9-12時');
+        expect(morningSlots).toHaveLength(2);
+      });
+    });
+
+    it('displays update time with clock emoji in mobile view', async () => {
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 375
+      });
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'テスト施設',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'available',
+              '18-21': 'available'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      await act(async () => {
+        render(<AvailabilityTable />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('🕐')).toBeInTheDocument();
+        expect(screen.getByText(/更新/)).toBeInTheDocument();
+      });
+    });
+
+    it('handles boundary case at exactly 640px', async () => {
+      // Test at exactly 640px (should show desktop)
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 640
+      });
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'テスト施設',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'available',
+              '18-21': 'available'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      await act(async () => {
+        render(<AvailabilityTable />);
+      });
+
+      await waitFor(() => {
+        // At 640px, should show desktop table view
+        expect(screen.getAllByRole('table')).toHaveLength(1);
+        expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+      });
+    });
+
+    it('handles boundary case at 639px', async () => {
+      // Test at 639px (should show mobile)
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 639
+      });
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'テスト施設',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'available',
+              '18-21': 'available'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      await act(async () => {
+        render(<AvailabilityTable />);
+      });
+
+      await waitFor(() => {
+        // At 639px, should show mobile card view
+        expect(screen.queryAllByRole('table')).toHaveLength(0);
+        expect(screen.getByText('9-12時')).toBeInTheDocument();
+      });
+    });
+
+    it('cleans up resize event listener on unmount', async () => {
+      const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+
+      const mockData = {
+        '2025-11-15': [
+          {
+            facilityName: 'テスト施設',
+            timeSlots: { 
+              '9-12': 'available',
+              '13-17': 'available',
+              '18-21': 'available'
+            },
+            lastUpdated: '2025-08-24T14:18:03Z',
+          },
+        ],
+      };
+
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
+
+      const { unmount } = render(<AvailabilityTable />);
+
+      await waitFor(() => {
+        expect(screen.getByText('空きスタサーチくん')).toBeInTheDocument();
+      });
+
+      unmount();
+
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+      removeEventListenerSpy.mockRestore();
+    });
   });
 });

@@ -23,3 +23,35 @@ jest.mock('axios', () => ({
   put: jest.fn(),
   delete: jest.fn(),
 }));
+
+// Helper to mock window.innerWidth
+Object.defineProperty(window, 'innerWidth', {
+  writable: true,
+  configurable: true,
+  value: 1024
+});
+
+// Helper to mock window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+// Helper function to simulate window resize
+global.mockWindowSize = (width: number) => {
+  Object.defineProperty(window, 'innerWidth', {
+    writable: true,
+    configurable: true,
+    value: width
+  });
+  window.dispatchEvent(new Event('resize'));
+};

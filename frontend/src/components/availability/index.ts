@@ -4,4 +4,5 @@ export { default as EmptyState } from './EmptyState';
 export { default as StatusBadge } from './StatusBadge';
 export { default as LegendSection } from './LegendSection';
 export { default as AvailabilityTableRow } from './AvailabilityTableRow';
+export { default as MobileCardView } from './MobileCardView';
 export type { ErrorDetails } from './ErrorState';
