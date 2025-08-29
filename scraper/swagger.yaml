@@ -1,0 +1,349 @@
+openapi: 3.0.3
+info:
+  title: 空きスタサーチくん Scraper API
+  description: 音楽施設の予約状況をスクレイピングするためのAPI
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: ローカル開発環境
+  - url: https://webapp-scraper-prod.azurewebsites.net
+    description: Azure本番環境
+
+tags:
+  - name: Health
+    description: ヘルスチェック関連
+  - name: Scraping
+    description: スクレイピング機能
+
+paths:
+  /:
+    get:
+      summary: サービス情報取得
+      description: APIサービスの基本情報を取得します
+      tags:
+        - Health
+      responses:
+        '200':
+          description: サービス情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfo'
+              example:
+                service: "Scraper Web App"
+                status: "running"
+                timestamp: "2025-08-26T10:00:00.000Z"
+
+  /health:
+    get:
+      summary: ヘルスチェック
+      description: サービスの稼働状況を確認します
+      tags:
+        - Health
+      responses:
+        '200':
+          description: ヘルスチェック成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+              example:
+                status: "healthy"
+                timestamp: "2025-08-26T10:00:00.000Z"
+
+  /scrape:
+    post:
+      summary: 施設予約状況のスクレイピング
+      description: |
+        指定された日付の施設予約状況をスクレイピングします。
+        日付の指定は以下の2つの方法が可能です：
+        1. クエリパラメータ（優先）
+        2. リクエストボディ（JSON）
+      tags:
+        - Scraping
+      parameters:
+        - name: date
+          in: query
+          description: スクレイピング対象日付（YYYY-MM-DD形式）。複数指定可能
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: date
+              pattern: '^\d{4}-\d{2}-\d{2}$'
+          style: form
+          explode: true
+          examples:
+            single:
+              value: ["2025-11-15"]
+              summary: 単一日付
+            multiple:
+              value: ["2025-11-15", "2025-11-16"]
+              summary: 複数日付
+        - name: triggeredBy
+          in: query
+          description: トリガー元の識別子
+          required: false
+          schema:
+            type: string
+            default: manual
+            enum:
+              - manual
+              - scheduler
+              - api
+          example: scheduler
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrapeRequest'
+            examples:
+              single_date:
+                summary: 単一日付のスクレイピング
+                value:
+                  dates: ["2025-11-15"]
+                  triggeredBy: "manual"
+              multiple_dates:
+                summary: 複数日付のスクレイピング
+                value:
+                  dates: ["2025-11-15", "2025-11-16", "2025-11-22"]
+                  triggeredBy: "scheduler"
+      responses:
+        '200':
+          description: スクレイピング成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrapeResponse'
+              examples:
+                success:
+                  summary: 全日付成功
+                  value:
+                    status: "success"
+                    timestamp: "2025-08-26T10:00:00.000Z"
+                    triggeredBy: "scheduler"
+                    total_dates: 3
+                    success_count: 3
+                    error_count: 0
+                    results:
+                      - date: "2025-11-15"
+                        status: "success"
+                        facilities: 10
+                      - date: "2025-11-16"
+                        status: "success"
+                        facilities: 10
+                      - date: "2025-11-22"
+                        status: "success"
+                        facilities: 10
+                partial:
+                  summary: 部分的成功
+                  value:
+                    status: "partial"
+                    timestamp: "2025-08-26T10:00:00.000Z"
+                    triggeredBy: "manual"
+                    total_dates: 2
+                    success_count: 1
+                    error_count: 1
+                    results:
+                      - date: "2025-11-15"
+                        status: "success"
+                        facilities: 10
+                      - date: "2025-11-16"
+                        status: "error"
+                        message: "Connection timeout"
+        '400':
+          description: 不正なリクエスト
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_dates:
+                  summary: 日付未指定
+                  value:
+                    status: "error"
+                    message: "At least one date is required. Use query parameter ?date=YYYY-MM-DD or JSON body {\"dates\": [\"YYYY-MM-DD\"]}"
+                    timestamp: "2025-08-26T10:00:00.000Z"
+                invalid_format:
+                  summary: 日付フォーマットエラー
+                  value:
+                    status: "error"
+                    message: "Invalid date format: 2025/11/15. Use YYYY-MM-DD"
+                    timestamp: "2025-08-26T10:00:00.000Z"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                message: "Internal server error"
+                timestamp: "2025-08-26T10:00:00.000Z"
+
+components:
+  schemas:
+    ServiceInfo:
+      type: object
+      required:
+        - service
+        - status
+        - timestamp
+      properties:
+        service:
+          type: string
+          description: サービス名
+          example: "Scraper Web App"
+        status:
+          type: string
+          description: サービス状態
+          example: "running"
+        timestamp:
+          type: string
+          format: date-time
+          description: タイムスタンプ
+          example: "2025-08-26T10:00:00.000Z"
+
+    HealthCheck:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: ヘルス状態
+          enum:
+            - healthy
+            - unhealthy
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: タイムスタンプ
+          example: "2025-08-26T10:00:00.000Z"
+
+    ScrapeRequest:
+      type: object
+      properties:
+        dates:
+          type: array
+          description: スクレイピング対象日付のリスト（YYYY-MM-DD形式）
+          items:
+            type: string
+            format: date
+            pattern: '^\d{4}-\d{2}-\d{2}$'
+          minItems: 1
+          example: ["2025-11-15", "2025-11-16"]
+        triggeredBy:
+          type: string
+          description: トリガー元の識別子
+          default: manual
+          enum:
+            - manual
+            - scheduler
+            - api
+          example: "scheduler"
+
+    ScrapeResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - total_dates
+        - success_count
+        - error_count
+        - results
+      properties:
+        status:
+          type: string
+          description: 処理ステータス
+          enum:
+            - success
+            - partial
+            - error
+          example: "success"
+        timestamp:
+          type: string
+          format: date-time
+          description: 処理完了時刻
+          example: "2025-08-26T10:00:00.000Z"
+        triggeredBy:
+          type: string
+          description: トリガー元
+          example: "scheduler"
+        total_dates:
+          type: integer
+          description: 処理対象日付の総数
+          example: 3
+        success_count:
+          type: integer
+          description: 成功した日付の数
+          example: 3
+        error_count:
+          type: integer
+          description: エラーが発生した日付の数
+          example: 0
+        results:
+          type: array
+          description: 各日付の処理結果
+          items:
+            $ref: '#/components/schemas/ScrapeResult'
+
+    ScrapeResult:
+      type: object
+      required:
+        - date
+        - status
+      properties:
+        date:
+          type: string
+          format: date
+          description: 処理日付
+          example: "2025-11-15"
+        status:
+          type: string
+          description: 処理ステータス
+          enum:
+            - success
+            - error
+          example: "success"
+        facilities:
+          type: integer
+          description: 取得した施設数（成功時のみ）
+          example: 10
+        message:
+          type: string
+          description: エラーメッセージ（エラー時のみ）
+          example: "Connection timeout"
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: エラーステータス
+          example: "error"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "At least one date is required"
+        timestamp:
+          type: string
+          format: date-time
+          description: エラー発生時刻
+          example: "2025-08-26T10:00:00.000Z"
+        error:
+          type: string
+          description: 詳細なエラー情報（500エラー時）
+          example: "Database connection failed"
