@@ -8,7 +8,7 @@
     "start": "npm run setup && concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "cd api && func start",
     "start:frontend": "wait-on http://localhost:7071 && cd frontend && npm start",
-    "start:scraper": "cd scraper && python app.py",
+    "start:scraper": "cd scraper && source venv/bin/activate && python app.py",
     "test": "npm run setup && npm run test:backend && npm run test:frontend && npm run test:scraper && npm run test:e2e",
     "test:backend": "cd api && npm test",
     "test:frontend": "cd frontend && npm test -- --watchAll=false",
