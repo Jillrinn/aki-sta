@@ -299,18 +299,28 @@ class EnsembleStudioScraper:
         try:
             with sync_playwright() as p:
                 # 環境に応じてブラウザを選択
-                system = platform.system()
+                # 環境変数を優先的にチェック（Docker/Azure環境用）
+                platform_override = os.environ.get('PLATFORM_OVERRIDE')
+                system = platform_override if platform_override else platform.system()
                 
-                if system == "Darwin":  # macOS
+                print(f"Platform detection: system={system}, override={platform_override}")
+                
+                # Azure Web Appやコンテナ環境を明示的に判定
+                is_container = os.environ.get('CONTAINER_ENV') == 'true'
+                is_azure = os.environ.get('WEBSITE_INSTANCE_ID') is not None  # Azure固有の環境変数
+                
+                if is_azure or is_container:
+                    # Azure/Dockerでは必ずChromiumを使用
+                    print(f"Azure/Container environment detected, forcing Chromium browser")
+                    browser = p.chromium.launch(headless=True)
+                elif system == "Darwin":  # macOS
                     # macOSではWebKitを使用（GPUクラッシュ回避）
                     print(f"Running on macOS, using WebKit browser")
                     browser = p.webkit.launch(headless=True)
-                else:  # Linux/Docker環境
-                    # Docker環境ではChromiumが安定
+                else:  # Linux/その他の環境
+                    # その他の環境ではChromiumが安定
                     print(f"Running on {system}, using Chromium browser")
-                    browser = p.chromium.launch(
-                        headless=True
-                    )
+                    browser = p.chromium.launch(headless=True)
                 
                 try:
                     context = browser.new_context(

@@ -53,6 +53,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Set environment variables BEFORE installing Playwright
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PYTHONUNBUFFERED=1
+# コンテナ環境を明示的に示す
+ENV CONTAINER_ENV=true
+ENV PLATFORM_OVERRIDE=Linux
 
 # Install Playwright browsers (Chromium only for size optimization)
 # Install Chromium browser without dependencies (already installed via apt-get)
