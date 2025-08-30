@@ -63,7 +63,7 @@ curl -X POST http://localhost:8000/scrape \
   -d '{"dates": ["2025-11-15", "2025-11-16"]}'
 
 # Logic Apps や Azure Scheduler からの実行例
-curl -X POST https://webapp-scraper-prod.azurewebsites.net/scrape \
+curl -X POST https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape \
   -H "Content-Type: application/json" \
   -d '{
     "triggeredBy": "scheduler",
@@ -72,6 +72,136 @@ curl -X POST https://webapp-scraper-prod.azurewebsites.net/scrape \
 ```
 
 詳細なAPI仕様は [API_SPEC.md](API_SPEC.md) を参照してください。
+
+## 🐳 Docker環境での実行（推奨）
+
+Dockerコンテナを使用することで、環境依存を排除し、本番環境と同じ環境でローカル開発・テストが可能です。
+
+### クイックスタート
+
+```bash
+# 1. 環境変数設定（初回のみ）
+cp .env.docker.example .env.docker
+# .env.dockerを編集してCosmos DB接続情報を設定
+
+# 2. 起動
+./docker-run.sh start
+
+# 3. APIテスト
+curl -X POST http://localhost:8000/scrape?date=2025-01-30
+
+# 4. 停止
+./docker-run.sh stop
+```
+
+### Makefileを使用した操作
+
+```bash
+# ビルド＆起動
+make build
+make up
+
+# ログ確認
+make logs
+
+# スクレイピング実行（CLIモード）
+make scrape DATE=2025-01-30
+
+# テスト実行
+make test
+
+# ヘルスチェック
+make health
+
+# 停止
+make down
+```
+
+### docker-run.shコマンド一覧
+
+```bash
+# サービス起動（ビルド含む）
+./docker-run.sh start
+
+# サービス停止
+./docker-run.sh stop
+
+# サービス再起動
+./docker-run.sh restart
+
+# ステータス確認
+./docker-run.sh status
+
+# ログ表示（フォロー）
+./docker-run.sh logs
+
+# テスト実行
+./docker-run.sh test
+
+# CLIモードでスクレイピング
+./docker-run.sh scrape 2025-01-30
+
+# コンテナ内でシェル起動
+./docker-run.sh shell
+
+# クリーンアップ
+./docker-run.sh clean
+```
+
+### API呼び出し例
+
+```bash
+# ヘルスチェック
+curl http://localhost:8000/health
+
+# 単一日付のスクレイピング
+curl -X POST http://localhost:8000/scrape?date=2025-01-30
+
+# 複数日付のスクレイピング
+curl -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"dates": ["2025-01-30", "2025-01-31"]}'
+
+# HTTPieを使用
+http POST localhost:8000/scrape date==2025-01-30
+```
+
+### Docker環境の詳細
+
+- **ベースイメージ**: Python 3.11-slim
+- **Webサーバー**: Gunicorn（ワーカー1、タイムアウト600秒）
+- **ブラウザ**: Playwright Chromium
+- **ポート**: 8000
+- **ヘルスチェック**: 30秒間隔で`/health`エンドポイントを確認
+
+### トラブルシューティング
+
+#### 環境変数エラー
+```bash
+# エラー: COSMOS_ENDPOINT is not configured
+# 解決: .env.dockerを正しく設定
+cp .env.docker.example .env.docker
+nano .env.docker  # Cosmos DB接続情報を入力
+```
+
+#### ポート競合
+```bash
+# エラー: bind: address already in use
+# 解決: 別のポートを使用
+docker-compose -p scraper-dev up -d  # 別のプロジェクト名で起動
+```
+
+#### コンテナ内デバッグ
+```bash
+# コンテナ内でシェル起動
+make shell
+
+# コンテナ内でPythonコンソール
+docker-compose exec scraper python
+
+# コンテナ内でスクレイピング実行
+docker-compose exec scraper python src/main.py --date 2025-01-30
+```
 
 ### run-playwright.sh スクリプトを使用（推奨）
 

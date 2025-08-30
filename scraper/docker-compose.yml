@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aki-sta-scraper
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.docker
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    volumes:
+      # 開発時のホットリロード用（srcディレクトリのみマウント）
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
