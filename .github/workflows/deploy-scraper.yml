@@ -134,9 +134,11 @@ jobs:
         response=$(curl -s -X POST "http://localhost:8000/scrape?date=2025-01-30")
         echo "Response: $response"
         
-        # Check for success or expected structure
-        if echo "$response" | grep -q '"success":true'; then
+        # Check for success or expected structure (updated format)
+        if echo "$response" | grep -q '"status":"success"'; then
           echo "✅ Scrape endpoint returned success"
+        elif echo "$response" | grep -q '"success":true'; then
+          echo "✅ Scrape endpoint returned success (legacy format)"
         elif echo "$response" | grep -q '"facilities":\[\]'; then
           echo "✅ Scrape endpoint returned empty facilities (expected for future date)"
         else
