@@ -156,18 +156,8 @@ class TestDynamicDateScraping:
     
     def test_real_site_scraping(self, scraper, dynamic_date):
         """実際のサイトに対するスクレイピングテスト"""
-        # 注: ネットワークエラーの場合はテストを失敗させない
-        try:
-            # 実際のサイトにアクセス
-            results = scraper.scrape_availability(dynamic_date)
-        except Exception as e:
-            # ネットワークエラーなどの場合はテストをスキップ
-            error_msg = str(e)
-            if any(x in error_msg.lower() for x in ['network', 'connection', 'timeout', 'err_aborted']):
-                pytest.skip(f"ネットワークエラーのためスキップ: {error_msg}")
-            else:
-                # その他のエラーは再発生
-                raise
+        # 実際のサイトにアクセス
+        results = scraper.scrape_availability(dynamic_date)
         
         # 型と構造の検証のみ（値は問わない）
         self._validate_scraping_results(results, dynamic_date)

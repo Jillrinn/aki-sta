@@ -297,7 +297,14 @@ class EnsembleStudioScraper:
         try:
             with sync_playwright() as p:
                 # ブラウザを起動（Chromiumを使用 - Docker環境で安定）
-                browser = p.chromium.launch(headless=True)
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--disable-blink-features=AutomationControlled',
+                        '--disable-web-security',
+                        '--disable-features=IsolateOrigins,site-per-process'
+                    ]
+                )
                 
                 try:
                     context = browser.new_context(
