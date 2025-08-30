@@ -758,9 +758,7 @@ describe('Full Application Flow', () => {
   "id": "2025-11-15",
   "date": "2025-11-15",
   "label": "本番ライブ", 
-  "isActive": true,
-  "priority": 1,
-  "createdAt": "2025-08-19T10:00:00Z"
+  "updatedAt": "2025-08-19T10:00:00Z"
 }
 ```
 
@@ -770,7 +768,7 @@ describe('Full Application Flow', () => {
   "id": "2025-08-19",
   "date": "2025-08-19",
   "count": 2,
-  "lastUpdate": "2025-08-19T15:30:00Z"
+  "updatedAt": "2025-08-19T15:30:00Z"
 }
 ```
 
