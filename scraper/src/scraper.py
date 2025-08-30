@@ -399,44 +399,51 @@ class EnsembleStudioScraper:
         指定日付の空き状況をスクレイピングしてCosmos DBに保存
         
         Args:
-            date: "YYYY-MM-DD"形式の日付文字列
+            date: "YYYY-MM-DD"または"YYYY/MM/DD"形式の日付文字列
         
         Returns:
             結果を含む辞書（status, data, message, error_type）
         """
         try:
-            # 日付フォーマット検証
-            try:
-                datetime.strptime(date, '%Y-%m-%d')
-            except ValueError:
+            # 日付フォーマット検証と正規化
+            normalized_date = None
+            for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
+                try:
+                    parsed_date = datetime.strptime(date, fmt)
+                    normalized_date = parsed_date.strftime('%Y-%m-%d')
+                    break
+                except ValueError:
+                    continue
+            
+            if normalized_date is None:
                 return {
                     "status": "error",
-                    "message": f"Invalid date format: {date}. Expected YYYY-MM-DD",
+                    "message": f"Invalid date format: {date}. Expected YYYY-MM-DD or YYYY/MM/DD",
                     "error_type": "VALIDATION_ERROR"
                 }
             
-            # スクレイピング実行
-            print(f"\nスクレイピング開始: {date}")
-            facilities = self.scrape_availability(date)
+            # スクレイピング実行（正規化された日付を使用）
+            print(f"\nスクレイピング開始: {normalized_date}")
+            facilities = self.scrape_availability(normalized_date)
             
             if not facilities:
                 return {
                     "status": "error",
-                    "message": f"No data found for date: {date}",
+                    "message": f"No data found for date: {normalized_date}",
                     "error_type": "NO_DATA_FOUND"
                 }
             
-            # Cosmos DBに保存
+            # Cosmos DBに保存（正規化された日付を使用）
             try:
                 from .cosmos_writer import CosmosWriter
                 writer = CosmosWriter()
-                if writer.save_availability(date, facilities):
+                if writer.save_availability(normalized_date, facilities):
                     print(f"\n保存先:")
-                    print(f"  ✅ Cosmos DB: {date}")
+                    print(f"  ✅ Cosmos DB: {normalized_date}")
                     print(f"\nスクレイピング完了")
                     return {
                         "status": "success",
-                        "data": {date: facilities}
+                        "data": {normalized_date: facilities}
                     }
                 else:
                     return {

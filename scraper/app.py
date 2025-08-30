@@ -104,26 +104,33 @@ def scrape():
         
         for date in dates:
             try:
-                # 日付フォーマット検証
-                try:
-                    datetime.strptime(date, '%Y-%m-%d')
-                except ValueError:
-                    raise ValueError(f"Date must be in YYYY-MM-DD format, got: {date}")
+                # 日付フォーマット検証と正規化
+                normalized_date = None
+                for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
+                    try:
+                        parsed_date = datetime.strptime(date, fmt)
+                        normalized_date = parsed_date.strftime('%Y-%m-%d')
+                        break
+                    except ValueError:
+                        continue
                 
-                logger.info(f"Scraping date: {date}")
-                result = scraper.scrape_and_save(date)
+                if normalized_date is None:
+                    raise ValueError(f"Date must be in YYYY-MM-DD or YYYY/MM/DD format, got: {date}")
+                
+                logger.info(f"Scraping date: {normalized_date}")
+                result = scraper.scrape_and_save(normalized_date)
                 
                 if result and result.get('status') == 'success':
                     success_count += 1
                     results.append({
-                        'date': date,
+                        'date': normalized_date,
                         'status': 'success',
-                        'facilities': len(result.get('data', {}).get(date, []))
+                        'facilities': len(result.get('data', {}).get(normalized_date, []))
                     })
                 else:
                     error_count += 1
                     error_info = {
-                        'date': date,
+                        'date': normalized_date,
                         'status': 'error',
                         'error_type': result.get('error_type', 'SCRAPING_ERROR'),
                         'message': result.get('message', 'Unknown error')
@@ -140,7 +147,7 @@ def scrape():
                     'date': date,
                     'status': 'error',
                     'error_type': 'INVALID_DATE_FORMAT',
-                    'message': f'Invalid date format. Expected YYYY-MM-DD, got: {date}',
+                    'message': f'Invalid date format. Expected YYYY-MM-DD or YYYY/MM/DD, got: {date}',
                     'details': str(e)
                 })
             except ConnectionError as e:
