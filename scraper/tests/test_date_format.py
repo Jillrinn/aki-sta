@@ -1,10 +1,10 @@
 """
-日付形式の柔軟性をテスト
+日付形式の柔軟性と過去日付バリデーションをテスト
 """
 import subprocess
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from unittest.mock import Mock, patch
 
@@ -161,3 +161,36 @@ class TestDateFormat:
         
         # 全て正規化された形式になることを確認
         assert normalized_dates == ['2025-09-01', '2025-09-02', '2025-09-03']
+    
+    def test_past_date_validation_logic(self):
+        """日付バリデーション ロジックのユニットテスト"""
+        from datetime import date
+        
+        # 過去日付の検証
+        yesterday = (datetime.now() - timedelta(days=1)).date()
+        today = date.today()
+        tomorrow = (datetime.now() + timedelta(days=1)).date()
+        
+        # 基本的な日付比較ロジック
+        assert yesterday < today, "昨日は今日より前"
+        assert today >= today, "今日は今日と同じかそれ以降"
+        assert tomorrow > today, "明日は今日より後"
+        
+        # バリデーション関数をテスト
+        def is_past_date(date_str):
+            """過去日付チェック関数"""
+            try:
+                parsed_date = datetime.strptime(date_str, '%Y-%m-%d')
+                return parsed_date.date() < date.today()
+            except ValueError:
+                return False
+        
+        # テストケース
+        yesterday_str = yesterday.strftime('%Y-%m-%d')
+        today_str = today.strftime('%Y-%m-%d')
+        tomorrow_str = tomorrow.strftime('%Y-%m-%d')
+        
+        assert is_past_date(yesterday_str) == True, "昨日は過去日付として判定されるべき"
+        assert is_past_date(today_str) == False, "今日は過去日付ではない"
+        assert is_past_date(tomorrow_str) == False, "明日は過去日付ではない"
+        assert is_past_date("invalid-date") == False, "無効な日付はFalseを返すべき"

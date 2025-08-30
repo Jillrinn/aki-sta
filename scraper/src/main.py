@@ -4,7 +4,7 @@
 import argparse
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -55,6 +55,14 @@ def main():
     
     # 正規化された日付文字列 (YYYY-MM-DD形式)
     normalized_date = parsed_date.strftime("%Y-%m-%d")
+    
+    # 過去日付チェック
+    today = date.today()
+    if parsed_date.date() < today:
+        print(f"エラー: 過去の日付は指定できません。")
+        print(f"指定された日付: {normalized_date}")
+        print(f"今日の日付: {today.strftime('%Y-%m-%d')}")
+        sys.exit(1)
     
     print(f"スクレイピング開始: {normalized_date}")
     

@@ -84,14 +84,23 @@ def scrape():
                 'timestamp': datetime.now().isoformat()
             }), 400
         
-        # Validate date formats
-        for date in dates:
+        # Validate date formats and check past dates
+        today = datetime.now().date()
+        for date_str in dates:
             try:
-                datetime.strptime(date, '%Y-%m-%d')
+                parsed_date = datetime.strptime(date_str, '%Y-%m-%d')
+                # 過去日付チェック
+                if parsed_date.date() < today:
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'過去の日付は指定できません: {date_str}',
+                        'today': today.strftime('%Y-%m-%d'),
+                        'timestamp': datetime.now().isoformat()
+                    }), 400
             except ValueError:
                 return jsonify({
                     'status': 'error',
-                    'message': f'Invalid date format: {date}. Use YYYY-MM-DD',
+                    'message': f'Invalid date format: {date_str}. Use YYYY-MM-DD',
                     'timestamp': datetime.now().isoformat()
                 }), 400
         
@@ -141,15 +150,25 @@ def scrape():
                     results.append(error_info)
                     
             except ValueError as e:
-                # 日付フォーマットエラー
-                logger.error(f"Invalid date format {date}: {str(e)}")
+                # 日付フォーマットエラー・過去日付エラー
+                error_message = str(e)
+                logger.error(f"Date validation error for {date}: {error_message}")
                 error_count += 1
+                
+                # エラータイプの判定
+                if "過去の日付" in error_message:
+                    error_type = 'PAST_DATE_ERROR'
+                    message = error_message
+                else:
+                    error_type = 'INVALID_DATE_FORMAT'
+                    message = f'Invalid date format. Expected YYYY-MM-DD or YYYY/MM/DD, got: {date}'
+                
                 results.append({
                     'date': date,
                     'status': 'error',
-                    'error_type': 'INVALID_DATE_FORMAT',
-                    'message': f'Invalid date format. Expected YYYY-MM-DD or YYYY/MM/DD, got: {date}',
-                    'details': str(e)
+                    'error_type': error_type,
+                    'message': message,
+                    'details': error_message
                 })
             except (PlaywrightError, FileNotFoundError) as e:
                 # Playwrightブラウザエラー
