@@ -284,7 +284,7 @@ if __name__ == '__main__':
 
 #### 7.1 ヘルスチェック
 ```bash
-curl https://webapp-scraper-prod.azurewebsites.net/health
+curl https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/health
 ```
 
 期待されるレスポンス：
@@ -297,7 +297,7 @@ curl https://webapp-scraper-prod.azurewebsites.net/health
 
 #### 7.2 スクレイピング実行テスト
 ```bash
-curl -X POST https://webapp-scraper-prod.azurewebsites.net/scrape \
+curl -X POST https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape \
   -H "Content-Type: application/json" \
   -d '{"dates": ["2025-11-15"]}'
 ```

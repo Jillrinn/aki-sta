@@ -100,13 +100,13 @@ POST /scrape?triggeredBy=manual&date=2025-11-15
 
 ```bash
 # クエリパラメータで単一日付
-curl -X POST "https://webapp-scraper-prod.azurewebsites.net/scrape?date=2025-11-15"
+curl -X POST "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape?date=2025-11-15"
 
 # クエリパラメータで複数日付
-curl -X POST "https://webapp-scraper-prod.azurewebsites.net/scrape?date=2025-11-15&date=2025-11-16"
+curl -X POST "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape?date=2025-11-15&date=2025-11-16"
 
 # JSON ボディで複数日付
-curl -X POST "https://webapp-scraper-prod.azurewebsites.net/scrape" \
+curl -X POST "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape" \
   -H "Content-Type: application/json" \
   -d '{"dates": ["2025-11-15", "2025-11-16"], "triggeredBy": "manual"}'
 ```
@@ -116,7 +116,7 @@ curl -X POST "https://webapp-scraper-prod.azurewebsites.net/scrape" \
 ```json
 {
   "method": "POST",
-  "uri": "https://webapp-scraper-prod.azurewebsites.net/scrape",
+  "uri": "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape",
   "headers": {
     "Content-Type": "application/json"
   },

@@ -261,7 +261,7 @@ Quota exceeded for Japan East: 0 VMs allowed, 2 VMs requested
      - 設定した時刻: 8, 17（8時と17時）
    - **アクション**: 「HTTP」
      - メソッド: POST
-     - URI: `https://webapp-scraper-prod.azurewebsites.net/scrape`
+     - URI: `https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape`
      - ヘッダー: `Content-Type: application/json`
      - 本文:
        ```json
@@ -411,7 +411,7 @@ cat > logic-app-definition.json << 'EOF'
         "type": "Http",
         "inputs": {
           "method": "POST",
-          "uri": "https://webapp-scraper-prod.azurewebsites.net/scrape",
+          "uri": "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape",
           "headers": {
             "Content-Type": "application/json"
           },
