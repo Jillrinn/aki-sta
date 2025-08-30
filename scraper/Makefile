@@ -1,17 +1,18 @@
-.PHONY: help build up down logs shell test scrape clean health
+.PHONY: help build up down logs shell test scrape clean health docker-test
 
 # デフォルトターゲット
 help:
 	@echo "使用可能なコマンド:"
-	@echo "  make build   - Dockerイメージをビルド"
-	@echo "  make up      - コンテナを起動（Web APIモード）"
-	@echo "  make down    - コンテナを停止・削除"
-	@echo "  make logs    - コンテナのログを表示"
-	@echo "  make shell   - コンテナ内でシェルを起動"
-	@echo "  make test    - テストを実行"
-	@echo "  make scrape  - CLIモードでスクレイピング実行"
-	@echo "  make health  - ヘルスチェック"
-	@echo "  make clean   - コンテナとイメージを削除"
+	@echo "  make build       - Dockerイメージをビルド"
+	@echo "  make up          - コンテナを起動（Web APIモード）"
+	@echo "  make down        - コンテナを停止・削除"
+	@echo "  make logs        - コンテナのログを表示"
+	@echo "  make shell       - コンテナ内でシェルを起動"
+	@echo "  make test        - テストを実行"
+	@echo "  make docker-test - Dockerコンテナの統合テスト"
+	@echo "  make scrape      - CLIモードでスクレイピング実行"
+	@echo "  make health      - ヘルスチェック"
+	@echo "  make clean       - コンテナとイメージを削除"
 
 # Dockerイメージをビルド
 build:
@@ -56,6 +57,19 @@ scrape:
 # ヘルスチェック
 health:
 	@curl -s http://localhost:8000/health | python -m json.tool || echo "Service is not running"
+
+# Dockerコンテナの統合テスト
+docker-test:
+	@if [ ! -f .env.docker ]; then \
+		echo "Error: .env.docker file not found!"; \
+		echo "Run: cp .env.docker.example .env.docker"; \
+		echo "Then edit .env.docker with your Cosmos DB credentials"; \
+		exit 1; \
+	fi
+	@echo "Building Docker image..."
+	@docker-compose build
+	@echo "Running Docker integration tests..."
+	@./scripts/docker-test.sh scraper-scraper:latest .env.docker
 
 # クリーンアップ（コンテナとイメージを削除）
 clean:

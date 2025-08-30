@@ -65,9 +65,112 @@ jobs:
         cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
         cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
   
-  deploy:
+  test:
+    name: Test Docker Container
     runs-on: ubuntu-latest
     needs: build-and-push
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Pull Docker image
+      run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+    
+    - name: Create .env.docker for testing
+      run: |
+        cat > scraper/.env.docker <<EOF
+        COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}
+        COSMOS_KEY=${{ secrets.COSMOS_KEY }}
+        COSMOS_DATABASE=${{ secrets.COSMOS_DATABASE }}
+        DEBUG=true
+        PYTHONUNBUFFERED=1
+        PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+        EOF
+    
+    - name: Start Docker container
+      run: |
+        docker run -d \
+          --name scraper-test \
+          -p 8000:8000 \
+          --env-file scraper/.env.docker \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+    
+    - name: Wait for container to be ready
+      run: |
+        echo "Waiting for container to start..."
+        for i in {1..30}; do
+          if curl -s http://localhost:8000/health > /dev/null; then
+            echo "Container is ready!"
+            break
+          fi
+          echo "Waiting... ($i/30)"
+          sleep 2
+        done
+        
+        # Final health check
+        curl -f http://localhost:8000/health || exit 1
+    
+    - name: Test health endpoint
+      run: |
+        echo "Testing health endpoint..."
+        response=$(curl -s http://localhost:8000/health)
+        echo "Response: $response"
+        
+        # Check if response contains expected fields
+        echo "$response" | grep -q '"status":"healthy"' || exit 1
+        echo "✅ Health check passed"
+    
+    - name: Test scrape endpoint with valid date
+      run: |
+        echo "Testing scrape endpoint with valid date..."
+        response=$(curl -s -X POST "http://localhost:8000/scrape?date=2025-01-30")
+        echo "Response: $response"
+        
+        # Check for success or expected structure
+        if echo "$response" | grep -q '"success":true'; then
+          echo "✅ Scrape endpoint returned success"
+        elif echo "$response" | grep -q '"facilities":\[\]'; then
+          echo "✅ Scrape endpoint returned empty facilities (expected for future date)"
+        else
+          echo "❌ Unexpected response from scrape endpoint"
+          exit 1
+        fi
+    
+    - name: Test scrape endpoint with invalid date
+      run: |
+        echo "Testing error handling with invalid date..."
+        response=$(curl -s -X POST "http://localhost:8000/scrape?date=invalid-date")
+        echo "Response: $response"
+        
+        # Check for error response
+        if echo "$response" | grep -q '"error"'; then
+          echo "✅ Error handling test passed"
+        else
+          echo "❌ Expected error response for invalid date"
+          exit 1
+        fi
+    
+    - name: Show container logs (if failed)
+      if: failure()
+      run: docker logs scraper-test
+    
+    - name: Stop and remove test container
+      if: always()
+      run: |
+        docker stop scraper-test || true
+        docker rm scraper-test || true
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
     
     steps:
     - name: Deploy to Azure Web App

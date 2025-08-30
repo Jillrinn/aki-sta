@@ -198,18 +198,12 @@ class TestEnsembleStudioScraper:
     
     @patch('src.scraper.sync_playwright')
     def test_scrape_availability_error_handling(self, mock_playwright, scraper):
-        """エラー時のデフォルトデータ返却テスト"""
+        """エラー時の例外再発生テスト"""
         # Playwrightがエラーを発生させる
         mock_playwright.side_effect = Exception("Connection error")
         
-        result = scraper.scrape_availability("2025-11-15")
+        # 例外が再発生することを確認
+        with pytest.raises(Exception) as exc_info:
+            scraper.scrape_availability("2025-11-15")
         
-        # デフォルトデータが返される
-        assert len(result) == 2
-        assert result[0]["facilityName"] == "あんさんぶるStudio和(本郷)"
-        assert result[1]["facilityName"] == "あんさんぶるStudio音(初台)"
-        
-        # すべての時間帯がunknown
-        for facility in result:
-            for time_slot in ["9-12", "13-17", "18-21"]:
-                assert facility["timeSlots"][time_slot] == "unknown"
+        assert str(exc_info.value) == "Connection error"

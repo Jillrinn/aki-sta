@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.scraper import EnsembleStudioScraper
+from src.date_provider import TargetDateProvider
 
 
 class TestDynamicDateScraping:
@@ -22,9 +23,10 @@ class TestDynamicDateScraping:
     
     @pytest.fixture
     def dynamic_date(self):
-        """現在日時の3日後の日付を生成"""
-        target_date = datetime.now() + timedelta(days=7)
-        return target_date.strftime("%Y-%m-%d")
+        """ターゲット日付を取得（将来的な拡張に対応）"""
+        # TargetDateProviderを使用して日付を取得
+        dates = TargetDateProvider.get_target_dates()
+        return dates[0] if dates else (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
     
     @patch('src.scraper.sync_playwright')
     def test_scrape_with_dynamic_date(self, mock_playwright, scraper, dynamic_date):
@@ -49,10 +51,20 @@ class TestDynamicDateScraping:
         </html>
         """
         
+        # locatorモックを正しく設定
+        mock_locator = Mock()
+        mock_locator.count.return_value = 0  # 整数を返すように修正
+        mock_locator.nth.return_value = Mock()
+        mock_page.locator.return_value = mock_locator
+        mock_page.goto.return_value = Mock(status=200)
+        mock_page.wait_for_selector.return_value = None
+        mock_page.wait_for_timeout.return_value = None
+        
         mock_context = Mock()
         mock_context.new_page.return_value = mock_page
         mock_browser = Mock()
         mock_browser.new_context.return_value = mock_context
+        mock_browser.close.return_value = None
         mock_chromium = Mock()
         mock_chromium.launch.return_value = mock_browser
         mock_p = Mock()
@@ -144,8 +156,18 @@ class TestDynamicDateScraping:
     
     def test_real_site_scraping(self, scraper, dynamic_date):
         """実際のサイトに対するスクレイピングテスト"""
-        # 実際のサイトにアクセス
-        results = scraper.scrape_availability(dynamic_date)
+        # 注: ネットワークエラーの場合はテストを失敗させない
+        try:
+            # 実際のサイトにアクセス
+            results = scraper.scrape_availability(dynamic_date)
+        except Exception as e:
+            # ネットワークエラーなどの場合はテストをスキップ
+            error_msg = str(e)
+            if any(x in error_msg.lower() for x in ['network', 'connection', 'timeout', 'err_aborted']):
+                pytest.skip(f"ネットワークエラーのためスキップ: {error_msg}")
+            else:
+                # その他のエラーは再発生
+                raise
         
         # 型と構造の検証のみ（値は問わない）
         self._validate_scraping_results(results, dynamic_date)
