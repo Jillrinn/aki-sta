@@ -129,10 +129,18 @@ jobs:
         echo "$response" | grep -q '"status":"healthy"' || exit 1
         echo "✅ Health check passed"
     
+    - name: Get dynamic test date
+      id: get-date
+      run: |
+        cd scraper
+        TEST_DATE=$(python scripts/get_test_date.py)
+        echo "test_date=$TEST_DATE" >> $GITHUB_OUTPUT
+        echo "Using test date: $TEST_DATE"
+    
     - name: Test scrape endpoint with valid date
       run: |
-        echo "Testing scrape endpoint with valid date..."
-        response=$(curl -s -X POST "http://localhost:8000/scrape?date=2025-01-30")
+        echo "Testing scrape endpoint with dynamic date: ${{ steps.get-date.outputs.test_date }}..."
+        response=$(curl -s -X POST "http://localhost:8000/scrape?date=${{ steps.get-date.outputs.test_date }}")
         echo "Response: $response"
         
         # Check for success or expected structure (updated format)
