@@ -355,29 +355,21 @@ class EnsembleStudioScraper:
                         print(f"\n--- Processing {studio_name} ---")
                         
                         # 目的の年月に移動
-                        if self.navigate_to_month(page, calendar, target_date):
-                            # 日付セルを特定
-                            date_cell = self.find_date_cell(calendar, target_day)
-                            
-                            if date_cell:
-                                # 時刻情報を抽出
-                                time_slots = self.extract_time_slots(date_cell)
-                            else:
-                                print(f"Could not find date cell for day {target_day}")
-                                time_slots = {
-                                    "9-12": "unknown",
-                                    "13-17": "unknown",
-                                    "18-21": "unknown"
-                                }
-                        else:
-                            print(f"Could not navigate to target month")
-                            time_slots = {
-                                "9-12": "unknown",
-                                "13-17": "unknown",
-                                "18-21": "unknown"
-                            }
+                        if not self.navigate_to_month(page, calendar, target_date):
+                            print(f"Warning: Skipping {studio_name} - could not navigate to target month")
+                            continue  # このスタジオをスキップ
                         
-                        # 結果を追加
+                        # 日付セルを特定
+                        date_cell = self.find_date_cell(calendar, target_day)
+                        
+                        if not date_cell:
+                            print(f"Warning: Skipping {studio_name} - date cell not found for day {target_day}")
+                            continue  # このスタジオをスキップ
+                        
+                        # 時刻情報を抽出
+                        time_slots = self.extract_time_slots(date_cell)
+                        
+                        # 結果を追加（有効なデータがある場合のみ）
                         results.append({
                             "facilityName": studio_name,
                             "timeSlots": time_slots,
