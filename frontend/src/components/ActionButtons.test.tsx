@@ -92,11 +92,25 @@ describe('ActionButtons', () => {
     expect(manualFetchButton).toHaveClass('text-white');
   });
 
-  test('buttons container is positioned correctly', () => {
+  test('buttons container has responsive layout', () => {
     const { container } = render(<ActionButtons />);
     
-    const buttonsContainer = container.querySelector('.fixed.top-5.left-5');
+    const buttonsContainer = container.querySelector('.flex');
     expect(buttonsContainer).toBeInTheDocument();
-    expect(buttonsContainer).toHaveClass('z-10');
+    expect(buttonsContainer).toHaveClass('flex-col');
+    expect(buttonsContainer).toHaveClass('sm:flex-row');
+    expect(buttonsContainer).toHaveClass('sm:justify-end');
+  });
+
+  test('buttons have responsive width', () => {
+    render(<ActionButtons />);
+    
+    const registerButton = screen.getByLabelText('練習日程登録');
+    expect(registerButton).toHaveClass('w-full');
+    expect(registerButton).toHaveClass('sm:w-auto');
+    
+    const manualFetchButton = screen.getByLabelText('空き状況取得（手動）');
+    expect(manualFetchButton).toHaveClass('w-full');
+    expect(manualFetchButton).toHaveClass('sm:w-auto');
   });
 });

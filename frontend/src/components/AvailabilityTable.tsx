@@ -11,6 +11,7 @@ import {
   AvailabilityTableRow,
   MobileCardView
 } from './availability';
+import ActionButtons from './ActionButtons';
 
 const AvailabilityTable: React.FC = () => {
   const { data, loading, error } = useAvailabilityData();
@@ -44,7 +45,9 @@ const AvailabilityTable: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
       <h1 className="text-2xl sm:text-3xl text-gray-800 text-center mb-2 font-bold">空きスタサーチくん</h1>
-      <p className="text-center text-gray-600 mb-8">施設空き状況一覧</p>
+      <p className="text-center text-gray-600 mb-4">施設空き状況一覧</p>
+      
+      <ActionButtons />
       
       {sortedDates.map((date, dateIndex) => (
         <div key={date} className="mb-8">

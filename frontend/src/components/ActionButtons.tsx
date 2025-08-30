@@ -16,17 +16,17 @@ const ActionButtons: React.FC = () => {
 
   return (
     <>
-      <div className="fixed top-5 left-5 z-10 flex gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-2 sm:gap-3 mb-4">
         <button
           onClick={handleRegisterClick}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg font-medium text-sm sm:text-base"
+          className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg font-medium text-sm sm:text-base"
           aria-label="練習日程登録"
         >
           練習日程登録
         </button>
         <button
           onClick={handleManualFetchClick}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-lg font-medium text-sm sm:text-base"
+          className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-lg font-medium text-sm sm:text-base"
           aria-label="空き状況取得（手動）"
         >
           空き状況取得（手動）
