@@ -1,5 +1,22 @@
 const { availabilityHandler } = require('../../src/functions/availability');
-const mockFallbackData = require('../../src/repositories/fallback-data.json');
+const mockAvailabilityData = {
+  "2025-11-15": [
+    {
+      "facilityName": "Ensemble Studio 本郷",
+      "timeSlots": {
+        "13-17": "available"
+      },
+      "lastUpdated": "2025-08-20T08:00:00Z"
+    },
+    {
+      "facilityName": "Ensemble Studio 初台",
+      "timeSlots": {
+        "13-17": "booked"
+      },
+      "lastUpdated": "2025-08-20T08:30:00Z"
+    }
+  ]
+}
 
 // Cosmos DBリポジトリをモック化
 jest.mock('../../src/repositories/availability-repository', () => ({
@@ -38,7 +55,7 @@ describe('Availability API', () => {
 
   test('should return data for valid date', async () => {
     // モックデータを設定
-    availabilityRepository.getAvailabilityData.mockResolvedValue(mockFallbackData['2025-11-15']);
+    availabilityRepository.getAvailabilityData.mockResolvedValue(mockAvailabilityData['2025-11-15']);
     
     request.params.date = '2025-11-15';
     
@@ -68,8 +85,8 @@ describe('Availability API', () => {
   test('should return all data when date is missing', async () => {
     // 全データを返すようにモック設定
     const mockAllData = {
-      '2025-11-15': mockFallbackData['2025-11-15'],
-      '2025-11-16': mockFallbackData['2025-11-16']
+      '2025-11-15': mockAvailabilityData['2025-11-15'],
+      '2025-11-16': mockAvailabilityData['2025-11-16']
     };
     availabilityRepository.getAllAvailabilityData.mockResolvedValue(mockAllData);
     
@@ -119,7 +136,7 @@ describe('Availability API', () => {
 
   test('should use Cosmos DB repository (Pure Cosmos DB architecture)', async () => {
     // Cosmos DBリポジトリのモックデータを設定
-    availabilityRepository.getAvailabilityData.mockResolvedValue(mockFallbackData['2025-11-15']);
+    availabilityRepository.getAvailabilityData.mockResolvedValue(mockAvailabilityData['2025-11-15']);
     
     request.params.date = '2025-11-15';
     
