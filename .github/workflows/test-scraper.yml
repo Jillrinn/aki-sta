@@ -32,7 +32,7 @@ jobs:
     - name: Test scraper execution (dry run)
       run: |
         # テスト環境変数でスクレイパーの起動確認
-        docker run --rm --env-file .env.test aki-sta-scraper:test python src/main.py --help
+        docker run --rm --env-file .env.test aki-sta-scraper:test python -m src.entrypoints.cli --help
       working-directory: ./scraper
     
     - name: Upload test results
