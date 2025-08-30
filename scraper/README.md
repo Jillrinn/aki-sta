@@ -55,7 +55,7 @@ gunicorn --bind 0.0.0.0:8000 --timeout 600 app:app
 curl http://localhost:8000/health
 
 # スクレイピング実行（単一日付）
-curl -X POST http://localhost:8000/scrape?date=2025-11-15
+curl -X POST 'http://localhost:8000/scrape?date=2025-11-15'
 
 # スクレイピング実行（複数日付、JSONペイロード）
 curl -X POST http://localhost:8000/scrape \
@@ -88,7 +88,7 @@ cp .env.docker.example .env.docker
 ./docker-run.sh start
 
 # 3. APIテスト
-curl -X POST http://localhost:8000/scrape?date=2025-01-30
+curl -X POST 'http://localhost:8000/scrape?date=2025-01-30'
 
 # 4. 停止
 ./docker-run.sh stop
@@ -155,7 +155,7 @@ make down
 curl http://localhost:8000/health
 
 # 単一日付のスクレイピング
-curl -X POST http://localhost:8000/scrape?date=2025-01-30
+curl -X POST 'http://localhost:8000/scrape?date=2025-01-30'
 
 # 複数日付のスクレイピング
 curl -X POST http://localhost:8000/scrape \

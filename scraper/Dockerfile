@@ -51,7 +51,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers (Chromium only for size optimization)
-# Note: Dependencies are already installed via apt-get above
+# Install Chromium browser without dependencies (already installed via apt-get)
 RUN playwright install chromium
 
 # Copy application code

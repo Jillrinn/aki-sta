@@ -11,6 +11,7 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, request, jsonify
+from playwright.sync_api import Error as PlaywrightError
 
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -149,6 +150,24 @@ def scrape():
                     'error_type': 'INVALID_DATE_FORMAT',
                     'message': f'Invalid date format. Expected YYYY-MM-DD or YYYY/MM/DD, got: {date}',
                     'details': str(e)
+                })
+            except (PlaywrightError, FileNotFoundError) as e:
+                # Playwrightブラウザエラー
+                logger.error(f"Browser error for {date}: {str(e)}")
+                error_count += 1
+                error_message = str(e)
+                if "Executable doesn't exist" in error_message or "playwright install" in error_message:
+                    error_type = 'BROWSER_NOT_INSTALLED'
+                    message = 'Playwright browser not installed. Please run: playwright install chromium'
+                else:
+                    error_type = 'BROWSER_ERROR'
+                    message = 'Browser launch failed'
+                results.append({
+                    'date': date,
+                    'status': 'error',
+                    'error_type': error_type,
+                    'message': message,
+                    'details': error_message
                 })
             except ConnectionError as e:
                 # ネットワークエラー
