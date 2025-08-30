@@ -10,7 +10,7 @@ info:
 servers:
   - url: http://localhost:8000
     description: ローカル開発環境
-  - url: https://webapp-scraper-prod.azurewebsites.net
+  - url: https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net
     description: Azure本番環境
 
 tags:
