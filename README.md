@@ -47,10 +47,18 @@
 - **フロントエンド**: React + TypeScript
 - **データベース**: Azure Cosmos DB (NoSQL)
 - **テスト**: Jest + React Testing Library + Playwright
-- **スクレイパー**: Python + Playwright
+- **スクレイパー**: Python + Playwright (Docker対応)
 - **CI/CD**: GitHub Actions
+- **コンテナ**: Docker (スクレイパー環境の一貫性確保)
 
 ## 🛠️ 開発環境・特殊機能
+
+### Docker環境でのスクレイパー実行 🐳
+スクレイパーはDockerコンテナで実行することで、環境の一貫性を保証します。
+- **環境統一**: ローカル/CI/本番で同一のDockerイメージを使用
+- **依存関係解決**: Playwrightブラウザが事前インストール済み
+- **プラットフォーム対応**: macOS（WebKit）、Linux/Docker（Chromium）を自動選択
+- **簡単実行**: `npm run scraper:date -- 2025/09/20` で即実行可能
 
 ### Playwright環境分離システム 🎯
 Python（スクレイパー）とNode.js（E2E）で異なるバージョンのPlaywrightを使用してもバージョン競合が発生しない包括的なシステムを実装。
@@ -63,6 +71,9 @@ Python（スクレイパー）とNode.js（E2E）で異なるバージョンのP
 ```bash
 # 包括的環境セットアップ（推奨）
 ./setup-playwright-environments.sh
+
+# Dockerを使用する場合（スクレイパー）
+npm run scraper:build  # 初回のみ必要
 ```
 
 ### Cosmos DB統合 🌐
@@ -163,23 +174,40 @@ npm test -- --coverage --watchAll=false  # カバレッジ付きテスト
 
 #### Pythonスクレイパーテスト
 ```bash
-cd scraper
-./test.sh  # テスト実行
-# または
-npm run test:scraper  # ルートから実行
+# Docker実行（推奨）
+npm run test:scraper
+
+# ローカル実行（開発用）
+npm run test:scraper:local
 ```
 
 ### 🕷️ スクレイパー実行
+
+#### Docker実行（推奨）
 ```bash
+# Dockerイメージをビルド
+npm run scraper:build
+
 # デフォルト実行（今日の日付でスクレイピング）
 npm run scraper
 
-# 特定の日付を指定して実行（ディレクトリ内から）
-cd scraper && ./run-playwright.sh src/main.py --date 2025-11-15
+# 特定の日付を指定して実行
+npm run scraper:date -- 2025/11/15
 
-# ヘルプを表示
-cd scraper && ./run-playwright.sh src/main.py --help
+# Dockerコンテナでテスト実行
+npm run test:scraper
 ```
+
+#### ローカル実行（開発用）
+```bash
+# 特定の日付を指定して実行
+npm run scraper:local:date -- 2025/11/15
+
+# ローカル環境でテスト実行
+npm run test:scraper:local
+```
+
+**注意**: Docker実行では環境の一貫性が保証され、Playwrightブラウザのインストールも不要です。
 
 #### E2Eテスト
 ```bash
