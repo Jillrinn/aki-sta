@@ -50,16 +50,16 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Set environment variables BEFORE installing Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PYTHONUNBUFFERED=1
+
 # Install Playwright browsers (Chromium only for size optimization)
 # Install Chromium browser without dependencies (already installed via apt-get)
 RUN playwright install chromium
 
 # Copy application code
 COPY . .
-
-# Set environment variables
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV PYTHONUNBUFFERED=1
 
 # Azure Web Apps expects port 8000 by default
 EXPOSE 8000

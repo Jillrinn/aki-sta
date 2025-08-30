@@ -370,7 +370,8 @@ class EnsembleStudioScraper:
             print(f"Error during scraping: {e}")
             import traceback
             traceback.print_exc()
-            return self._get_default_data()
+            # エラーを上位に伝搬するために例外を再度投げる
+            raise
     
     def _get_default_data(self) -> List[Dict]:
         """エラー時のデフォルトデータ"""
@@ -424,7 +425,32 @@ class EnsembleStudioScraper:
             
             # スクレイピング実行（正規化された日付を使用）
             print(f"\nスクレイピング開始: {normalized_date}")
-            facilities = self.scrape_availability(normalized_date)
+            try:
+                facilities = self.scrape_availability(normalized_date)
+            except Exception as scrape_error:
+                # Playwrightエラーを含むスクレイピングエラーをキャッチ
+                error_message = str(scrape_error)
+                if "Executable doesn't exist" in error_message or "playwright install" in error_message:
+                    return {
+                        "status": "error",
+                        "message": "Playwright browser not installed",
+                        "error_type": "BROWSER_NOT_INSTALLED",
+                        "details": error_message
+                    }
+                elif "timeout" in error_message.lower():
+                    return {
+                        "status": "error",
+                        "message": "Website request timed out",
+                        "error_type": "TIMEOUT_ERROR",
+                        "details": error_message
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": f"Scraping failed",
+                        "error_type": "SCRAPING_ERROR",
+                        "details": error_message
+                    }
             
             if not facilities:
                 return {
