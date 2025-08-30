@@ -3,6 +3,8 @@
 人間の操作に近い方法でPlaywrightのlocatorを使用してDOM要素を探索
 """
 import json
+import os
+import platform
 import re
 import time
 from datetime import datetime, timedelta
@@ -296,15 +298,19 @@ class EnsembleStudioScraper:
         
         try:
             with sync_playwright() as p:
-                # ブラウザを起動（Chromiumを使用 - Docker環境で安定）
-                browser = p.chromium.launch(
-                    headless=True,
-                    args=[
-                        '--disable-blink-features=AutomationControlled',
-                        '--disable-web-security',
-                        '--disable-features=IsolateOrigins,site-per-process'
-                    ]
-                )
+                # 環境に応じてブラウザを選択
+                system = platform.system()
+                
+                if system == "Darwin":  # macOS
+                    # macOSではWebKitを使用（GPUクラッシュ回避）
+                    print(f"Running on macOS, using WebKit browser")
+                    browser = p.webkit.launch(headless=True)
+                else:  # Linux/Docker環境
+                    # Docker環境ではChromiumが安定
+                    print(f"Running on {system}, using Chromium browser")
+                    browser = p.chromium.launch(
+                        headless=True
+                    )
                 
                 try:
                     context = browser.new_context(
@@ -316,7 +322,7 @@ class EnsembleStudioScraper:
                     
                     # ページにアクセス
                     print(f"Accessing: {self.base_url}")
-                    response = page.goto(self.base_url, wait_until="domcontentloaded", timeout=60000)
+                    response = page.goto(self.base_url, wait_until="networkidle", timeout=60000)
                     
                     if response:
                         print(f"Response status: {response.status}")
