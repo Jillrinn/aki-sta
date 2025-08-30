@@ -68,4 +68,4 @@ COPY . .
 EXPOSE 8000
 
 # Start Flask app with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "600", "--workers", "1", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "600", "--workers", "1", "src.entrypoints.flask_api:app"]

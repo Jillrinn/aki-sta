@@ -16,10 +16,10 @@ load_dotenv(root_env_path)
 playwright_env_path = Path(__file__).parent.parent / '.env.playwright'
 load_dotenv(playwright_env_path)
 
-# srcディレクトリをパスに追加
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# scraperディレクトリをパスに追加（srcの親ディレクトリ）
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.scraper import EnsembleStudioScraper
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
 
 
 def main():

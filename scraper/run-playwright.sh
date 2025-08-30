@@ -62,10 +62,10 @@ if [[ $# -eq 0 ]]; then
     echo "  --help               Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0 src/main.py"
-    echo "  $0 src/main.py --date 2025-11-15"
-    echo "  $0 --install-browsers src/main.py"
-    echo "  $0 --browser chromium src/main.py --date 2025-11-15"
+    echo "  $0 src/entrypoints/cli.py"
+    echo "  $0 src/entrypoints/cli.py --date 2025-11-15"
+    echo "  $0 --install-browsers src/entrypoints/cli.py"
+    echo "  $0 --browser chromium src/entrypoints/cli.py --date 2025-11-15"
     echo ""
     exit 0
 fi

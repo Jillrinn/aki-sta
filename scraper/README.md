@@ -42,10 +42,10 @@ Scraperは Flask ベースの Web API サーバーとして起動できます。
 source venv/bin/activate
 
 # Flask開発サーバーで起動（ポート8000）
-python app.py
+python src/entrypoints/flask_api.py
 
 # または Gunicorn を使用（本番環境推奨）
-gunicorn --bind 0.0.0.0:8000 --timeout 600 app:app
+gunicorn --bind 0.0.0.0:8000 --timeout 600 src.entrypoints.flask_api:app
 ```
 
 #### 利用可能なエンドポイント
@@ -200,7 +200,7 @@ make shell
 docker-compose exec scraper python
 
 # コンテナ内でスクレイピング実行
-docker-compose exec scraper python src/main.py --date 2025-01-30
+docker-compose exec scraper python src/entrypoints/cli.py --date 2025-01-30
 ```
 
 ### run-playwright.sh スクリプトを使用（推奨）
@@ -217,19 +217,19 @@ docker-compose exec scraper python src/main.py --date 2025-01-30
 
 ```bash
 # デフォルト実行（今日の日付でスクレイピング）
-./run-playwright.sh src/main.py
+./run-playwright.sh src/entrypoints/cli.py
 
 # 特定日付のスクレイピング（YYYY-MM-DD形式）
-./run-playwright.sh src/main.py --date 2025-11-15
+./run-playwright.sh src/entrypoints/cli.py --date 2025-11-15
 
 # YYYY/MM/DD形式でも指定可能
-./run-playwright.sh src/main.py --date 2025/11/15
+./run-playwright.sh src/entrypoints/cli.py --date 2025/11/15
 
 # ブラウザをインストールしてから実行
-./run-playwright.sh --install-browsers src/main.py
+./run-playwright.sh --install-browsers src/entrypoints/cli.py
 
 # 別のブラウザを使用（デフォルトはwebkit）
-./run-playwright.sh --browser chromium src/main.py
+./run-playwright.sh --browser chromium src/entrypoints/cli.py
 
 # ヘルプを表示
 ./run-playwright.sh --help
@@ -250,19 +250,19 @@ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
 source venv/bin/activate
 
 # 特定日付のスクレイピング（YYYY-MM-DD形式）
-python src/main.py --date 2025-11-15
+python src/entrypoints/cli.py --date 2025-11-15
 
 # YYYY/MM/DD形式でも指定可能
-python src/main.py --date 2025/09/01
+python src/entrypoints/cli.py --date 2025/09/01
 
 # 今日の日付でスクレイピング
-python src/main.py
+python src/entrypoints/cli.py
 ```
 
 ### Pythonスクリプトとして
 
 ```python
-from src.scraper import EnsembleStudioScraper
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
 
 scraper = EnsembleStudioScraper()
 
@@ -370,7 +370,7 @@ unset COSMOS_ENDPOINT COSMOS_KEY COSMOS_DATABASE
 #### 🔹 プログラムから制御
 
 ```python
-from src.scraper import EnsembleStudioScraper
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
 
 scraper = EnsembleStudioScraper()
 date = "2025-11-15"

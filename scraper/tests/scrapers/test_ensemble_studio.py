@@ -6,7 +6,7 @@ import os
 import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch, MagicMock
-from src.scraper import EnsembleStudioScraper
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
 
 
 class TestTimeSlotConversion:
@@ -196,7 +196,7 @@ class TestEnsembleStudioScraper:
         
         assert saved_data == data
     
-    @patch('src.scraper.sync_playwright')
+    @patch('src.scrapers.ensemble_studio.sync_playwright')
     def test_scrape_availability_error_handling(self, mock_playwright, scraper):
         """エラー時の例外再発生テスト"""
         # Playwrightがエラーを発生させる

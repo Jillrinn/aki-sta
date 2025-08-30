@@ -476,7 +476,7 @@ class EnsembleStudioScraper:
             
             # Cosmos DBに保存（正規化された日付を使用）
             try:
-                from .cosmos_writer import CosmosWriter
+                from src.repositories.cosmos_repository import CosmosWriter
                 writer = CosmosWriter()
                 if writer.save_availability(normalized_date, facilities):
                     print(f"\n保存先:")

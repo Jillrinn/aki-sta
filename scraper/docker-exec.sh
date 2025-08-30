@@ -92,7 +92,7 @@ case "$1" in
         check_env_file "$env_file"
         
         info "Running scraper with args: $@"
-        docker run --rm --env-file "$env_file" $IMAGE_NAME python src/main.py "$@"
+        docker run --rm --env-file "$env_file" $IMAGE_NAME python src/entrypoints/cli.py "$@"
         ;;
     
     shell)

@@ -13,10 +13,10 @@ from typing import List, Dict, Any
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Add src directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add scraper directory to path (parent of src)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.scraper import EnsembleStudioScraper
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
 
 # ロギング設定
 logging.basicConfig(

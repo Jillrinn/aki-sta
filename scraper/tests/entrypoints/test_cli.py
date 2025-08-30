@@ -14,12 +14,12 @@ class TestDateFormat:
     
     def test_date_format_with_hyphen(self):
         """YYYY-MM-DD形式の日付が受け入れられることを確認"""
-        # main.pyのパス
-        main_py = Path(__file__).parent.parent / "src" / "main.py"
+        # cli.pyのパス
+        cli_py = Path(__file__).parent.parent.parent / "src" / "entrypoints" / "cli.py"
         
         # --helpを実行して、正常に動作することを確認
         result = subprocess.run(
-            [sys.executable, str(main_py), "--date", "2025-09-01", "--help"],
+            [sys.executable, str(cli_py), "--date", "2025-09-01", "--help"],
             capture_output=True,
             text=True
         )
@@ -29,13 +29,13 @@ class TestDateFormat:
     
     def test_date_format_with_slash(self):
         """YYYY/MM/DD形式の日付が受け入れられることを確認"""
-        # main.pyのパス
-        main_py = Path(__file__).parent.parent / "src" / "main.py"
+        # cli.pyのパス
+        cli_py = Path(__file__).parent.parent.parent / "src" / "entrypoints" / "cli.py"
         
         # テスト用のダミー出力ファイルを指定して実行
         # （実際のスクレイピングは行わない）
         result = subprocess.run(
-            [sys.executable, str(main_py), "--date", "2025/09/01", "--help"],
+            [sys.executable, str(cli_py), "--date", "2025/09/01", "--help"],
             capture_output=True,
             text=True
         )
@@ -45,12 +45,12 @@ class TestDateFormat:
     
     def test_invalid_date_format(self):
         """無効な日付形式がエラーになることを確認"""
-        # main.pyのパス
-        main_py = Path(__file__).parent.parent / "src" / "main.py"
+        # cli.pyのパス
+        cli_py = Path(__file__).parent.parent.parent / "src" / "entrypoints" / "cli.py"
         
         # 無効な形式でテスト
         result = subprocess.run(
-            [sys.executable, str(main_py), "--date", "2025.09.01"],
+            [sys.executable, str(cli_py), "--date", "2025.09.01"],
             capture_output=True,
             text=True
         )
@@ -61,11 +61,11 @@ class TestDateFormat:
     
     def test_invalid_date_value(self):
         """無効な日付値（13月など）がエラーになることを確認"""
-        main_py = Path(__file__).parent.parent / "src" / "main.py"
+        cli_py = Path(__file__).parent.parent.parent / "src" / "entrypoints" / "cli.py"
         
         # 無効な月でテスト
         result = subprocess.run(
-            [sys.executable, str(main_py), "--date", "2025-13-01"],
+            [sys.executable, str(cli_py), "--date", "2025-13-01"],
             capture_output=True,
             text=True
         )
@@ -78,13 +78,13 @@ class TestDateFormat:
         """日付がCosmos DB保存時に正規化されることを確認"""
         # EnsembleStudioScraperをインポート
         import sys
-        sys.path.insert(0, str(Path(__file__).parent.parent))
-        from src.scraper import EnsembleStudioScraper
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+        from src.scrapers.ensemble_studio import EnsembleStudioScraper
         
         scraper = EnsembleStudioScraper()
         
         # Mock CosmosWriter
-        with patch('src.cosmos_writer.CosmosWriter') as MockCosmosWriter:
+        with patch('src.repositories.cosmos_repository.CosmosWriter') as MockCosmosWriter:
             mock_writer = Mock()
             mock_writer.save_availability.return_value = True
             MockCosmosWriter.return_value = mock_writer

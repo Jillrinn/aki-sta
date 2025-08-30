@@ -13,10 +13,10 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 from playwright.sync_api import Error as PlaywrightError
 
-# Add src directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add scraper directory to path (parent of src)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.scraper import EnsembleStudioScraper
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
 
 # Initialize Flask app
 app = Flask(__name__)

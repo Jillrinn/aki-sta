@@ -4,7 +4,7 @@
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime
-from src.scraper import EnsembleStudioScraper
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
 
 
 class TestErrorHandling:
@@ -32,7 +32,7 @@ class TestErrorHandling:
         browser.new_context.return_value = context
         return browser, context
     
-    @patch('src.scraper.sync_playwright')
+    @patch('src.scrapers.ensemble_studio.sync_playwright')
     def test_skip_studio_when_navigate_fails(self, mock_playwright, scraper):
         """navigate_to_monthが失敗した場合、そのスタジオをスキップすることを確認"""
         # Playwrightのモック設定
@@ -90,7 +90,7 @@ class TestErrorHandling:
                         assert results[0]["facilityName"] == "スタジオ2"
                         assert results[0]["timeSlots"]["9-12"] == "available"
     
-    @patch('src.scraper.sync_playwright')
+    @patch('src.scrapers.ensemble_studio.sync_playwright')
     def test_skip_studio_when_date_cell_not_found(self, mock_playwright, scraper):
         """find_date_cellが失敗した場合、そのスタジオをスキップすることを確認"""
         # Playwrightのモック設定
@@ -147,7 +147,7 @@ class TestErrorHandling:
                         assert results[0]["facilityName"] == "スタジオB"
                         assert results[0]["timeSlots"]["18-21"] == "available"
     
-    @patch('src.scraper.sync_playwright')
+    @patch('src.scrapers.ensemble_studio.sync_playwright')
     def test_empty_result_when_all_studios_fail(self, mock_playwright, scraper):
         """すべてのスタジオでエラーが発生した場合、空の結果を返すことを確認"""
         # Playwrightのモック設定
@@ -190,7 +190,7 @@ class TestErrorHandling:
                 # 結果が空のリストであることを確認
                 assert results == []
     
-    @patch('src.scraper.sync_playwright')
+    @patch('src.scrapers.ensemble_studio.sync_playwright')
     def test_scrape_and_save_with_no_valid_data(self, mock_playwright, scraper):
         """有効なデータがない場合、scrape_and_saveがエラーを返すことを確認"""
         # Playwrightのモック設定
@@ -228,7 +228,7 @@ class TestErrorHandling:
                 assert result["error_type"] == "NO_DATA_FOUND"
                 assert "No data found" in result["message"]
     
-    @patch('src.scraper.sync_playwright')
+    @patch('src.scrapers.ensemble_studio.sync_playwright')
     def test_time_slot_unknown_preserved(self, mock_playwright, scraper):
         """時間帯が見つからない場合はunknownとして扱われることを確認"""
         # Playwrightのモック設定

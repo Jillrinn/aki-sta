@@ -115,7 +115,7 @@ case "$1" in
         fi
         echo "Running scraper for date: $2"
         check_env
-        docker-compose run --rm scraper python src/main.py --date "$2"
+        docker-compose run --rm scraper python src/entrypoints/cli.py --date "$2"
         ;;
     
     shell)

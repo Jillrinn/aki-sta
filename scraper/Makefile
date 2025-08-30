@@ -52,7 +52,7 @@ scrape:
 		echo "Usage: make scrape DATE=2025-01-30"; \
 		exit 1; \
 	fi
-	docker-compose run --rm scraper python src/main.py --date $(DATE)
+	docker-compose run --rm scraper python src/entrypoints/cli.py --date $(DATE)
 
 # ヘルスチェック
 health:

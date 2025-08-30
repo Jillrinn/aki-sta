@@ -7,7 +7,7 @@ import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.cosmos_writer import CosmosWriter
+from src.repositories.cosmos_repository import CosmosWriter
 
 
 class TestCosmosWriter(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestCosmosWriter(unittest.TestCase):
         'COSMOS_KEY': 'test-key',
         'COSMOS_DATABASE': 'test-db'
     })
-    @patch('src.cosmos_writer.CosmosClient')
+    @patch('src.repositories.cosmos_repository.CosmosClient')
     def setUp(self, mock_cosmos_client):
         """テスト用のセットアップ"""
         # Cosmos DBクライアントのモック
@@ -97,7 +97,7 @@ class TestCosmosWriter(unittest.TestCase):
             self.assertEqual(result, expected_id)
     
     @patch.dict(os.environ, {}, clear=True)
-    @patch('src.cosmos_writer.load_dotenv')
+    @patch('src.repositories.cosmos_repository.load_dotenv')
     def test_missing_connection_settings(self, mock_load_dotenv):
         """接続設定が不足している場合のエラー"""
         # dotenvのロードを無効化
