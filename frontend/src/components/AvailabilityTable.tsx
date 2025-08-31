@@ -76,7 +76,7 @@ const AvailabilityTable: React.FC = () => {
             className="text-xl text-gray-700 mb-3 font-semibold"
             data-testid={`date-header-${dateIndex}`}
           >
-            {date}の空き状況
+            {date}
             {labelMap[date] && (
               <span className="ml-2 text-lg text-gray-600">
                 - {labelMap[date]}
