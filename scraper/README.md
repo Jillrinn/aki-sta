@@ -35,52 +35,20 @@ cp .env.example .env  # .envファイルを作成
 
 Scraperは Flask ベースの Web API サーバーとして起動できます。これにより HTTP エンドポイント経由でスクレイピングを実行できます。
 
-#### 🆕 v2 API（推奨） - Pythonベストプラクティスアーキテクチャ
+#### ローカル起動
 
 ```bash
 # 仮想環境をアクティベート
 source venv/bin/activate
 
-# v2 API起動（ポート8000）
-python src/entrypoints/flask_api_v2.py
-
-# または Gunicorn を使用（本番環境推奨）
-gunicorn --bind 0.0.0.0:8000 --timeout 600 src.api:create_app
-```
-
-**利用可能なエンドポイント:**
-
-```bash
-# ヘルスチェック
-curl http://localhost:8000/api/health
-
-# あんさんぶるスタジオ - 特定日付
-curl -X POST 'http://localhost:8000/api/scrape/ensemble?date=2025-11-15'
-
-# あんさんぶるスタジオ - target-dates使用
-curl -X POST 'http://localhost:8000/api/scrape/ensemble'
-
-# 全施設 - 特定日付
-curl -X POST 'http://localhost:8000/api/scrape?date=2025-11-15'
-
-# ステータス確認
-curl http://localhost:8000/api/scrape/status
-```
-
-**特徴:**
-- ✨ **レイヤードアーキテクチャ**: 保守性と拡張性が向上
-- 🎯 **target-dates連携**: Cosmos DBから日付を自動取得
-- 🏭 **ファクトリーパターン**: 新施設追加が簡単
-- 🔧 **カスタム例外**: 詳細なエラー情報
-
-#### v1 API（互換性維持）
-
-```bash
 # Flask開発サーバーで起動（ポート8000）
 python src/entrypoints/flask_api.py
+
+# または Gunicorn を使用（本番環境推奨）
+gunicorn --bind 0.0.0.0:8000 --timeout 600 src.entrypoints.flask_api:app
 ```
 
-**利用可能なエンドポイント:**
+#### 利用可能なエンドポイント
 
 ```bash
 # ヘルスチェック
@@ -93,10 +61,17 @@ curl -X POST 'http://localhost:8000/scrape?date=2025-11-15'
 curl -X POST http://localhost:8000/scrape \
   -H "Content-Type: application/json" \
   -d '{"dates": ["2025-11-15", "2025-11-16"]}'
+
+# Logic Apps や Azure Scheduler からの実行例
+curl -X POST https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape \
+  -H "Content-Type: application/json" \
+  -d '{
+    "triggeredBy": "scheduler",
+    "dates": ["2025-11-15", "2025-11-16"]
+  }'
 ```
 
 詳細なAPI仕様は [API_SPEC.md](API_SPEC.md) を参照してください。
-v2 APIの詳細は [README_API_V2.md](README_API_V2.md) を参照してください。
 
 ## 🐳 Docker環境での実行（推奨）
 

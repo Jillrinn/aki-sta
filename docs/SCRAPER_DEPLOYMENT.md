@@ -284,11 +284,7 @@ if __name__ == '__main__':
 
 #### 7.1 ヘルスチェック
 ```bash
-# v2 APIヘルスチェック
-curl https://aki-sta-scraper.azurewebsites.net/api/health
-
-# 互換性: v1 APIヘルスチェック
-curl https://aki-sta-scraper.azurewebsites.net/health
+curl https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/health
 ```
 
 期待されるレスポンス：
@@ -301,16 +297,9 @@ curl https://aki-sta-scraper.azurewebsites.net/health
 
 #### 7.2 スクレイピング実行テスト
 ```bash
-# v2 API - あんさんぶるスタジオ（特定日付）
-curl -X POST https://aki-sta-scraper.azurewebsites.net/api/scrape/ensemble?date=2025-11-15
-
-# v2 API - あんさんぶるスタジオ（target-dates使用）
-curl -X POST https://aki-sta-scraper.azurewebsites.net/api/scrape/ensemble
-
-# 互換性: v1 API（複数日付）
-curl -X POST https://aki-sta-scraper.azurewebsites.net/scrape \
+curl -X POST https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape \
   -H "Content-Type: application/json" \
-  -d '{"dates": ["2025-11-15", "2025-11-16"]}'
+  -d '{"dates": ["2025-11-15"]}'
 ```
 
 #### 7.3 ログ確認

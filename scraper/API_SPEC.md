@@ -1,29 +1,36 @@
-# Scraper API 仕様書 v2
+# Scraper API 仕様書
 
 ## 概要
 Azure Web Apps でホスティングされるスクレイピングサービスの API 仕様。
-Python/Flaskベストプラクティスに基づいた新しいアーキテクチャで実装。
 
 ## エンドポイント
 
-### POST /api/scrape/ensemble
-あんさんぶるスタジオの予約状況をスクレイピングする専用エンドポイント。
+### POST /scrape
+施設の予約状況をスクレイピングする統一エンドポイント。
 
 #### リクエスト
 
-**日付指定方法:**
-- クエリパラメータで特定日付を指定
-- パラメータなしの場合はCosmos DBのtarget-datesを使用
+**日付指定方法（優先順位）:**
+1. クエリパラメータ（最優先）
+2. JSON ボディ
 
 **クエリパラメータ:**
 ```
-POST /api/scrape/ensemble?date=2025-11-15
-POST /api/scrape/ensemble?triggeredBy=manual&date=2025-11-15
-POST /api/scrape/ensemble  # target-dates使用
+POST /scrape?date=2025-11-15
+POST /scrape?date=2025-11-15&date=2025-11-16
+POST /scrape?triggeredBy=manual&date=2025-11-15
+```
+
+**JSON ボディ:**
+```json
+{
+  "triggeredBy": "scheduler",
+  "dates": ["2025-11-15", "2025-11-16", "2025-11-22"]
+}
 ```
 
 **パラメータ:**
-- `date`: 任意 - YYYY-MM-DD 形式の日付（未指定時はtarget-dates使用）
+- `date` / `dates`: **必須** - YYYY-MM-DD 形式の日付（単一または複数）
 - `triggeredBy`: 任意 - トリガー元（"scheduler", "manual" など）デフォルト: "manual"
 
 #### レスポンス
@@ -32,33 +39,16 @@ POST /api/scrape/ensemble  # target-dates使用
 ```json
 {
   "status": "success",
-  "timestamp": "2025-08-31T12:00:00Z",
-  "triggeredBy": "manual",
-  "facilityType": "ensemble_studio",
-  "totalDates": 1,
-  "successCount": 1,
-  "errorCount": 0,
+  "timestamp": "2025-08-26T10:00:00.000Z",
+  "triggeredBy": "scheduler",
+  "total_dates": 3,
+  "success_count": 3,
+  "error_count": 0,
   "results": [
     {
+      "date": "2025-11-15",
       "status": "success",
-      "date": "2025-08-31",
-      "facilityType": "ensemble_studio",
-      "facilitiesCount": 2,
-      "data": {
-        "date": "2025-08-31",
-        "facilities": [
-          {
-            "facilityId": "ensemble-hongo",
-            "facilityName": "あんさんぶるStudio和(本郷)",
-            "facilityType": "ensemble_studio",
-            "timeSlots": [
-              {"slot": "9-12", "available": true},
-              {"slot": "13-17", "available": false},
-              {"slot": "18-21", "available": true}
-            ]
-          }
-        ]
-      }
+      "facilities": 10
     }
   ]
 }
@@ -73,50 +63,18 @@ POST /api/scrape/ensemble  # target-dates使用
 }
 ```
 
-### POST /api/scrape
-全ての対応施設の予約状況をスクレイピングする統一エンドポイント。
-
-#### リクエスト
-
-**クエリパラメータ:**
-```
-POST /api/scrape?date=2025-11-15
-POST /api/scrape  # target-dates使用
-```
-
-#### レスポンス
-
-**成功時 (200):**
-```json
-{
-  "status": "success",
-  "timestamp": "2025-08-31T12:00:00Z",
-  "totalSuccess": 1,
-  "totalError": 0,
-  "facilities": [
-    {
-      "facilityType": "ensemble_studio",
-      "successCount": 1,
-      "errorCount": 0,
-      "results": [...]
-    }
-  ]
-}
-```
-
-### GET /api/health
+### GET /health
 ヘルスチェックエンドポイント。
 
 #### レスポンス (200)
 ```json
 {
   "status": "healthy",
-  "service": "Scraper API",
-  "timestamp": "2025-08-31T12:00:00Z"
+  "timestamp": "2025-08-26T10:00:00.000Z"
 }
 ```
 
-### GET /api/
+### GET /
 サービス情報エンドポイント。
 
 #### レスポンス (200)
@@ -124,20 +82,7 @@ POST /api/scrape  # target-dates使用
 {
   "service": "Scraper Web App",
   "status": "running",
-  "version": "2.0.0",
-  "timestamp": "2025-08-31T12:00:00Z"
-}
-```
-
-### GET /api/scrape/status
-スクレイパーステータスエンドポイント。
-
-#### レスポンス (200)
-```json
-{
-  "status": "ready",
-  "supportedFacilities": ["ensemble_studio"],
-  "timestamp": "2025-08-31T12:00:00Z"
+  "timestamp": "2025-08-26T10:00:00.000Z"
 }
 ```
 
@@ -146,9 +91,7 @@ POST /api/scrape  # target-dates使用
 | コード | 説明 |
 |--------|------|
 | 200 | 成功 |
-| 400 | 不正なリクエスト（日付フォーマットエラー、過去日付） |
-| 404 | データまたはエンドポイントが見つからない |
-| 503 | サービス一時利用不可（ネットワーク、ブラウザエラー） |
+| 400 | 不正なリクエスト（日付未指定、フォーマットエラー） |
 | 500 | サーバーエラー |
 
 ## 使用例
@@ -156,20 +99,16 @@ POST /api/scrape  # target-dates使用
 ### cURL
 
 ```bash
-# あんさんぶるスタジオ - 特定日付
-curl -X POST "https://aki-sta-scraper.azurewebsites.net/api/scrape/ensemble?date=2025-11-15"
+# クエリパラメータで単一日付
+curl -X POST "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape?date=2025-11-15"
 
-# あんさんぶるスタジオ - target-dates使用
-curl -X POST "https://aki-sta-scraper.azurewebsites.net/api/scrape/ensemble"
+# クエリパラメータで複数日付
+curl -X POST "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape?date=2025-11-15&date=2025-11-16"
 
-# 全施設 - 特定日付
-curl -X POST "https://aki-sta-scraper.azurewebsites.net/api/scrape?date=2025-11-15"
-
-# ヘルスチェック
-curl "https://aki-sta-scraper.azurewebsites.net/api/health"
-
-# ステータス確認
-curl "https://aki-sta-scraper.azurewebsites.net/api/scrape/status"
+# JSON ボディで複数日付
+curl -X POST "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape" \
+  -H "Content-Type: application/json" \
+  -d '{"dates": ["2025-11-15", "2025-11-16"], "triggeredBy": "manual"}'
 ```
 
 ### Logic Apps 設定
@@ -177,33 +116,20 @@ curl "https://aki-sta-scraper.azurewebsites.net/api/scrape/status"
 ```json
 {
   "method": "POST",
-  "uri": "https://aki-sta-scraper.azurewebsites.net/api/scrape/ensemble",
+  "uri": "https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net/scrape",
   "headers": {
     "Content-Type": "application/json"
   },
-  "queries": {
-    "triggeredBy": "scheduler"
+  "body": {
+    "triggeredBy": "scheduler",
+    "dates": ["2025-11-15", "2025-11-16", "2025-11-22", "2025-11-23"]
   }
 }
 ```
-注: target-datesを使用するため、日付指定は不要
 
 ## 注意事項
 
-1. **target-dates連携**: 日付未指定時は Cosmos DB の targetDates コンテナから自動取得
+1. **日付は必須**: 少なくとも1つの日付を指定する必要があります
 2. **日付フォーマット**: YYYY-MM-DD 形式のみ対応
-3. **過去日付の拒否**: 過去の日付は指定できません
+3. **優先順位**: クエリパラメータが JSON ボディより優先されます
 4. **レート制限**: Azure Free Tier の制限内での利用を推奨
-5. **拡張性**: 新施設追加時は ScraperFactory に登録するだけで自動的に API で利用可能
-
-## 移行ガイド（v1からv2へ）
-
-### 主な変更点
-1. **エンドポイント変更**: `/scrape` → `/api/scrape/ensemble` または `/api/scrape`
-2. **target-dates対応**: 日付指定が任意に（未指定時は自動取得）
-3. **レスポンス形式**: より構造化された詳細なレスポンス
-4. **エラーハンドリング**: カスタム例外による詳細なエラー情報
-
-### 互換性
-- 旧API（`/scrape`）も引き続き利用可能
-- 段階的な移行が可能
