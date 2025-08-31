@@ -16,8 +16,7 @@ from dotenv import load_dotenv
 # Add scraper directory to path (parent of src)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.domain.entities import FacilityType
-from src.services.scraper_service import ScraperService
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
 
 # ロギング設定
 logging.basicConfig(
@@ -32,7 +31,7 @@ class ContainerScraperRunner:
     
     def __init__(self):
         """初期化"""
-        self.service = ScraperService()
+        self.scraper = EnsembleStudioScraper()
         
     def get_target_dates(self) -> List[str]:
         """スクレイピング対象日付の取得"""
@@ -86,23 +85,36 @@ class ContainerScraperRunner:
             error_count = 0
             error_details = []
             
-            # スクレイピング実行（V2 APIを使用）
-            results = self.service.scrape_facility(FacilityType.ENSEMBLE_STUDIO, target_dates)
-            
-            # 結果の処理
-            for result in results:
-                if result.status == 'success':
-                    # 成功した場合
-                    all_results.extend(result.facilities)
-                    success_count += 1
-                    logger.info(f"Successfully scraped {len(result.facilities)} facilities for {result.date}")
-                elif result.status == 'error':
-                    # エラーの場合
-                    logger.warning(f"Failed to scrape {result.date}: {result.error}")
+            # 各日付でスクレイピング実行
+            for date in target_dates:
+                try:
+                    logger.info(f"Scraping data for {date}")
+                    
+                    # scrape_and_save メソッドを使用（既存のロジックを活用）
+                    result = self.scraper.scrape_and_save(date)
+                    
+                    if result and result.get('status') == 'success':
+                        # 成功した場合
+                        data = result.get('data', {}).get(date, [])
+                        all_results.extend(data)
+                        success_count += 1
+                        logger.info(f"Successfully scraped {len(data)} facilities for {date}")
+                    else:
+                        # エラーの場合
+                        error_msg = result.get('message', 'Unknown error')
+                        logger.warning(f"Failed to scrape {date}: {error_msg}")
+                        error_count += 1
+                        error_details.append({
+                            "date": date,
+                            "error": error_msg
+                        })
+                        
+                except Exception as e:
+                    logger.error(f"Exception while scraping {date}: {str(e)}")
                     error_count += 1
                     error_details.append({
-                        "date": result.date,
-                        "error": result.error
+                        "date": date,
+                        "error": str(e)
                     })
             
             # 実行結果サマリ

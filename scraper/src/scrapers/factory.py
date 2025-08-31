@@ -6,7 +6,7 @@ from typing import Dict, Type, Optional
 from ..domain.entities import FacilityType
 from ..domain.exceptions import FacilityNotSupportedError
 from .base import BaseScraper
-from .ensemble_studio import EnsembleStudioScraperV2
+from .ensemble_studio_v2 import EnsembleStudioScraperV2
 
 
 logger = logging.getLogger(__name__)
