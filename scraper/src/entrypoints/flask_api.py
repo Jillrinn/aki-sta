@@ -17,6 +17,8 @@ from playwright.sync_api import Error as PlaywrightError
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.scrapers.ensemble_studio import EnsembleStudioScraper
+from src.services.scrape_service import ScrapeService
+from src.services.target_date_service import TargetDateService
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -28,7 +30,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize scraper
+# Initialize services lazily
+target_date_service = None
+scrape_service = None
+
+def get_services():
+    """サービスインスタンスを遅延初期化"""
+    global target_date_service, scrape_service
+    if target_date_service is None:
+        try:
+            target_date_service = TargetDateService()
+            scrape_service = ScrapeService(target_date_service=target_date_service)
+        except Exception as e:
+            # エラー時はモックサービスを使用
+            from unittest.mock import Mock
+            target_date_service = Mock()
+            target_date_service.get_single_date_to_scrape.return_value = datetime.now().strftime('%Y-%m-%d')
+            scrape_service = Mock()
+    return target_date_service, scrape_service
+
+# Initialize scraper (for backward compatibility)
 scraper = EnsembleStudioScraper()
 
 
@@ -253,6 +274,88 @@ def scrape():
 
 
 # Single date endpoint removed - use POST /scrape?date=YYYY-MM-DD instead
+
+
+@app.route('/scrape/ensemble', methods=['GET', 'POST'])
+def scrape_ensemble():
+    """
+    あんさんぶるスタジオ専用エンドポイント
+    
+    GET: target_dateから日付を取得してスクレイピング
+    POST: 指定日付でスクレイピング
+    """
+    try:
+        if request.method == 'GET':
+            # サービスを取得
+            target_service, scraping_service = get_services()
+            
+            # target_dateから日付を取得
+            date = target_service.get_single_date_to_scrape()
+            logger.info(f"Scraping ensemble with target date: {date}")
+            
+            result = scraping_service.scrape_facility('ensemble', date)
+            
+            return jsonify({
+                'status': result.get('status'),
+                'facility': 'ensemble',
+                'date': date,
+                'source': 'target_date',
+                'data': result.get('data', {}),
+                'timestamp': datetime.now().isoformat()
+            }), 200 if result.get('status') == 'success' else 500
+            
+        else:  # POST
+            # リクエストから日付を取得
+            date = request.args.get('date')
+            if not date:
+                data = request.get_json() or {}
+                date = data.get('date')
+            
+            if not date:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Date is required. Use ?date=YYYY-MM-DD or JSON body {"date": "YYYY-MM-DD"}',
+                    'timestamp': datetime.now().isoformat()
+                }), 400
+            
+            # 日付フォーマット検証
+            try:
+                parsed_date = datetime.strptime(date, '%Y-%m-%d')
+                if parsed_date.date() < datetime.now().date():
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'過去の日付は指定できません: {date}',
+                        'timestamp': datetime.now().isoformat()
+                    }), 400
+            except ValueError:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Invalid date format: {date}. Use YYYY-MM-DD',
+                    'timestamp': datetime.now().isoformat()
+                }), 400
+            
+            logger.info(f"Scraping ensemble with specified date: {date}")
+            
+            # サービスを取得
+            _, scraping_service = get_services()
+            result = scraping_service.scrape_facility('ensemble', date)
+            
+            return jsonify({
+                'status': result.get('status'),
+                'facility': 'ensemble',
+                'date': date,
+                'source': 'request',
+                'data': result.get('data', {}),
+                'timestamp': datetime.now().isoformat()
+            }), 200 if result.get('status') == 'success' else 500
+            
+    except Exception as e:
+        logger.error(f"Error in scrape_ensemble endpoint: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 
 @app.errorhandler(404)

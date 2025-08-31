@@ -372,5 +372,67 @@ class TestDebugMode:
         assert 'Test error' in data['results'][0]['details']
 
 
+class TestEnsembleEndpoint:
+    """あんさんぶるスタジオ専用エンドポイントのテスト"""
+    
+    @patch('src.entrypoints.flask_api.scrape_service')
+    @patch('src.entrypoints.flask_api.target_date_service')
+    def test_get_ensemble_with_target_date(self, mock_target_service, mock_scrape_service, client):
+        """GETリクエストでtarget_dateを使用するテスト"""
+        # モック設定
+        mock_target_service.get_single_date_to_scrape.return_value = '2025-11-20'
+        mock_scrape_service.scrape_facility.return_value = {
+            'status': 'success',
+            'data': {'2025-11-20': [{'facilityName': 'ensemble', 'timeSlots': {}}]}
+        }
+        
+        response = client.get('/scrape/ensemble')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 200
+        assert data['status'] == 'success'
+        assert data['facility'] == 'ensemble'
+        assert data['date'] == '2025-11-20'
+        assert data['source'] == 'target_date'
+    
+    @patch('src.entrypoints.flask_api.scrape_service')
+    def test_post_ensemble_with_date(self, mock_scrape_service, client):
+        """POSTリクエストで日付指定するテスト"""
+        # モック設定
+        mock_scrape_service.scrape_facility.return_value = {
+            'status': 'success',
+            'data': {'2025-11-15': [{'facilityName': 'ensemble', 'timeSlots': {}}]}
+        }
+        
+        response = client.post('/scrape/ensemble?date=2025-11-15')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 200
+        assert data['status'] == 'success'
+        assert data['facility'] == 'ensemble'
+        assert data['date'] == '2025-11-15'
+        assert data['source'] == 'request'
+    
+    def test_post_ensemble_without_date(self, client):
+        """POSTリクエストで日付なしエラーテスト"""
+        response = client.post('/scrape/ensemble')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 400
+        assert data['status'] == 'error'
+        assert 'Date is required' in data['message']
+    
+    def test_post_ensemble_with_past_date(self, client):
+        """POSTリクエストで過去日付エラーテスト"""
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        
+        response = client.post(f'/scrape/ensemble?date={yesterday}')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 400
+        assert data['status'] == 'error'
+        assert '過去の日付' in data['message']
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
