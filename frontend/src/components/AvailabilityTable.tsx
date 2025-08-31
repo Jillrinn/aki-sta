@@ -46,13 +46,14 @@ const AvailabilityTable: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
       <h1 className="text-2xl sm:text-3xl text-gray-800 text-center mb-2 font-bold">空きスタサーチくん</h1>
-      <p className="text-center text-gray-600 mb-2">施設空き状況一覧</p>
-      <div className="text-center mb-4">
-        <Link 
-          to="/target-dates" 
-          className="text-sm text-brand-blue hover:text-blue-700 underline"
+      <p className="text-center text-gray-600 mb-4">施設空き状況一覧</p>
+      
+      <div className="flex justify-center mb-4">
+        <Link
+          to="/target-dates"
+          className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base"
         >
-          登録済み日程を見る →
+          登録済み練習日程を見る →
         </Link>
       </div>
       
