@@ -17,10 +17,18 @@ class Settings:
         env_path = root_path / '.env'
         load_dotenv(env_path)
         
-        # Cosmos DB settings
-        self.cosmos_endpoint = os.getenv('COSMOS_ENDPOINT')
-        self.cosmos_key = os.getenv('COSMOS_KEY')
-        self.cosmos_database = os.getenv('COSMOS_DATABASE', 'studio-reservations')
+        # Check if running in test environment
+        self.is_testing = os.getenv('TESTING', 'false').lower() == 'true'
+        
+        # Cosmos DB settings (use test defaults if in testing mode)
+        if self.is_testing:
+            self.cosmos_endpoint = os.getenv('COSMOS_ENDPOINT', 'https://test-cosmos.documents.azure.com:443/')
+            self.cosmos_key = os.getenv('COSMOS_KEY', 'test-key-not-used-in-tests')
+            self.cosmos_database = os.getenv('COSMOS_DATABASE', 'test-db')
+        else:
+            self.cosmos_endpoint = os.getenv('COSMOS_ENDPOINT')
+            self.cosmos_key = os.getenv('COSMOS_KEY')
+            self.cosmos_database = os.getenv('COSMOS_DATABASE', 'studio-reservations')
         
         # Azure settings
         self.azure_storage_connection = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
@@ -46,6 +54,10 @@ class Settings:
         
     def validate(self) -> bool:
         """Validate required settings"""
+        # Skip validation in test environment
+        if self.is_testing:
+            return True
+            
         required_settings = [
             ('COSMOS_ENDPOINT', self.cosmos_endpoint),
             ('COSMOS_KEY', self.cosmos_key)

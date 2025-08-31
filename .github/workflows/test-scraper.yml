@@ -15,10 +15,11 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    - name: Build Docker image
+    - name: Build Docker test image
       uses: docker/build-push-action@v5
       with:
         context: ./scraper
+        file: ./scraper/Dockerfile.test
         tags: aki-sta-scraper:test
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -31,8 +32,8 @@ jobs:
     
     - name: Test scraper execution (dry run)
       run: |
-        # テスト環境変数でスクレイパーの起動確認
-        docker run --rm --env-file .env.test aki-sta-scraper:test python -m src.entrypoints.cli --help
+        # テスト環境変数でスクレイパーの起動確認（環境変数はイメージに含まれている）
+        docker run --rm aki-sta-scraper:test python -m src.entrypoints.cli --help
       working-directory: ./scraper
     
     - name: Upload test results

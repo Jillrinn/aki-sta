@@ -59,14 +59,14 @@ case "$1" in
         ;;
     
     test)
+        info "Building test Docker image..."
+        # テスト用イメージをビルド
+        docker build -t ${IMAGE_NAME}:test -f Dockerfile.test . || error "Failed to build test Docker image"
+        success "Test Docker image built successfully"
+        
         info "Running tests in Docker..."
-        # テスト用環境変数ファイルを使用（存在する場合）
-        if [ -f ".env.test" ]; then
-            docker run --rm --env-file .env.test $IMAGE_NAME python -m pytest tests/ -v
-        else
-            # テスト用環境変数がない場合は環境変数なしで実行
-            docker run --rm $IMAGE_NAME python -m pytest tests/ -v
-        fi
+        # テスト用イメージで実行（環境変数は既にイメージに含まれている）
+        docker run --rm ${IMAGE_NAME}:test python -m pytest tests/ -v
         ;;
     
     run)
