@@ -65,15 +65,6 @@ const TargetDatesList: React.FC = () => {
     return `${month}/${day}(${dayOfWeek})`;
   };
 
-  const formatUpdateTime = (updateTime: string): string => {
-    const date = new Date(updateTime);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${month}/${day} ${hours}:${minutes}`;
-  };
-
   const handleDeleteClick = (targetDate: TargetDate) => {
     setDeleteTarget(targetDate);
     setDeleteError('');
