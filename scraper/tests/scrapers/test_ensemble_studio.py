@@ -196,7 +196,7 @@ class TestEnsembleStudioScraper:
         
         assert saved_data == data
     
-    @patch('src.scrapers.ensemble_studio.sync_playwright')
+    @patch('src.scrapers.base.sync_playwright')
     def test_scrape_availability_error_handling(self, mock_playwright, scraper):
         """エラー時の例外再発生テスト"""
         # Playwrightがエラーを発生させる
