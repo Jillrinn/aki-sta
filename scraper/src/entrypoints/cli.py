@@ -19,7 +19,8 @@ load_dotenv(playwright_env_path)
 # scraperディレクトリをパスに追加（srcの親ディレクトリ）
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.scrapers.ensemble_studio import EnsembleStudioScraper
+from src.domain.entities import FacilityType
+from src.services.scraper_service import ScraperService
 
 
 def main():
@@ -67,20 +68,22 @@ def main():
     print(f"スクレイピング開始: {normalized_date}")
     
     # スクレイピング実行
-    scraper = EnsembleStudioScraper()
+    service = ScraperService()
     
     try:
-        result = scraper.scrape_and_save(normalized_date)
+        results = service.scrape_facility(FacilityType.ENSEMBLE_STUDIO, [normalized_date])
         
         # 結果を表示
-        if normalized_date in result.get("data", {}):
-            facilities = result["data"][normalized_date]
-            print(f"\n取得したデータ ({normalized_date}):")
-            for facility in facilities:
-                print(f"\n{facility['facilityName']}:")
-                for time_slot, status in facility['timeSlots'].items():
-                    status_symbol = "○" if status == "available" else "×" if status == "booked" else "?"
-                    print(f"  {time_slot}: {status_symbol} ({status})")
+        for result in results:
+            if result.status == 'success':
+                print(f"\n取得したデータ ({result.date}):")
+                for facility in result.facilities:
+                    print(f"\n{facility['facilityName']}:")
+                    for time_slot, status in facility['timeSlots'].items():
+                        status_symbol = "○" if status == "available" else "×" if status == "booked" else "?"
+                        print(f"  {time_slot}: {status_symbol} ({status})")
+            elif result.status == 'error':
+                print(f"\nエラー ({result.date}): {result.error}")
         
         # Cosmos DB保存のため、出力パス表示は削除（scraper.py内でログ出力済み）
         print("\nスクレイピング完了")
