@@ -140,7 +140,7 @@ const TargetDatesList: React.FC = () => {
             空きスタサーチくん
           </Link>
         </h1>
-        <p className="text-center text-gray-600 mb-4">登録済み練習日程</p>
+        <p className="text-center text-gray-600 mb-4">練習日程一覧</p>
         
         <div className="flex justify-center mb-4">
           <Link
@@ -155,9 +155,9 @@ const TargetDatesList: React.FC = () => {
           <button
             onClick={handleRegisterClick}
             className="px-4 py-2 bg-brand-green-dark text-white rounded-lg hover:bg-brand-green transition-colors shadow-lg font-bold text-sm sm:text-base"
-            aria-label="練習日程登録"
+            aria-label="新規登録"
           >
-            練習日程登録
+            新規登録
           </button>
         </div>
       </div>

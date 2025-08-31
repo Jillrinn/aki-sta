@@ -141,7 +141,7 @@ await act(async () => {
 
 ボタン:
 - 空き状況取得: accent-orange (#ffa929)
-- 練習日程登録: accent-green (#63bb65)
+- 新規登録: accent-green (#63bb65)
 
 ステータス:
 - 空き: status-available (#63bb65)

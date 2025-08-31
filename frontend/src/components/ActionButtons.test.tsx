@@ -11,7 +11,7 @@ describe('ActionButtons', () => {
     render(<ActionButtons />);
     
     expect(screen.getByLabelText('空き状況取得（手動）')).toBeInTheDocument();
-    expect(screen.queryByLabelText('練習日程登録')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('新規登録')).not.toBeInTheDocument();
   });
 
   test('shows "機能未実装" alert when "空き状況取得（手動）" button is clicked', async () => {

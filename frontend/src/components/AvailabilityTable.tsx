@@ -53,7 +53,7 @@ const AvailabilityTable: React.FC = () => {
           to="/target-dates"
           className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base"
         >
-          登録済み練習日程を見る →
+          練習日程一覧を見る →
         </Link>
       </div>
       
