@@ -1,39 +1,22 @@
-# スクレイパー API
+# あんさんぶるスタジオ スクレイパー
 
-Playwrightを使用した施設予約状況スクレイピングシステム。Pythonベストプラクティスに基づくレイヤードアーキテクチャで実装。
+Playwright + BeautifulSoup4を使用してあんさんぶるスタジオ（本郷・初台）の予約状況をスクレイピングするPythonアプリケーション。
 
 ## 機能
 
-- あんさんぶるスタジオ（本郷・初台）の予約状況取得
-- 3つの時間帯（9-12, 13-17, 18-21）の空き状況確認
-- Cosmos DB統合によるデータ永続化
-- target-dates連携（Cosmos DBから日付自動取得）
-- ファクトリーパターンによる施設拡張性
-
-## アーキテクチャ
-
-```
-scraper/src/
-├── config/           # 設定管理
-├── domain/           # ドメインモデル（エンティティ、例外）
-├── services/         # ビジネスロジック層
-├── scrapers/         # スクレイパー実装
-│   ├── base.py      # 基底クラス
-│   ├── factory.py   # ファクトリーパターン
-│   └── ensemble_studio_v2.py  # あんさんぶるスタジオ実装
-├── repositories/     # データアクセス層
-└── api/             # Flask API層
-    ├── app.py       # Flaskアプリファクトリー
-    ├── routes/      # APIルート（Blueprint）
-    └── error_handlers.py # エラーハンドリング
-```
+- 本郷・初台の2施設の予約状況を同時取得
+- 3つの時間帯（9-12, 13-17, 18-21）の空き状況を確認
+- リトライ機能付きの安定したスクレイピング
+- 動的な日付ナビゲーション（カレンダー月移動対応）
+- JSON形式でのデータ保存と既存データの更新
+- **Cosmos DB統合対応** ✅ 実装済み（v3.0）
 
 ## セットアップ
 
 ```bash
 # Python仮想環境の作成
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # 依存関係のインストール
 pip install -r requirements.txt
@@ -41,80 +24,79 @@ pip install -r requirements.txt
 # Playwrightブラウザのインストール
 playwright install chromium
 
-# 環境変数設定
-cp .env.example .env
+# 環境変数設定（Cosmos DB接続情報）
+cp .env.example .env  # .envファイルを作成
 # .envファイルを編集してCosmos DB接続情報を設定
 ```
 
-## API エンドポイント
+## 使用方法
 
-### v2 API (現行)
+### Web APIサーバーとして起動
+
+Scraperは Flask ベースの Web API サーバーとして起動できます。これにより HTTP エンドポイント経由でスクレイピングを実行できます。
+
+#### 🆕 v2 API（推奨） - Pythonベストプラクティスアーキテクチャ
 
 ```bash
-# APIサーバー起動
+# 仮想環境をアクティベート
+source venv/bin/activate
+
+# v2 API起動（ポート8000）
 python src/entrypoints/flask_api_v2.py
 
-# または Gunicorn（本番環境）
+# または Gunicorn を使用（本番環境推奨）
 gunicorn --bind 0.0.0.0:8000 --timeout 600 src.api:create_app
 ```
 
-#### エンドポイント一覧
-
-| エンドポイント | 説明 |
-|-------------|------|
-| `GET /api/health` | ヘルスチェック |
-| `GET /api/scrape/status` | 対応施設の確認 |
-| `POST /api/scrape/ensemble?date=YYYY-MM-DD` | あんさんぶるスタジオ（特定日付） |
-| `POST /api/scrape/ensemble` | あんさんぶるスタジオ（target-dates使用） |
-| `POST /api/scrape?date=YYYY-MM-DD` | 全施設（特定日付） |
-| `POST /api/scrape` | 全施設（target-dates使用） |
-
-#### 使用例
+**利用可能なエンドポイント:**
 
 ```bash
+# ヘルスチェック
+curl http://localhost:8000/api/health
+
 # あんさんぶるスタジオ - 特定日付
 curl -X POST 'http://localhost:8000/api/scrape/ensemble?date=2025-11-15'
 
-# あんさんぶるスタジオ - target-dates使用（Cosmos DBから日付取得）
+# あんさんぶるスタジオ - target-dates使用
 curl -X POST 'http://localhost:8000/api/scrape/ensemble'
+
+# 全施設 - 特定日付
+curl -X POST 'http://localhost:8000/api/scrape?date=2025-11-15'
+
+# ステータス確認
+curl http://localhost:8000/api/scrape/status
 ```
 
-#### レスポンス形式
+**特徴:**
+- ✨ **レイヤードアーキテクチャ**: 保守性と拡張性が向上
+- 🎯 **target-dates連携**: Cosmos DBから日付を自動取得
+- 🏭 **ファクトリーパターン**: 新施設追加が簡単
+- 🔧 **カスタム例外**: 詳細なエラー情報
 
-```json
-{
-  "status": "success",
-  "timestamp": "2025-08-31T12:00:00Z",
-  "facilityType": "ensemble_studio",
-  "totalDates": 1,
-  "successCount": 1,
-  "errorCount": 0,
-  "results": [
-    {
-      "status": "success",
-      "date": "2025-08-31",
-      "facilitiesCount": 2,
-      "data": {
-        "facilities": [...]
-      }
-    }
-  ]
-}
-```
-
-### v1 API (互換性維持)
-
-旧APIも引き続き利用可能です：
+#### v1 API（互換性維持）
 
 ```bash
-# 起動
+# Flask開発サーバーで起動（ポート8000）
 python src/entrypoints/flask_api.py
+```
 
-# エンドポイント
-POST /scrape?date=2025-11-15
+**利用可能なエンドポイント:**
+
+```bash
+# ヘルスチェック
+curl http://localhost:8000/health
+
+# スクレイピング実行（単一日付）
+curl -X POST 'http://localhost:8000/scrape?date=2025-11-15'
+
+# スクレイピング実行（複数日付、JSONペイロード）
+curl -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"dates": ["2025-11-15", "2025-11-16"]}'
 ```
 
 詳細なAPI仕様は [API_SPEC.md](API_SPEC.md) を参照してください。
+v2 APIの詳細は [README_API_V2.md](README_API_V2.md) を参照してください。
 
 ## 🐳 Docker環境での実行（推奨）
 
@@ -209,12 +191,112 @@ curl -X POST http://localhost:8000/scrape \
 http POST localhost:8000/scrape date==2025-01-30
 ```
 
+### Docker環境の詳細
 
-### CLIでの実行
+- **ベースイメージ**: Python 3.11-slim
+- **Webサーバー**: Gunicorn（ワーカー1、タイムアウト600秒）
+- **ブラウザ**: Playwright Chromium
+- **ポート**: 8000
+- **ヘルスチェック**: 30秒間隔で`/health`エンドポイントを確認
+
+### トラブルシューティング
+
+#### 環境変数エラー
+```bash
+# エラー: COSMOS_ENDPOINT is not configured
+# 解決: .env.dockerを正しく設定
+cp .env.docker.example .env.docker
+nano .env.docker  # Cosmos DB接続情報を入力
+```
+
+#### ポート競合
+```bash
+# エラー: bind: address already in use
+# 解決: 別のポートを使用
+docker-compose -p scraper-dev up -d  # 別のプロジェクト名で起動
+```
+
+#### コンテナ内デバッグ
+```bash
+# コンテナ内でシェル起動
+make shell
+
+# コンテナ内でPythonコンソール
+docker-compose exec scraper python
+
+# コンテナ内でスクレイピング実行
+docker-compose exec scraper python src/entrypoints/cli.py --date 2025-01-30
+```
+
+### run-playwright.sh スクリプトを使用（推奨）
+
+`run-playwright.sh`は、Playwright環境を適切に設定してPythonスクリプトを実行するラッパースクリプトです。
+
+#### 特徴
+- **環境分離**: Python用とNode.js用のPlaywrightが競合しないよう環境を分離
+- **自動設定**: `.env.playwright`から環境変数を自動読み込み
+- **ブラウザ管理**: 必要に応じてブラウザを自動インストール
+- **仮想環境サポート**: venv環境を自動検出・アクティベート
+
+#### 基本的な使い方
 
 ```bash
-# 環境分離スクリプト使用（Playwright競合回避）
+# デフォルト実行（今日の日付でスクレイピング）
+./run-playwright.sh src/entrypoints/cli.py
+
+# 特定日付のスクレイピング（YYYY-MM-DD形式）
 ./run-playwright.sh src/entrypoints/cli.py --date 2025-11-15
+
+# YYYY/MM/DD形式でも指定可能
+./run-playwright.sh src/entrypoints/cli.py --date 2025/11/15
+
+# ブラウザをインストールしてから実行
+./run-playwright.sh --install-browsers src/entrypoints/cli.py
+
+# 別のブラウザを使用（デフォルトはwebkit）
+./run-playwright.sh --browser chromium src/entrypoints/cli.py
+
+# ヘルプを表示
+./run-playwright.sh --help
+```
+
+#### 環境設定（.env.playwright）
+```bash
+# Playwright環境分離設定
+PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/playwright-python
+PLAYWRIGHT_BROWSER=webkit
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
+```
+
+### 直接Pythonで実行
+
+```bash
+# 仮想環境をアクティベート
+source venv/bin/activate
+
+# 特定日付のスクレイピング（YYYY-MM-DD形式）
+python src/entrypoints/cli.py --date 2025-11-15
+
+# YYYY/MM/DD形式でも指定可能
+python src/entrypoints/cli.py --date 2025/09/01
+
+# 今日の日付でスクレイピング
+python src/entrypoints/cli.py
+```
+
+### Pythonスクリプトとして
+
+```python
+from src.scrapers.ensemble_studio import EnsembleStudioScraper
+
+scraper = EnsembleStudioScraper()
+
+# 特定日付の予約状況を取得
+date = "2025-11-15"
+results = scraper.scrape_availability(date)
+
+# JSONファイルに保存
+scraper.scrape_and_save(date, "availability.json")
 ```
 
 ## テスト実行
@@ -230,12 +312,31 @@ pytest tests/ -v
 npm run test:scraper
 ```
 
+### テストの種類
+
+- **単体テスト** (`test_scraper.py`): 個別関数のテスト
+- **動的日付テスト** (`test_dynamic_date.py`): 現在日時+7日での型検証テスト
+- **日付形式テスト** (`test_date_format.py`): YYYY-MM-DDとYYYY/MM/DD形式のサポート確認
+- **ファイル更新テスト** (`test_file_update.py`): ファイルの作成・更新・タイムスタンプ確認
+- **統合テスト**: 実際のサイトへのアクセステスト
 
 ## 開発環境
 
 ```bash
 # 開発用依存関係のインストール
 pip install -r requirements-dev.txt
+
+# コードフォーマット
+black src/ tests/
+
+# インポート整理
+isort src/ tests/
+
+# 型チェック
+mypy src/
+
+# Linting
+flake8 src/ tests/
 ```
 
 ## 出力
