@@ -126,7 +126,7 @@ jobs:
         echo "Response: $response"
         
         # Check if response contains expected fields
-        if echo "$response" | grep -q '"status":"healthy"'; then
+        if echo "$response" | grep -q '"status".*"healthy"'; then
           echo "✅ Health check passed"
         else
           echo "❌ Health check failed - expected 'healthy' status"
