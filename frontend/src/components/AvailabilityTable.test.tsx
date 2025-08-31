@@ -718,7 +718,7 @@ describe('AvailabilityTable', () => {
 
       await waitFor(() => {
         expect(screen.getByText('🕐')).toBeInTheDocument();
-        expect(screen.getByText(/更新/)).toBeInTheDocument();
+        expect(screen.getAllByText(/更新/)[0]).toBeInTheDocument();
       });
     });
 

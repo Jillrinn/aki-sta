@@ -18,18 +18,18 @@ const ActionButtons: React.FC = () => {
     <>
       <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-2 sm:gap-3 mb-4">
         <button
-          onClick={handleRegisterClick}
-          className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg font-medium text-sm sm:text-base"
-          aria-label="練習日程登録"
-        >
-          練習日程登録
-        </button>
-        <button
           onClick={handleManualFetchClick}
-          className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-lg font-medium text-sm sm:text-base"
+          className="w-full sm:w-auto px-4 py-2 bg-brand-orange-dark text-white rounded-lg hover:bg-brand-orange transition-colors shadow-lg font-bold text-sm sm:text-base order-1 sm:order-2"
           aria-label="空き状況取得（手動）"
         >
           空き状況取得（手動）
+        </button>
+        <button
+          onClick={handleRegisterClick}
+          className="w-full sm:w-auto px-4 py-2 bg-brand-green-dark text-white rounded-lg hover:bg-brand-green transition-colors shadow-lg font-bold text-sm sm:text-base order-2 sm:order-1"
+          aria-label="練習日程登録"
+        >
+          練習日程登録
         </button>
       </div>
 

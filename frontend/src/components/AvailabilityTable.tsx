@@ -75,7 +75,7 @@ const AvailabilityTable: React.FC = () => {
                 role="table"
                 aria-label={`${date}の施設空き状況`}
               >
-                <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                <thead className="bg-gradient-to-r from-primary-400 to-primary-700 text-white">
                   <tr>
                     <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
                       施設名

@@ -12,7 +12,7 @@ const AvailabilityTableRow: React.FC<AvailabilityTableRowProps> = ({
   facility, 
   formatUpdateTime 
 }) => (
-  <tr className="hover:bg-blue-50 transition-colors duration-150">
+  <tr className="hover:bg-primary-50 transition-colors duration-150">
     <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">
       {facility.facilityName}
     </td>

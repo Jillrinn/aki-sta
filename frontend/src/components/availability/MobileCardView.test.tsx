@@ -91,7 +91,7 @@ describe('MobileCardView', () => {
       />
     );
     
-    const availableSlot = container.querySelector('.bg-green-50');
+    const availableSlot = container.querySelector('[class*="bg-accent-green"]');
     expect(availableSlot).toBeInTheDocument();
     expect(availableSlot).toHaveTextContent('9-12時');
   });
@@ -125,7 +125,7 @@ describe('MobileCardView', () => {
     expect(card).toBeInTheDocument();
     
     // Check header with gradient
-    const header = container.querySelector('.bg-gradient-to-r.from-blue-600.to-blue-700');
+    const header = container.querySelector('[class*="bg-gradient-to-r"][class*="from-primary"]');
     expect(header).toBeInTheDocument();
     
     // Check footer with update time
@@ -151,7 +151,7 @@ describe('MobileCardView', () => {
       />
     );
     
-    const greenSlots = container.querySelectorAll('.bg-green-50');
+    const greenSlots = container.querySelectorAll('[class*="bg-accent-green"]');
     expect(greenSlots.length).toBe(3);
     
     const availableTexts = screen.getAllByText('空き');

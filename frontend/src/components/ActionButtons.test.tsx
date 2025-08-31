@@ -84,11 +84,11 @@ describe('ActionButtons', () => {
     render(<ActionButtons />);
     
     const registerButton = screen.getByLabelText('練習日程登録');
-    expect(registerButton).toHaveClass('bg-blue-600');
+    expect(registerButton).toHaveClass('bg-brand-green-dark');
     expect(registerButton).toHaveClass('text-white');
     
     const manualFetchButton = screen.getByLabelText('空き状況取得（手動）');
-    expect(manualFetchButton).toHaveClass('bg-green-600');
+    expect(manualFetchButton).toHaveClass('bg-brand-orange-dark');
     expect(manualFetchButton).toHaveClass('text-white');
   });
 

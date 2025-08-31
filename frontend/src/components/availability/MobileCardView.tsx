@@ -27,7 +27,7 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
 
   return (
     <div className="bg-white rounded-lg shadow-md mb-4 overflow-hidden border border-gray-200">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
+      <div className="bg-gradient-to-r from-primary-400 to-primary-700 text-white p-4">
         <h3 className="text-lg font-semibold">{facility.facilityName}</h3>
       </div>
       
@@ -41,7 +41,7 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
             <div 
               key={timeSlot}
               className={`flex items-center justify-between p-3 rounded-lg ${
-                isAvailable ? 'bg-green-50' : 'bg-gray-50'
+                isAvailable ? 'bg-accent-green/10' : 'bg-gray-50'
               }`}
             >
               <span className="text-base font-medium text-gray-700">
@@ -50,7 +50,7 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
               <div className="flex items-center gap-3">
                 <StatusBadge status={status} />
                 <span className={`text-sm font-medium ${
-                  isAvailable ? 'text-green-600' : 'text-gray-600'
+                  isAvailable ? 'text-accent-green' : 'text-gray-600'
                 }`}>
                   {statusText}
                 </span>

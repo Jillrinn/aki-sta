@@ -12,9 +12,9 @@ export const STATUS_SYMBOLS: Record<StatusValue, string> = {
 };
 
 export const STATUS_COLORS: Record<StatusValue, string> = {
-  available: 'bg-green-500',
-  booked: 'bg-red-500',
-  lottery: 'bg-orange-500',
+  available: 'bg-status-available',
+  booked: 'bg-status-reserved',
+  lottery: 'bg-status-pending',
   unknown: 'bg-gray-500'
 };
 
