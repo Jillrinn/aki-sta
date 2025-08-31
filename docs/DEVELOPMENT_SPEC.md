@@ -768,9 +768,16 @@ describe('Full Application Flow', () => {
   "id": "2025-08-19",
   "date": "2025-08-19",
   "count": 2,
+  "status": "completed",
   "updatedAt": "2025-08-19T15:30:00Z"
 }
 ```
+
+**statusフィールド値**:
+- `pending`: 実行待機中
+- `running`: 実行中
+- `completed`: 完了
+- `failed`: 失敗
 
 ### クエリパターン
 
