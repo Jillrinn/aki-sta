@@ -6,6 +6,17 @@ import { availabilityApi } from '../services/api';
 
 jest.mock('../services/api');
 
+// useTargetDatesフックをモック
+jest.mock('../hooks/useTargetDates', () => ({
+  useTargetDates: () => ({
+    data: [],
+    loading: false,
+    error: null,
+    refetch: jest.fn(),
+    deleteTargetDate: jest.fn()
+  })
+}));
+
 describe('AvailabilityTable', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -156,8 +167,8 @@ describe('AvailabilityTable', () => {
       expect(tables).toHaveLength(2); // 2つの日付なので2つのテーブル
       
       // 各日付のヘッダーが表示されていることを確認
-      expect(screen.getByText('2025-11-15の空き状況')).toBeInTheDocument();
-      expect(screen.getByText('2025-11-16の空き状況')).toBeInTheDocument();
+      expect(screen.getByText('2025-11-15')).toBeInTheDocument();
+      expect(screen.getByText('2025-11-16')).toBeInTheDocument();
     });
   });
 
