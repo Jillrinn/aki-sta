@@ -483,7 +483,7 @@ describe('AvailabilityTable', () => {
         expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
         
         // Card should be collapsed because 13-17 is booked
-        expect(screen.getByText('昼の時間帯は予約済み')).toBeInTheDocument();
+        expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
         
         // Time slots should not be visible since the card is collapsed
         expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
@@ -684,7 +684,7 @@ describe('AvailabilityTable', () => {
         expect(screen.getByText('9-12時')).toBeInTheDocument();
         
         // First facility (和) should show collapsed message (13-17 is booked)
-        expect(screen.getByText('昼の時間帯は予約済み')).toBeInTheDocument();
+        expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
       });
     });
 

@@ -88,8 +88,8 @@ describe('MobileCardView', () => {
       />
     );
     
-    // Should show "昼の時間帯は予約済み" since 13-17 is booked
-    expect(screen.getByText('昼の時間帯は予約済み')).toBeInTheDocument();
+    // Should show "希望時間は予約済み" since 13-17 is booked
+    expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
     
     // Should not show time slots since it's collapsed
     expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
@@ -314,8 +314,8 @@ describe('MobileCardView', () => {
     // Should be collapsed even though there are available slots
     expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
     
-    // Should show "昼の時間帯は予約済み" message
-    expect(screen.getByText('昼の時間帯は予約済み')).toBeInTheDocument();
+    // Should show "希望時間は予約済み" message
+    expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
   });
 
   it('toggles expansion when header is clicked', () => {
