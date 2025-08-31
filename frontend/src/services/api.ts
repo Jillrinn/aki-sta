@@ -6,6 +6,7 @@ import {
   CreateTargetDateResponse,
   DeleteTargetDateResponse 
 } from '../types/targetDates';
+import { ScraperResponse } from '../types/scraper';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
@@ -69,6 +70,24 @@ export const targetDatesApi = {
       return response.data;
     } catch (error) {
       console.error('Failed to delete target date:', error);
+      throw error;
+    }
+  }
+};
+
+export const scraperApi = {
+  async triggerScraping(): Promise<ScraperResponse> {
+    try {
+      const response = await axios.post<ScraperResponse>(
+        `${API_BASE_URL}/scrape`
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        // 409エラー（すでに実行中）の場合もエラーデータを返す
+        return error.response.data;
+      }
+      console.error('Failed to trigger scraping:', error);
       throw error;
     }
   }

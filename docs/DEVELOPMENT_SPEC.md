@@ -872,8 +872,10 @@ npx create-react-app frontend --template typescript
 ### 環境変数設定
 ```bash
 # .env (ローカル開発用)
-COSMOS_CONNECTION_STRING=AccountEndpoint=https://...
-COSMOS_DATABASE_NAME=studio-reservations
+COSMOS_ENDPOINT=https://...
+COSMOS_KEY=...
+COSMOS_DATABASE=studio-reservations
+SCRAPER_API_URL=https://aki-sta-scraper.azurewebsites.net
 NODE_ENV=development
 ```
 

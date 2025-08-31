@@ -1,0 +1,22 @@
+export interface ScraperSuccessResponse {
+  message: string;
+  description: string;
+  date: string;
+  requestId: string;
+  status: 'pending';
+}
+
+export interface ScraperAlreadyRunningResponse {
+  error: string;
+  message: string;
+  status: 'pending' | 'running';
+  lastRequestedAt: string;
+}
+
+export interface ScraperErrorResponse {
+  error: string;
+  message: string;
+  details?: string;
+}
+
+export type ScraperResponse = ScraperSuccessResponse | ScraperAlreadyRunningResponse | ScraperErrorResponse;

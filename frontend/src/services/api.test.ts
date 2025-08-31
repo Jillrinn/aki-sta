@@ -1,4 +1,4 @@
-import { availabilityApi } from './api';
+import { availabilityApi, scraperApi } from './api';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -82,5 +82,66 @@ describe('availabilityApi', () => {
     
     process.env.REACT_APP_API_URL = originalEnv;
     jest.dontMock('axios');
+  });
+});
+
+describe('scraperApi', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should trigger scraping successfully', async () => {
+    const mockResponse = {
+      data: {
+        message: 'Scraping request accepted',
+        description: 'スクレイピング処理を開始しました。バックグラウンドで実行中です。',
+        date: '2025-08-31',
+        requestId: 'rate-limit-2025-08-31',
+        status: 'pending' as const
+      }
+    };
+
+    (axios.post as jest.Mock).mockResolvedValue(mockResponse);
+
+    const result = await scraperApi.triggerScraping();
+
+    expect(axios.post).toHaveBeenCalledWith('/api/scrape');
+    expect(result).toEqual(mockResponse.data);
+  });
+
+  it('should handle 409 error when scraping is already running', async () => {
+    const mockErrorResponse = {
+      response: {
+        status: 409,
+        data: {
+          error: 'Scraping already in progress',
+          message: 'スクレイピング処理がすでに実行中です。しばらくお待ちください。',
+          status: 'running' as const,
+          lastRequestedAt: '2025-08-31T10:00:00Z'
+        }
+      }
+    };
+
+    (axios.post as jest.Mock).mockRejectedValue(mockErrorResponse);
+    (axios.isAxiosError as jest.Mock) = jest.fn().mockReturnValue(true);
+
+    const result = await scraperApi.triggerScraping();
+
+    expect(result).toEqual(mockErrorResponse.response.data);
+    expect(axios.post).toHaveBeenCalledWith('/api/scrape');
+  });
+
+  it('should handle network errors', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    const mockError = new Error('Network error');
+
+    (axios.post as jest.Mock).mockRejectedValue(mockError);
+    (axios.isAxiosError as jest.Mock) = jest.fn().mockReturnValue(false);
+
+    await expect(scraperApi.triggerScraping()).rejects.toThrow('Network error');
+    expect(axios.post).toHaveBeenCalledWith('/api/scrape');
+    
+    consoleErrorSpy.mockRestore();
   });
 });
