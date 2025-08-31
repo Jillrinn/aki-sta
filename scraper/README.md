@@ -14,18 +14,34 @@ Playwrightを使用した施設予約状況スクレイピングシステム。P
 
 ```
 scraper/src/
+├── api/              # Flask API層
+│   ├── app.py       # Flaskアプリファクトリー
+│   ├── routes/      # APIルート（Blueprint）
+│   │   ├── health.py    # ヘルスチェック
+│   │   └── scrape.py    # スクレイピングエンドポイント
+│   ├── middleware.py     # ミドルウェア
+│   └── error_handlers.py # エラーハンドリング
 ├── config/           # 設定管理
-├── domain/           # ドメインモデル（エンティティ、例外）
-├── services/         # ビジネスロジック層
+│   └── settings.py  # 環境変数と設定
+├── domain/           # ドメインモデル
+│   ├── entities.py  # エンティティ定義
+│   └── exceptions.py # カスタム例外
+├── entrypoints/      # 実行エントリーポイント
+│   ├── cli.py       # CLIインターフェース
+│   ├── container.py # コンテナ実行用
+│   └── flask_api.py # Flask APIサーバー
+├── repositories/     # データアクセス層
+│   └── cosmos_repository.py # Cosmos DB操作
 ├── scrapers/         # スクレイパー実装
 │   ├── base.py      # 基底クラス
 │   ├── factory.py   # ファクトリーパターン
-│   └── ensemble_studio_v2.py  # あんさんぶるスタジオ実装
-├── repositories/     # データアクセス層
-└── api/             # Flask API層
-    ├── app.py       # Flaskアプリファクトリー
-    ├── routes/      # APIルート（Blueprint）
-    └── error_handlers.py # エラーハンドリング
+│   └── ensemble_studio.py # あんさんぶるスタジオ実装
+├── services/         # ビジネスロジック層
+│   ├── scraper_service.py      # スクレイピング制御
+│   ├── cosmos_service.py       # Cosmos DBサービス
+│   └── target_dates_service.py # 対象日付管理
+└── utils/            # ユーティリティ
+    └── playwright_wrapper.py # Playwrightラッパー
 ```
 
 ## セットアップ
@@ -48,17 +64,15 @@ cp .env.example .env
 
 ## API エンドポイント
 
-### v2 API (現行)
-
 ```bash
 # APIサーバー起動
-python src/entrypoints/flask_api_v2.py
+python src/entrypoints/flask_api.py
 
 # または Gunicorn（本番環境）
-gunicorn --bind 0.0.0.0:8000 --timeout 600 src.api:create_app
+gunicorn --bind 0.0.0.0:8000 --timeout 600 src.entrypoints.flask_api:app
 ```
 
-#### エンドポイント一覧
+### エンドポイント一覧
 
 | エンドポイント | 説明 |
 |-------------|------|
@@ -69,7 +83,7 @@ gunicorn --bind 0.0.0.0:8000 --timeout 600 src.api:create_app
 | `POST /api/scrape?date=YYYY-MM-DD` | 全施設（特定日付） |
 | `POST /api/scrape` | 全施設（target-dates使用） |
 
-#### 使用例
+### 使用例
 
 ```bash
 # あんさんぶるスタジオ - 特定日付
@@ -79,7 +93,7 @@ curl -X POST 'http://localhost:8000/api/scrape/ensemble?date=2025-11-15'
 curl -X POST 'http://localhost:8000/api/scrape/ensemble'
 ```
 
-#### レスポンス形式
+### レスポンス形式
 
 ```json
 {
@@ -100,18 +114,6 @@ curl -X POST 'http://localhost:8000/api/scrape/ensemble'
     }
   ]
 }
-```
-
-### v1 API (互換性維持)
-
-旧APIも引き続き利用可能です：
-
-```bash
-# 起動
-python src/entrypoints/flask_api.py
-
-# エンドポイント
-POST /scrape?date=2025-11-15
 ```
 
 詳細なAPI仕様は [API_SPEC.md](API_SPEC.md) を参照してください。
@@ -244,66 +246,61 @@ pip install -r requirements-dev.txt
 
 ## データストレージ
 
-### 🌟 現在の動作（JSON + Cosmos DB 統合）
+### 🌟 Cosmos DB統合アーキテクチャ
 
-**JSONファイル保存が主要機能**として動作し、Cosmos DBは追加機能として利用できます：
+スクレイピングデータはCosmos DBを主要ストレージとして使用し、必要に応じてJSONファイル出力も可能です：
 
-1. **主要保存先：JSONファイル**
-   - `shared-data/availability.json`に常に保存
-   - 従来の形式を維持（下位互換性）
-   - ローカル開発やファイルベースの処理に対応
-
-2. **追加保存先：Cosmos DB**（オプション）
-   - 環境変数設定時のみ有効
+1. **主要保存先：Cosmos DB**
    - Azure Cosmos DBにリアルタイムで保存
    - upsert機能で既存データを更新
    - 本番環境での高可用性・検索機能を提供
+   - target-datesと統合された管理
 
-3. **並行保存方式**
-   - 環境変数設定時は**両方**に保存
-   - Cosmos DB失敗時もJSONファイルへの保存は継続
-   - データ損失を防ぐ安全な設計
+2. **補助保存先：JSONファイル**（オプション）
+   - `shared-data/availability.json`に出力可能
+   - ローカル開発やデバッグ用途
+   - レガシーシステムとの互換性維持
+
+3. **データ永続化戦略**
+   - Cosmos DBを中心としたデータ管理
+   - APIを通じた一貫したアクセス
+   - スケーラブルなアーキテクチャ
 
 ### 📁 ファイル保存とDB保存の使い分け
 
 #### 🔹 デフォルト動作（推奨）
 
 ```bash
-# JSONファイル + Cosmos DB 並行保存
-./run-playwright.sh src/main.py --date 2025-11-15
+# Cosmos DB経由での実行
+./run-playwright.sh src/entrypoints/cli.py --date 2025-11-15
 ```
 
 **動作:**
-1. JSONファイルに保存 ✅（常に実行）
-2. 環境変数があればCosmos DBにも保存 ✅
-3. Cosmos DB失敗時もJSONファイル保存は成功 ✅
+1. Cosmos DBに保存 ✅（主要ストレージ）
+2. target-datesとの連携 ✅
+3. APIを通じた統一的なアクセス ✅
 
-#### 🔹 JSONファイルのみ保存
+#### 🔹 API経由での実行
 
 ```bash
-# 環境変数を無効化してJSONファイルのみに保存
-unset COSMOS_ENDPOINT COSMOS_KEY COSMOS_DATABASE
-./run-playwright.sh src/main.py --date 2025-11-15
-```
+# Flask APIサーバー起動
+python src/entrypoints/flask_api.py
 
-**動作:**
-1. JSONファイルに保存 ✅
-2. Cosmos DB接続情報なし → スキップ
-3. **従来通りの単一ファイル保存動作**
+# スクレイピング実行
+curl -X POST 'http://localhost:8000/api/scrape/ensemble?date=2025-11-15'
+```
 
 #### 🔹 プログラムから制御
 
 ```python
-from src.scrapers.ensemble_studio import EnsembleStudioScraper
+from src.services.scraper_service import ScraperService
+from src.domain.entities import FacilityType
 
-scraper = EnsembleStudioScraper()
+service = ScraperService()
 date = "2025-11-15"
 
-# デフォルト：Cosmos DB + JSONファイル並行保存
-results = scraper.scrape_and_save(date)
-
-# 特定パスのJSONファイルに強制保存
-results = scraper.scrape_and_save(date, "custom_output.json")
+# Cosmos DB経由でスクレイピング実行
+results = service.scrape_facility(FacilityType.ENSEMBLE_STUDIO, [date])
 ```
 
 ### 🔧 環境変数設定
@@ -317,18 +314,16 @@ COSMOS_KEY=your-primary-key
 COSMOS_DATABASE=your-database-name
 ```
 
-### 📊 保存先判定ロジック
+### 📊 データフロー
 
 ```
 スクレイピング実行
     ↓
-JSONファイルに保存（常に実行）
-    ↓ 成功
-Cosmos DB環境変数あり？
-    ↓ Yes              ↓ No
-Cosmos DBに保存      完了
-    ↓ 成功  ↓ 失敗      
-   完了    完了（JSON保存済みなので安全）
+ScraperService経由で処理
+    ↓
+Cosmos DBに保存（主要ストレージ）
+    ↓
+APIレスポンス返却
 ```
 
 ### 🗂️ データ形式
@@ -372,7 +367,7 @@ Cosmos DBに保存      完了
 }
 ```
 
-### 🚀 新機能の使い方
+### 🚀 使い方
 
 #### 1. 初回セットアップ
 ```bash
@@ -383,11 +378,14 @@ cp .env.example .env
 nano .env
 ```
 
-#### 2. データ保存の確認
+#### 2. スクレイピング実行
 ```bash
-# スクレイピング実行後、以下で確認
-echo "Cosmos DBに保存されました"
-echo "JSONファイルにも保存されました: shared-data/availability.json"
+# CLI経由
+./run-playwright.sh src/entrypoints/cli.py --date 2025-11-15
+
+# API経由
+python src/entrypoints/flask_api.py
+curl -X POST 'http://localhost:8000/api/scrape/ensemble?date=2025-11-15'
 ```
 
 #### 3. トラブルシューティング
@@ -395,18 +393,10 @@ echo "JSONファイルにも保存されました: shared-data/availability.json
 **Cosmos DB接続エラーの場合:**
 ```bash
 # エラーログを確認
-./run-playwright.sh src/main.py --date 2025-11-15
+./run-playwright.sh src/entrypoints/cli.py --date 2025-11-15
 
-# 出力例:
-# Cosmos DB not available: Cosmos DB connection settings are missing
-# Also saved to JSON file: ../../shared-data/availability.json
-```
-
-**JSONファイルのみ使用する場合:**
-```bash
-# 一時的に環境変数を無効化
-mv .env .env.backup
-./run-playwright.sh src/main.py --date 2025-11-15
+# 環境変数の確認
+cat .env | grep COSMOS
 ```
 
 ## CI/CD
