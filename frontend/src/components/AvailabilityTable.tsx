@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Facility } from '../types/availability';
 import { useAvailabilityData } from '../hooks/useAvailabilityData';
+import { useTargetDates } from '../hooks/useTargetDates';
 import { formatUpdateTime } from '../utils/dateFormatter';
 import { TIME_SLOTS } from '../constants/availability';
 import {
@@ -16,7 +17,17 @@ import ActionButtons from './ActionButtons';
 
 const AvailabilityTable: React.FC = () => {
   const { data, loading, error } = useAvailabilityData();
+  const { data: targetDates } = useTargetDates();
   const [isMobile, setIsMobile] = useState(false);
+
+  // 日付とラベルのマッピングを作成
+  const labelMap = useMemo(() => {
+    const map: { [date: string]: string } = {};
+    targetDates?.forEach(td => {
+      map[td.date] = td.label;
+    });
+    return map;
+  }, [targetDates]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -66,6 +77,11 @@ const AvailabilityTable: React.FC = () => {
             data-testid={`date-header-${dateIndex}`}
           >
             {date}の空き状況
+            {labelMap[date] && (
+              <span className="ml-2 text-lg text-gray-600">
+                - {labelMap[date]}
+              </span>
+            )}
           </h2>
           
           {isMobile ? (
