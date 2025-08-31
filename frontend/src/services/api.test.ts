@@ -1,7 +1,13 @@
 import { availabilityApi, scraperApi } from './api';
 import axios from 'axios';
 
-jest.mock('axios');
+jest.mock('axios', () => ({
+  ...jest.requireActual('axios'),
+  get: jest.fn(),
+  post: jest.fn(),
+  delete: jest.fn(),
+  isAxiosError: jest.fn()
+}));
 
 describe('availabilityApi', () => {
   beforeEach(() => {
@@ -123,7 +129,7 @@ describe('scraperApi', () => {
     };
 
     (axios.post as jest.Mock).mockRejectedValue(mockErrorResponse);
-    (axios.isAxiosError as jest.Mock) = jest.fn().mockReturnValue(true);
+    (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
 
     const result = await scraperApi.triggerScraping();
 
@@ -137,7 +143,7 @@ describe('scraperApi', () => {
     const mockError = new Error('Network error');
 
     (axios.post as jest.Mock).mockRejectedValue(mockError);
-    (axios.isAxiosError as jest.Mock) = jest.fn().mockReturnValue(false);
+    (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(false);
 
     await expect(scraperApi.triggerScraping()).rejects.toThrow('Network error');
     expect(axios.post).toHaveBeenCalledWith('/api/scrape');
