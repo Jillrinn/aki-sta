@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTargetDates } from '../hooks/useTargetDates';
 import { TargetDate } from '../types/targetDates';
+import TargetDateModal from './TargetDateModal';
 
 const DeleteConfirmModal: React.FC<{
   isOpen: boolean;
@@ -50,10 +51,11 @@ const DeleteConfirmModal: React.FC<{
 };
 
 const TargetDatesList: React.FC = () => {
-  const { data, loading, error, deleteTargetDate } = useTargetDates();
+  const { data, loading, error, deleteTargetDate, refetch } = useTargetDates();
   const [deleteTarget, setDeleteTarget] = useState<TargetDate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -97,6 +99,15 @@ const TargetDatesList: React.FC = () => {
     setDeleteError('');
   };
 
+  const handleRegisterClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    refetch(); // 登録後にリストを更新
+  };
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
@@ -138,6 +149,16 @@ const TargetDatesList: React.FC = () => {
           >
             ← 空き状況に戻る
           </Link>
+        </div>
+        
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleRegisterClick}
+            className="px-4 py-2 bg-brand-green-dark text-white rounded-lg hover:bg-brand-green transition-colors shadow-lg font-bold text-sm sm:text-base"
+            aria-label="練習日程登録"
+          >
+            練習日程登録
+          </button>
         </div>
       </div>
 
@@ -206,6 +227,11 @@ const TargetDatesList: React.FC = () => {
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
         isDeleting={isDeleting}
+      />
+
+      <TargetDateModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
       />
     </div>
   );

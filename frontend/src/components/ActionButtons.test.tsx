@@ -2,76 +2,33 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ActionButtons from './ActionButtons';
 
-// TargetDateModalをモック化
-jest.mock('./TargetDateModal', () => {
-  return function MockTargetDateModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    if (!isOpen) return null;
-    return (
-      <div data-testid="target-date-modal">
-        <button onClick={onClose}>Close Modal</button>
-      </div>
-    );
-  };
-});
-
 describe('ActionButtons', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('renders both buttons', () => {
+  test('renders manual fetch button only', () => {
     render(<ActionButtons />);
     
-    expect(screen.getByLabelText('練習日程登録')).toBeInTheDocument();
     expect(screen.getByLabelText('空き状況取得（手動）')).toBeInTheDocument();
-  });
-
-  test('opens modal when "練習日程登録" button is clicked', () => {
-    render(<ActionButtons />);
-    
-    // モーダルが最初は表示されていないことを確認
-    expect(screen.queryByTestId('target-date-modal')).not.toBeInTheDocument();
-    
-    // ボタンをクリック
-    const registerButton = screen.getByLabelText('練習日程登録');
-    fireEvent.click(registerButton);
-    
-    // モーダルが表示されることを確認
-    expect(screen.getByTestId('target-date-modal')).toBeInTheDocument();
-  });
-
-  test('closes modal when onClose is called', () => {
-    render(<ActionButtons />);
-    
-    // モーダルを開く
-    const registerButton = screen.getByLabelText('練習日程登録');
-    fireEvent.click(registerButton);
-    
-    expect(screen.getByTestId('target-date-modal')).toBeInTheDocument();
-    
-    // モーダルを閉じる
-    const closeButton = screen.getByText('Close Modal');
-    fireEvent.click(closeButton);
-    
-    // モーダルが閉じられることを確認
-    expect(screen.queryByTestId('target-date-modal')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('練習日程登録')).not.toBeInTheDocument();
   });
 
   test('shows "機能未実装" alert when "空き状況取得（手動）" button is clicked', async () => {
     render(<ActionButtons />);
     
-    // アラートが最初は表示されていないことを確認
+    // 初期状態ではアラートは表示されない
     expect(screen.queryByText('機能未実装です！')).not.toBeInTheDocument();
     
     // ボタンをクリック
-    const manualFetchButton = screen.getByLabelText('空き状況取得（手動）');
-    fireEvent.click(manualFetchButton);
+    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    fireEvent.click(fetchButton);
     
-    // アラートが表示されることを確認
+    // アラートが表示される
     expect(screen.getByText('機能未実装です！')).toBeInTheDocument();
     expect(screen.getByText('この機能は現在開発中です。')).toBeInTheDocument();
     
-    // アラートが3秒後に消えることを確認
+    // 3秒後にアラートが消える
     await waitFor(
       () => {
         expect(screen.queryByText('機能未実装です！')).not.toBeInTheDocument();
@@ -80,37 +37,27 @@ describe('ActionButtons', () => {
     );
   });
 
-  test('buttons have correct styling', () => {
+  test('button has correct styling', () => {
     render(<ActionButtons />);
     
-    const registerButton = screen.getByLabelText('練習日程登録');
-    expect(registerButton).toHaveClass('bg-brand-green-dark');
-    expect(registerButton).toHaveClass('text-white');
-    
-    const manualFetchButton = screen.getByLabelText('空き状況取得（手動）');
-    expect(manualFetchButton).toHaveClass('bg-brand-orange-dark');
-    expect(manualFetchButton).toHaveClass('text-white');
+    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    expect(fetchButton).toHaveClass('bg-brand-orange-dark');
+    expect(fetchButton).toHaveClass('text-white');
   });
 
-  test('buttons container has responsive layout', () => {
+  test('button container has right alignment', () => {
     const { container } = render(<ActionButtons />);
     
     const buttonsContainer = container.querySelector('.flex');
     expect(buttonsContainer).toBeInTheDocument();
-    expect(buttonsContainer).toHaveClass('flex-col');
-    expect(buttonsContainer).toHaveClass('sm:flex-row');
-    expect(buttonsContainer).toHaveClass('sm:justify-end');
+    expect(buttonsContainer).toHaveClass('justify-end');
   });
 
-  test('buttons have responsive width', () => {
+  test('button has proper sizing', () => {
     render(<ActionButtons />);
     
-    const registerButton = screen.getByLabelText('練習日程登録');
-    expect(registerButton).toHaveClass('w-full');
-    expect(registerButton).toHaveClass('sm:w-auto');
-    
-    const manualFetchButton = screen.getByLabelText('空き状況取得（手動）');
-    expect(manualFetchButton).toHaveClass('w-full');
-    expect(manualFetchButton).toHaveClass('sm:w-auto');
+    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    expect(fetchButton).toHaveClass('px-4');
+    expect(fetchButton).toHaveClass('py-2');
   });
 });
