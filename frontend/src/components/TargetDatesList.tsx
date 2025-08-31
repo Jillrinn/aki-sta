@@ -59,11 +59,10 @@ const TargetDatesList: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
     const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
-    return `${year}年${month}月${day}日（${dayOfWeek}）`;
+    return `${month}/${day}(${dayOfWeek})`;
   };
 
   const formatUpdateTime = (updateTime: string): string => {
@@ -142,15 +141,6 @@ const TargetDatesList: React.FC = () => {
         </h1>
         <p className="text-center text-gray-600 mb-4">練習日程一覧</p>
         
-        <div className="flex justify-center mb-4">
-          <Link
-            to="/"
-            className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base"
-          >
-            ← 空き状況に戻る
-          </Link>
-        </div>
-        
         <div className="flex justify-end mb-4">
           <button
             onClick={handleRegisterClick}
@@ -177,34 +167,20 @@ const TargetDatesList: React.FC = () => {
                 <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
                   ラベル
                 </th>
-                <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
-                  更新日時
-                </th>
-                <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
-                  操作
-                </th>
               </tr>
             </thead>
             <tbody>
               {data.map((targetDate, index) => (
-                <tr key={targetDate.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <tr 
+                  key={targetDate.id} 
+                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} cursor-pointer hover:bg-gray-100 transition-colors`}
+                  onClick={() => handleDeleteClick(targetDate)}
+                >
                   <td className="p-4 border-b border-gray-200 font-medium">
                     {formatDate(targetDate.date)}
                   </td>
                   <td className="p-4 border-b border-gray-200">
                     {targetDate.label}
-                  </td>
-                  <td className="p-4 border-b border-gray-200 text-center text-sm text-gray-600">
-                    {formatUpdateTime(targetDate.updatedAt)}
-                  </td>
-                  <td className="p-4 border-b border-gray-200 text-center">
-                    <button
-                      onClick={() => handleDeleteClick(targetDate)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm font-bold"
-                      aria-label={`${targetDate.date}を削除`}
-                    >
-                      削除
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -233,6 +209,16 @@ const TargetDatesList: React.FC = () => {
         isOpen={isModalOpen}
         onClose={handleModalClose}
       />
+      
+      {/* 左下固定の戻るボタン */}
+      <div className="fixed bottom-4 left-4 z-40">
+        <Link
+          to="/"
+          className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base"
+        >
+          ← 空き状況に戻る
+        </Link>
+      </div>
     </div>
   );
 };
