@@ -108,7 +108,7 @@ jobs:
       run: |
         echo "Waiting for container to start..."
         for i in {1..30}; do
-          if curl -s http://localhost:8000/health > /dev/null; then
+          if curl -s http://localhost:8000/api/health > /dev/null; then
             echo "Container is ready!"
             break
           fi
@@ -117,12 +117,12 @@ jobs:
         done
         
         # Final health check
-        curl -f http://localhost:8000/health || exit 1
+        curl -f http://localhost:8000/api/health || exit 1
     
     - name: Test health endpoint
       run: |
         echo "Testing health endpoint..."
-        response=$(curl -s http://localhost:8000/health)
+        response=$(curl -s http://localhost:8000/api/health)
         echo "Response: $response"
         
         # Check if response contains expected fields
@@ -140,16 +140,16 @@ jobs:
     - name: Test scrape endpoint with valid date
       run: |
         echo "Testing scrape endpoint with dynamic date: ${{ steps.get-date.outputs.test_date }}..."
-        response=$(curl -s -X POST "http://localhost:8000/scrape?date=${{ steps.get-date.outputs.test_date }}")
+        response=$(curl -s -X POST "http://localhost:8000/api/scrape/ensemble?date=${{ steps.get-date.outputs.test_date }}")
         echo "Response: $response"
         
-        # Check for success or expected structure (updated format)
+        # Check for success or expected structure (v2 API format)
         if echo "$response" | grep -q '"status":"success"'; then
           echo "✅ Scrape endpoint returned success"
-        elif echo "$response" | grep -q '"success":true'; then
-          echo "✅ Scrape endpoint returned success (legacy format)"
-        elif echo "$response" | grep -q '"facilities":\[\]'; then
-          echo "✅ Scrape endpoint returned empty facilities (expected for future date)"
+        elif echo "$response" | grep -q '"status":"partial"'; then
+          echo "✅ Scrape endpoint returned partial success"
+        elif echo "$response" | grep -q '"facilityType":"ensemble_studio"'; then
+          echo "✅ Scrape endpoint returned ensemble_studio response"
         else
           echo "❌ Unexpected response from scrape endpoint"
           exit 1
@@ -158,7 +158,7 @@ jobs:
     - name: Test scrape endpoint with invalid date
       run: |
         echo "Testing error handling with invalid date..."
-        response=$(curl -s -X POST "http://localhost:8000/scrape?date=invalid-date")
+        response=$(curl -s -X POST "http://localhost:8000/api/scrape/ensemble?date=invalid-date")
         echo "Response: $response"
         
         # Check for error response
