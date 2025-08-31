@@ -481,17 +481,14 @@ describe('AvailabilityTable', () => {
 
         // Check that mobile card elements are rendered
         expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
-        expect(screen.getByText('9-12時')).toBeInTheDocument();
-        expect(screen.getByText('13-17時')).toBeInTheDocument();
-        expect(screen.getByText('18-21時')).toBeInTheDocument();
         
-        // Check status text - using getAllByText since there are multiple instances
-        const availableTexts = screen.getAllByText('空き');
-        const bookedTexts = screen.getAllByText('予約済み');
-        const unknownTexts = screen.getAllByText('不明');
-        expect(availableTexts.length).toBeGreaterThan(0);
-        expect(bookedTexts.length).toBeGreaterThan(0);
-        expect(unknownTexts.length).toBeGreaterThan(0);
+        // Card should be collapsed because 13-17 is booked
+        expect(screen.getByText('昼の時間帯は予約済み')).toBeInTheDocument();
+        
+        // Time slots should not be visible since the card is collapsed
+        expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+        expect(screen.queryByText('13-17時')).not.toBeInTheDocument();
+        expect(screen.queryByText('18-21時')).not.toBeInTheDocument();
       });
     });
 
@@ -683,9 +680,11 @@ describe('AvailabilityTable', () => {
         expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
         expect(screen.getByText('あんさんぶるStudio音(初台)')).toBeInTheDocument();
 
-        // Check that mobile-specific time labels appear for both
-        const morningSlots = screen.getAllByText('9-12時');
-        expect(morningSlots).toHaveLength(2);
+        // Check that the second facility (音) is expanded (13-17 is available)
+        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        
+        // First facility (和) should show collapsed message (13-17 is booked)
+        expect(screen.getByText('昼の時間帯は予約済み')).toBeInTheDocument();
       });
     });
 

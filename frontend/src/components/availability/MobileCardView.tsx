@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Facility } from '../../types/availability';
 import { TIME_SLOTS } from '../../constants/availability';
 import StatusBadge from './StatusBadge';
@@ -25,45 +25,85 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
     return statusMap[status] || '不明';
   };
 
+  // 施設の状態を判定
+  const hasAvailable = TIME_SLOTS.some(slot => facility.timeSlots[slot] === 'available');
+  const allBooked = TIME_SLOTS.every(slot => facility.timeSlots[slot] === 'booked');
+  const allUnknown = TIME_SLOTS.every(slot => facility.timeSlots[slot] === 'unknown');
+  const afternoonBooked = facility.timeSlots['13-17'] === 'booked';
+  
+  // ヘッダーの色を決定
+  const getHeaderColorClass = () => {
+    if (allUnknown) return 'bg-gradient-to-r from-gray-400 to-gray-600';
+    return 'bg-gradient-to-r from-primary-400 to-primary-700';
+  };
+
+  // 初期状態：空きがある場合のみ展開（ただし13-17が予約済みの場合は折りたたむ）
+  const [isExpanded, setIsExpanded] = useState(hasAvailable && !afternoonBooked);
+
+  useEffect(() => {
+    setIsExpanded(hasAvailable && !afternoonBooked);
+  }, [hasAvailable, afternoonBooked]);
+
   return (
     <div className="bg-white rounded-lg shadow-md mb-4 overflow-hidden border border-gray-200">
-      <div className="bg-gradient-to-r from-primary-400 to-primary-700 text-white p-4">
-        <h3 className="text-lg font-semibold">{facility.facilityName}</h3>
+      <div 
+        className={`${getHeaderColorClass()} text-white p-4 cursor-pointer`}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">{facility.facilityName}</h3>
+          <span className="text-2xl">{isExpanded ? '−' : '＋'}</span>
+        </div>
       </div>
       
-      <div className="p-4 space-y-3">
-        {TIME_SLOTS.map((timeSlot) => {
-          const status = facility.timeSlots[timeSlot];
-          const statusText = getStatusText(status);
-          const isAvailable = status === 'available';
-          
-          return (
-            <div 
-              key={timeSlot}
-              className={`flex items-center justify-between p-3 rounded-lg ${
-                isAvailable ? 'bg-accent-green/10' : 'bg-gray-50'
-              }`}
-            >
-              <span className="text-base font-medium text-gray-700">
-                {TIME_SLOT_LABELS[timeSlot]}
-              </span>
-              <div className="flex items-center gap-3">
-                <StatusBadge status={status} />
-                <span className={`text-sm font-medium ${
-                  isAvailable ? 'text-accent-green' : 'text-gray-600'
-                }`}>
-                  {statusText}
+      {isExpanded && (
+        <div className="p-4 space-y-3">
+          {TIME_SLOTS.map((timeSlot) => {
+            const status = facility.timeSlots[timeSlot];
+            const statusText = getStatusText(status);
+            const isAvailable = status === 'available';
+            
+            return (
+              <div 
+                key={timeSlot}
+                className={`flex items-center justify-between p-3 rounded-lg ${
+                  isAvailable ? 'bg-accent-green/10' : 'bg-gray-50'
+                }`}
+              >
+                <span className="text-base font-medium text-gray-700">
+                  {TIME_SLOT_LABELS[timeSlot]}
                 </span>
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={status} />
+                  <span className={`text-sm font-medium ${
+                    isAvailable ? 'text-accent-green' : 'text-gray-600'
+                  }`}>
+                    {statusText}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
       
       <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
-        <div className="flex items-center text-sm text-gray-600">
-          <span className="mr-2">🕐</span>
-          <span>{formatUpdateTime(facility.lastUpdated)} 更新</span>
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center">
+            <span className="mr-2">🕐</span>
+            <span>{formatUpdateTime(facility.lastUpdated)} 更新</span>
+          </div>
+          {!isExpanded && (
+            <span className={`font-medium px-2 py-1 rounded ${
+              allBooked ? 'bg-red-100 text-red-700' : 
+              allUnknown ? 'bg-gray-100 text-gray-700' : 
+              afternoonBooked ? 'bg-orange-100 text-orange-700' : ''
+            }`}>
+              {allBooked ? '全て予約済み' : 
+               allUnknown ? '全て不明' : 
+               afternoonBooked ? '昼の時間帯は予約済み' : '詳細を見る'}
+            </span>
+          )}
         </div>
       </div>
     </div>

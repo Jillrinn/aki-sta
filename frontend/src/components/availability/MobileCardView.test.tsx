@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MobileCardView from './MobileCardView';
 import { Facility } from '../../types/availability';
@@ -31,34 +31,56 @@ describe('MobileCardView', () => {
     expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
   });
 
-  it('renders all time slots with labels', () => {
+  it('renders all time slots with labels when expanded', () => {
+    // Use a facility without afternoon booked to ensure it's expanded
+    const expandedFacility: Facility = {
+      facilityName: 'テスト施設',
+      timeSlots: {
+        '9-12': 'available',
+        '13-17': 'available',
+        '18-21': 'unknown'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
     render(
       <MobileCardView 
-        facility={mockFacility} 
+        facility={expandedFacility} 
         formatUpdateTime={mockFormatUpdateTime}
       />
     );
     
+    // Should be expanded (has available slots and afternoon is not booked)
     expect(screen.getByText('9-12時')).toBeInTheDocument();
     expect(screen.getByText('13-17時')).toBeInTheDocument();
     expect(screen.getByText('18-21時')).toBeInTheDocument();
   });
 
-  it('renders status badges for each time slot', () => {
+  it('renders status badges for each time slot when expanded', () => {
+    const expandedFacility: Facility = {
+      facilityName: 'テスト施設',
+      timeSlots: {
+        '9-12': 'available',
+        '13-17': 'lottery',
+        '18-21': 'unknown'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
     render(
       <MobileCardView 
-        facility={mockFacility} 
+        facility={expandedFacility} 
         formatUpdateTime={mockFormatUpdateTime}
       />
     );
     
     // Check for status symbols
     expect(screen.getByText('○')).toBeInTheDocument(); // available
-    expect(screen.getByText('×')).toBeInTheDocument(); // booked
+    expect(screen.getByText('△')).toBeInTheDocument(); // lottery
     expect(screen.getByText('?')).toBeInTheDocument(); // unknown
   });
 
-  it('renders status text for each time slot', () => {
+  it('shows collapsed message for afternoon booked', () => {
     render(
       <MobileCardView 
         facility={mockFacility} 
@@ -66,9 +88,11 @@ describe('MobileCardView', () => {
       />
     );
     
-    expect(screen.getByText('空き')).toBeInTheDocument();
-    expect(screen.getByText('予約済み')).toBeInTheDocument();
-    expect(screen.getByText('不明')).toBeInTheDocument();
+    // Should show "昼の時間帯は予約済み" since 13-17 is booked
+    expect(screen.getByText('昼の時間帯は予約済み')).toBeInTheDocument();
+    
+    // Should not show time slots since it's collapsed
+    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
   });
 
   it('renders update time correctly', () => {
@@ -83,10 +107,20 @@ describe('MobileCardView', () => {
     expect(screen.getByText(/08\/24 \d{2}:18 更新/)).toBeInTheDocument();
   });
 
-  it('applies green background for available slots', () => {
+  it('applies green background for available slots when expanded', () => {
+    const expandedFacility: Facility = {
+      facilityName: 'テスト施設',
+      timeSlots: {
+        '9-12': 'available',
+        '13-17': 'available',
+        '18-21': 'booked'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
     const { container } = render(
       <MobileCardView 
-        facility={mockFacility} 
+        facility={expandedFacility} 
         formatUpdateTime={mockFormatUpdateTime}
       />
     );
@@ -96,10 +130,20 @@ describe('MobileCardView', () => {
     expect(availableSlot).toHaveTextContent('9-12時');
   });
 
-  it('applies gray background for non-available slots', () => {
+  it('applies gray background for non-available slots when expanded', () => {
+    const expandedFacility: Facility = {
+      facilityName: 'テスト施設',
+      timeSlots: {
+        '9-12': 'available',
+        '13-17': 'unknown',
+        '18-21': 'booked'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
     const { container } = render(
       <MobileCardView 
-        facility={mockFacility} 
+        facility={expandedFacility} 
         formatUpdateTime={mockFormatUpdateTime}
       />
     );
@@ -109,7 +153,7 @@ describe('MobileCardView', () => {
     const graySlots = Array.from(allSlots).filter(el => 
       el.className.includes('bg-gray-50')
     );
-    expect(graySlots.length).toBe(2); // booked and unknown slots
+    expect(graySlots.length).toBe(2); // unknown and booked slots
   });
 
   it('renders card with proper structure', () => {
@@ -125,7 +169,7 @@ describe('MobileCardView', () => {
     expect(card).toBeInTheDocument();
     
     // Check header with gradient
-    const header = container.querySelector('[class*="bg-gradient-to-r"][class*="from-primary"]');
+    const header = container.querySelector('[class*="bg-gradient-to-r"]');
     expect(header).toBeInTheDocument();
     
     // Check footer with update time
@@ -169,15 +213,23 @@ describe('MobileCardView', () => {
       lastUpdated: '2025-08-24T14:18:03Z'
     };
 
-    render(
+    const { container } = render(
       <MobileCardView 
         facility={allBookedFacility} 
         formatUpdateTime={mockFormatUpdateTime}
       />
     );
     
-    const bookedTexts = screen.getAllByText('予約済み');
-    expect(bookedTexts.length).toBe(3);
+    // Should be collapsed by default
+    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    expect(screen.queryByText('予約済み')).not.toBeInTheDocument();
+    
+    // Should show blue header (default color, not red)
+    const header = container.querySelector('[class*="from-primary"]');
+    expect(header).toBeInTheDocument();
+    
+    // Should show "全て予約済み" message
+    expect(screen.getByText('全て予約済み')).toBeInTheDocument();
   });
 
   it('handles lottery status correctly', () => {
@@ -210,5 +262,97 @@ describe('MobileCardView', () => {
     );
     
     expect(screen.getByText('🕐')).toBeInTheDocument();
+  });
+
+  it('collapses when all slots are unknown', () => {
+    const allUnknownFacility: Facility = {
+      facilityName: 'テスト施設',
+      timeSlots: {
+        '9-12': 'unknown',
+        '13-17': 'unknown',
+        '18-21': 'unknown'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
+    const { container } = render(
+      <MobileCardView 
+        facility={allUnknownFacility} 
+        formatUpdateTime={mockFormatUpdateTime}
+      />
+    );
+    
+    // Should be collapsed by default
+    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    
+    // Should show gray header
+    const header = container.querySelector('[class*="from-gray-400"]');
+    expect(header).toBeInTheDocument();
+    
+    // Should show "全て不明" message
+    expect(screen.getByText('全て不明')).toBeInTheDocument();
+  });
+
+  it('collapses when afternoon slot is booked', () => {
+    const afternoonBookedFacility: Facility = {
+      facilityName: 'テスト施設',
+      timeSlots: {
+        '9-12': 'available',
+        '13-17': 'booked',
+        '18-21': 'available'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
+    render(
+      <MobileCardView 
+        facility={afternoonBookedFacility} 
+        formatUpdateTime={mockFormatUpdateTime}
+      />
+    );
+    
+    // Should be collapsed even though there are available slots
+    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    
+    // Should show "昼の時間帯は予約済み" message
+    expect(screen.getByText('昼の時間帯は予約済み')).toBeInTheDocument();
+  });
+
+  it('toggles expansion when header is clicked', () => {
+    const noAfternoonFacility: Facility = {
+      facilityName: 'テスト施設',
+      timeSlots: {
+        '9-12': 'available',
+        '13-17': 'available',
+        '18-21': 'booked'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
+    render(
+      <MobileCardView 
+        facility={noAfternoonFacility} 
+        formatUpdateTime={mockFormatUpdateTime}
+      />
+    );
+    
+    // Initially expanded (has available slots and afternoon is not booked)
+    expect(screen.getByText('9-12時')).toBeInTheDocument();
+    expect(screen.getByText('−')).toBeInTheDocument();
+    
+    // Click to collapse
+    const header = screen.getByText('テスト施設').closest('div')?.parentElement;
+    fireEvent.click(header!);
+    
+    // Should be collapsed
+    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    expect(screen.getByText('＋')).toBeInTheDocument();
+    
+    // Click to expand again
+    fireEvent.click(header!);
+    
+    // Should be expanded
+    expect(screen.getByText('9-12時')).toBeInTheDocument();
+    expect(screen.getByText('−')).toBeInTheDocument();
   });
 });
