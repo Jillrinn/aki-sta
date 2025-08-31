@@ -126,8 +126,13 @@ jobs:
         echo "Response: $response"
         
         # Check if response contains expected fields
-        echo "$response" | grep -q '"status":"healthy"' || exit 1
-        echo "✅ Health check passed"
+        if echo "$response" | grep -q '"status":"healthy"'; then
+          echo "✅ Health check passed"
+        else
+          echo "❌ Health check failed - expected 'healthy' status"
+          echo "Response was: $response"
+          exit 1
+        fi
     
     - name: Get dynamic test date
       id: get-date
