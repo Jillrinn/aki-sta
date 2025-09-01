@@ -172,7 +172,7 @@ class TestErrorHandling:
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_scraper_error_handling(self, mock_scraper, client):
-        """スクレイパーエラー時の処理テスト"""
+        """スクレイパーエラー時の処理テスト（非同期処理）"""
         # スクレイパーがエラーを返す
         mock_scraper.scrape_and_save.return_value = {
             'status': 'error',
@@ -183,15 +183,14 @@ class TestErrorHandling:
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        # 全て失敗した場合は500を返す
-        assert response.status_code == 500
-        assert data['status'] == 'partial'
-        assert '2025-11-15' in data['data']
-        assert data['data']['2025-11-15'] == []  # エラーの場合は空配列
+        # 非同期処理のため、即座に202を返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_playwright_error_handling(self, mock_scraper, client):
-        """Playwrightエラー時の処理テスト"""
+        """Playwrightエラー時の処理テスト（非同期処理）"""
         from playwright.sync_api import Error as PlaywrightError
         
         # Playwrightエラーを発生させる
@@ -202,14 +201,14 @@ class TestErrorHandling:
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        assert response.status_code == 500  # 全て失敗
-        assert data['status'] == 'partial'
-        assert '2025-11-15' in data['data']
-        assert data['data']['2025-11-15'] == []  # エラーの場合は空配列
+        # 非同期処理のため、即座に202を返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_network_error_handling(self, mock_scraper, client):
-        """ネットワークエラー時の処理テスト"""
+        """ネットワークエラー時の処理テスト（非同期処理）"""
         # ConnectionErrorを発生させる
         mock_scraper.scrape_and_save.side_effect = ConnectionError(
             "Failed to connect to website"
@@ -218,14 +217,14 @@ class TestErrorHandling:
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        assert response.status_code == 500
-        assert data['status'] == 'partial'
-        assert '2025-11-15' in data['data']
-        assert data['data']['2025-11-15'] == []  # エラーの場合は空配列
+        # 非同期処理のため、即座に202を返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_generic_exception_handling(self, mock_scraper, client):
-        """一般的な例外の処理テスト"""
+        """一般的な例外の処理テスト（非同期処理）"""
         # 一般的な例外を発生させる
         mock_scraper.scrape_and_save.side_effect = Exception(
             "Unexpected error occurred"
@@ -234,14 +233,14 @@ class TestErrorHandling:
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        assert response.status_code == 500
-        assert data['status'] == 'partial'
-        assert '2025-11-15' in data['data']
-        assert data['data']['2025-11-15'] == []  # エラーの場合は空配列
+        # 非同期処理のため、即座に202を返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_partial_success(self, mock_scraper, client):
-        """部分的成功のテスト"""
+        """部分的成功のテスト（非同期処理）"""
         # 1つ目は成功、2つ目は失敗
         mock_scraper.scrape_and_save.side_effect = [
             {
@@ -262,12 +261,10 @@ class TestErrorHandling:
         response = client.post('/scrape?date=2025-11-15&date=2025-11-16')
         data = json.loads(response.data)
         
-        assert response.status_code == 200
-        assert data['status'] == 'partial'
-        assert '2025-11-15' in data['data']
-        assert '2025-11-16' in data['data']
-        assert len(data['data']['2025-11-15']) == 1  # 成功
-        assert data['data']['2025-11-16'] == []  # 失敗
+        # 非同期処理のため、即座に202を返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
 
 
 class TestRequestFormats:
@@ -275,7 +272,7 @@ class TestRequestFormats:
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_triggered_by_parameter(self, mock_scraper, client):
-        """triggeredByパラメータのテスト"""
+        """triggeredByパラメータのテスト（非同期処理）"""
         mock_scraper.scrape_and_save.return_value = {
             'status': 'success',
             'data': {'2025-11-15': []}
@@ -285,9 +282,10 @@ class TestRequestFormats:
         response = client.post('/scrape?date=2025-11-15&triggeredBy=timer')
         data = json.loads(response.data)
         
-        # triggeredByは新しいレスポンス形式では削除された
-        assert 'timestamp' in data
-        assert '2025-11-15' in data['data']
+        # 非同期処理のため、成功レスポンスを返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
         
         # JSONボディで指定
         response = client.post('/scrape',
@@ -295,13 +293,14 @@ class TestRequestFormats:
                              content_type='application/json')
         data = json.loads(response.data)
         
-        # triggeredByは新しいレスポンス形式では削除された
-        assert 'timestamp' in data
-        assert '2025-11-15' in data['data']
+        # 非同期処理のため、成功レスポンスを返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_query_params_precedence(self, mock_scraper, client):
-        """クエリパラメータがJSONボディより優先されることのテスト"""
+        """クエリパラメータがJSONボディより優先されることのテスト（非同期処理）"""
         mock_scraper.scrape_and_save.return_value = {
             'status': 'success',
             'data': {'2025-11-15': [{'facilityName': 'Test', 'timeSlots': {}}]}
@@ -313,9 +312,10 @@ class TestRequestFormats:
                              content_type='application/json')
         data = json.loads(response.data)
         
-        # クエリパラメータの日付が使用される
-        assert '2025-11-15' in data['data']
-        assert len(data['data']['2025-11-15']) == 1
+        # 非同期処理のため、成功レスポンスを返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
 
 
 class TestDebugMode:
@@ -324,30 +324,32 @@ class TestDebugMode:
     @patch('src.entrypoints.flask_api.scraper')
     @patch.dict(os.environ, {'DEBUG': 'true'})
     def test_debug_mode_traceback(self, mock_scraper, client):
-        """デバッグモード時にトレースバックが含まれることのテスト"""
+        """デバッグモード時のテスト（非同期処理）"""
         # 例外を発生させる
         mock_scraper.scrape_and_save.side_effect = Exception("Test error")
         
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        # 新しい形式では、エラー時でも空配列が返される
-        assert '2025-11-15' in data['data']
-        assert data['data']['2025-11-15'] == []
+        # 非同期処理のため、即座に202を返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
     
     @patch('src.entrypoints.flask_api.scraper')
     @patch.dict(os.environ, {'DEBUG': 'false'})
     def test_production_mode_no_traceback(self, mock_scraper, client):
-        """本番モード時にトレースバックが含まれないことのテスト"""
+        """本番モード時のテスト（非同期処理）"""
         # 例外を発生させる
         mock_scraper.scrape_and_save.side_effect = Exception("Test error")
         
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        # 新しい形式では、エラー時でも空配列が返される
-        assert '2025-11-15' in data['data']
-        assert data['data']['2025-11-15'] == []
+        # 非同期処理のため、即座に202を返す
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
 
 
 class TestRateLimitErrors:
@@ -373,13 +375,10 @@ class TestRateLimitErrors:
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        # 検証
+        # 検証（rate limitチェックは同期的に行われる）
         assert response.status_code == 409
-        assert data['status'] == 'error'
-        assert data['error_type'] == 'RATE_LIMIT_ERROR'
-        assert 'すでに実行中' in data['message']
-        assert data['currentStatus'] == 'running'
-        assert data['lastRequestedAt'] == '2025-01-09T10:00:00Z'
+        assert data['success'] == False
+        assert data['message'] == '空き状況取得は実行中の可能性があります'
     
     @patch('src.repositories.rate_limits_repository.RateLimitsRepository')
     def test_scrape_ensemble_with_rate_limit_error(self, mock_repo_class, client):
@@ -401,11 +400,10 @@ class TestRateLimitErrors:
         response = client.post('/scrape/ensemble?date=2025-11-15')
         data = json.loads(response.data)
         
-        # 検証
+        # 検証（rate limitチェックは同期的に行われる）
         assert response.status_code == 409
-        assert data['status'] == 'error'
-        assert data['error_type'] == 'RATE_LIMIT_ERROR'
-        assert 'すでに実行中' in data['message']
+        assert data['success'] == False
+        assert data['message'] == '空き状況取得は実行中の可能性があります'
     
     @patch('src.entrypoints.flask_api.scraper')
     @patch('src.repositories.rate_limits_repository.RateLimitsRepository')
@@ -424,11 +422,10 @@ class TestRateLimitErrors:
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        # 検証（rate limits失敗してもスクレイピングは成功）
-        assert response.status_code == 200
-        assert data['status'] == 'success'
-        assert '2025-11-15' in data['data']
-        assert len(data['data']['2025-11-15']) == 1
+        # 検証（rate limits失敗しても非同期処理を開始）
+        assert response.status_code == 202
+        assert data['success'] == True
+        assert data['message'] == '空き状況取得を開始しました'
         mock_scraper.scrape_and_save.assert_called_once()
 
 
@@ -436,7 +433,7 @@ class TestEnsembleEndpoint:
     """あんさんぶるスタジオ専用エンドポイントのテスト"""
     
     def test_post_ensemble_with_date(self, client):
-        """POSTリクエストで日付指定するテスト"""
+        """POSTリクエストで日付指定するテスト（非同期処理）"""
         # get_services関数をモック化
         with patch('src.entrypoints.flask_api.get_services') as mock_get_services:
             # モックサービスを作成
@@ -450,11 +447,10 @@ class TestEnsembleEndpoint:
             response = client.post('/scrape/ensemble?date=2025-11-15')
             data = json.loads(response.data)
             
-            assert response.status_code == 200
-            assert data['status'] == 'success'
-            # 新しい統一形式ではfacilityやdateフィールドは削除
-            assert '2025-11-15' in data['data']
-            assert 'timestamp' in data
+            # 非同期処理のため、即座に202を返す
+            assert response.status_code == 202
+            assert data['success'] == True
+            assert data['message'] == '空き状況取得を開始しました'
     
     def test_post_ensemble_without_date(self, client):
         """POSTリクエストで日付なしエラーテスト"""
