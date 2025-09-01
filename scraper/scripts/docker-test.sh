@@ -122,13 +122,16 @@ log_info "Testing error handling with invalid date..."
 response=$(curl -s -X POST "http://localhost:$PORT/scrape?date=invalid-date")
 echo "Response: $response"
 
-# 新しいレスポンス形式に対応（success: false）
-if echo "$response" | grep -q '"success":false'; then
-    log_info "✅ Error handling test passed (new format)"
-elif echo "$response" | grep -q '"error"'; then
+# 複数の方法でエラーレスポンスをチェック
+if python3 -c "import json, sys; data = json.loads('$response'); sys.exit(0 if data.get('success') == False else 1)" 2>/dev/null; then
+    log_info "✅ Error handling test passed (JSON parsed, success=false)"
+elif echo "$response" | grep -F '"success":false' >/dev/null 2>&1; then
+    log_info "✅ Error handling test passed (string match)"
+elif echo "$response" | grep '"error"' >/dev/null 2>&1; then
     log_info "✅ Error handling test passed (legacy format)"
 else
     log_error "❌ Expected error response for invalid date"
+    log_error "Debug: Could not detect error pattern in response"
     exit 1
 fi
 

@@ -166,13 +166,16 @@ jobs:
         response=$(curl -s -X POST "http://localhost:8000/scrape?date=invalid-date")
         echo "Response: $response"
         
-        # Check for error response (updated for new format)
-        if echo "$response" | grep -q '"success":false'; then
-          echo "✅ Error handling test passed (new format)"
-        elif echo "$response" | grep -q '"error"'; then
+        # Use Python for more reliable JSON parsing
+        if python3 -c "import json, sys; data = json.loads('$response'); sys.exit(0 if data.get('success') == False else 1)" 2>/dev/null; then
+          echo "✅ Error handling test passed (success=false detected)"
+        elif echo "$response" | grep -F '"success":false' >/dev/null 2>&1; then
+          echo "✅ Error handling test passed (string match)"
+        elif echo "$response" | grep '"error"' >/dev/null 2>&1; then
           echo "✅ Error handling test passed (legacy format)"
         else
           echo "❌ Expected error response for invalid date"
+          echo "Debug: Could not detect error pattern in response"
           exit 1
         fi
     
