@@ -774,7 +774,6 @@ describe('Full Application Flow', () => {
 ```
 
 **statusフィールド値**:
-- `pending`: 実行待機中
 - `running`: 実行中
 - `completed`: 完了
 - `failed`: 失敗

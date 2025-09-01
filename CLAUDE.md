@@ -57,20 +57,24 @@ cd frontend && npm start   # Terminal 2
 ```
 
 ### テスト実行
+
+**重要**: テストはルートディレクトリのpackage.jsonに定義されたnpmコマンドを使用すること。
+個別ディレクトリでの直接実行は依存関係の問題が発生する可能性があります。
+
 ```bash
-# 一括テスト（backend + frontend + scraper + e2e）
+# 一括テスト（backend + frontend + scraper + e2e）- 推奨
 npm test
 
-# Backend個別
-cd api && npm test
+# 個別テスト（ルートから実行）
+npm run test:backend    # Backend個別
+npm run test:frontend   # Frontend個別  
+npm run test:scraper    # Scraperテスト（Docker環境で実行）
+npm run test:e2e        # E2Eテスト
 
-# Frontend個別
+# どうしても個別ディレクトリで実行する場合
+cd api && npm test      # Backend（環境変数同期を含む）
 cd frontend && npm test -- --coverage --watchAll=false
-
-# Scraperテスト
-cd scraper && python -m pytest tests/ -v
-
-# E2Eテスト
+cd scraper && ./docker-exec.sh test  # Docker環境必須
 cd e2e && npm test
 ```
 
