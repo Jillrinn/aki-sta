@@ -19,7 +19,7 @@ async function scrapeBatchHandler(request, context) {
     const result = await scrapeService.executeBatchScraping(source);
     
     return {
-      status: result.success ? 202 : 404,
+      status: result.success ? 202 : 500,
       jsonBody: {
         success: result.success,
         message: result.message,

@@ -80,7 +80,7 @@ describe('scrape-batch', () => {
       expect(scrapeService.executeBatchScraping).not.toHaveBeenCalled();
     });
 
-    it('should return 404 when no target dates are found', async () => {
+    it('should return 500 when no target dates are found', async () => {
       mockRequest.json.mockResolvedValue({});
       
       scrapeService.executeBatchScraping.mockResolvedValue({
@@ -90,7 +90,7 @@ describe('scrape-batch', () => {
 
       const result = await scrapeBatchHandler(mockRequest, mockContext);
 
-      expect(result.status).toBe(404);
+      expect(result.status).toBe(500);
       expect(result.jsonBody.success).toBe(false);
       expect(result.jsonBody.message).toBe('練習日程が登録されていません');
     });
