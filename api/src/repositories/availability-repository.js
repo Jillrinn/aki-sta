@@ -65,5 +65,35 @@ module.exports = {
       console.error('Cosmos DB read all error:', error);
       throw new Error(`Failed to read all availability data from Cosmos DB: ${error.message}`);
     }
+  },
+
+  deleteAvailabilityById: async (id) => {
+    try {
+      await cosmosClient.initialize();
+      const container = cosmosClient.getContainer('availability');
+      
+      // IDから日付部分を抽出（パーティションキー用）
+      // ID形式: date_facilityName (例: 2025-12-25_あんさんぶるStudio和(本郷))
+      const datePart = id.split('_')[0];
+      
+      if (!datePart || !/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        throw new Error(`Invalid ID format: ${id}`);
+      }
+      
+      // 削除実行（パーティションキーはdate）
+      await container.item(id, datePart).delete();
+      
+      return { 
+        success: true, 
+        message: `Availability data with ID ${id} deleted successfully` 
+      };
+    } catch (error) {
+      if (error.code === 404) {
+        console.warn(`Availability data not found: ${id}`);
+        throw new Error(`Availability data with ID ${id} not found`);
+      }
+      console.error('Failed to delete availability data:', error);
+      throw new Error(`Failed to delete availability data from Cosmos DB: ${error.message}`);
+    }
   }
 };

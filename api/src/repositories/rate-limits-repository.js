@@ -100,6 +100,74 @@ class RateLimitsRepository {
       throw error;
     }
   }
+
+  async getAllRecords() {
+    try {
+      await this.initialize();
+      const { resources } = await this.container.items
+        .readAll()
+        .fetchAll();
+      
+      // 日付でソートして返す
+      return resources.sort((a, b) => b.date.localeCompare(a.date));
+    } catch (error) {
+      console.error('Error fetching all rate limit records:', error);
+      throw new Error(`Failed to get rate limit records from Cosmos DB: ${error.message}`);
+    }
+  }
+
+  async getRecord(date) {
+    try {
+      await this.initialize();
+      const { resources } = await this.container.items
+        .query({
+          query: 'SELECT * FROM c WHERE c.date = @date',
+          parameters: [{ name: '@date', value: date }]
+        })
+        .fetchAll();
+      
+      if (resources.length === 0) {
+        throw new Error(`Rate limit record for ${date} not found`);
+      }
+      
+      return resources[0];
+    } catch (error) {
+      if (error.message.includes('not found')) {
+        throw error;
+      }
+      console.error('Error fetching rate limit record:', error);
+      throw new Error(`Failed to get rate limit record from Cosmos DB: ${error.message}`);
+    }
+  }
+
+  async deleteRecordById(id) {
+    try {
+      await this.initialize();
+      
+      // IDから日付部分を抽出（パーティションキー用）
+      // ID形式: rate-limit-YYYY-MM-DD
+      const match = id.match(/^rate-limit-(\d{4}-\d{2}-\d{2})$/);
+      if (!match) {
+        throw new Error(`Invalid ID format: ${id}`);
+      }
+      const date = match[1];
+      
+      // 削除実行（パーティションキーはdate）
+      await this.container.item(id, date).delete();
+      
+      return { 
+        success: true, 
+        message: `Rate limit record with ID ${id} deleted successfully` 
+      };
+    } catch (error) {
+      if (error.code === 404) {
+        console.warn(`Rate limit record not found: ${id}`);
+        throw new Error(`Rate limit record with ID ${id} not found`);
+      }
+      console.error('Failed to delete rate limit record:', error);
+      throw new Error(`Failed to delete rate limit record from Cosmos DB: ${error.message}`);
+    }
+  }
 }
 
 const rateLimitsRepository = new RateLimitsRepository();

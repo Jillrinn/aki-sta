@@ -122,8 +122,11 @@ log_info "Testing error handling with invalid date..."
 response=$(curl -s -X POST "http://localhost:$PORT/scrape?date=invalid-date")
 echo "Response: $response"
 
-if echo "$response" | grep -q '"error"'; then
-    log_info "✅ Error handling test passed"
+# 新しいレスポンス形式に対応（success: false）
+if echo "$response" | grep -q '"success":false'; then
+    log_info "✅ Error handling test passed (new format)"
+elif echo "$response" | grep -q '"error"'; then
+    log_info "✅ Error handling test passed (legacy format)"
 else
     log_error "❌ Expected error response for invalid date"
     exit 1

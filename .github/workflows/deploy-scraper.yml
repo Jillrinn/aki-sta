@@ -166,9 +166,11 @@ jobs:
         response=$(curl -s -X POST "http://localhost:8000/scrape?date=invalid-date")
         echo "Response: $response"
         
-        # Check for error response
-        if echo "$response" | grep -q '"error"'; then
-          echo "✅ Error handling test passed"
+        # Check for error response (updated for new format)
+        if echo "$response" | grep -q '"success":false'; then
+          echo "✅ Error handling test passed (new format)"
+        elif echo "$response" | grep -q '"error"'; then
+          echo "✅ Error handling test passed (legacy format)"
         else
           echo "❌ Expected error response for invalid date"
           exit 1
