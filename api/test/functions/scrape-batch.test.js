@@ -35,7 +35,7 @@ describe('scrape-batch', () => {
       
       scrapeService.executeBatchScraping.mockResolvedValue({
         success: true,
-        message: 'スクレイピングを開始しました',
+        message: '空き状況取得を開始しました',
         targetDates: ['2025-09-15', '2025-09-20']
       });
 
@@ -43,7 +43,7 @@ describe('scrape-batch', () => {
 
       expect(result.status).toBe(202);
       expect(result.jsonBody.success).toBe(true);
-      expect(result.jsonBody.message).toBe('スクレイピングを開始しました');
+      expect(result.jsonBody.message).toBe('空き状況取得を開始しました');
       expect(result.jsonBody.targetDates).toHaveLength(2);
       expect(scrapeService.executeBatchScraping).toHaveBeenCalledWith('logic-app');
     });
@@ -56,7 +56,7 @@ describe('scrape-batch', () => {
       
       scrapeService.executeBatchScraping.mockResolvedValue({
         success: true,
-        message: 'スクレイピングを開始しました',
+        message: '空き状況取得を開始しました',
         targetDates: ['2025-09-15']
       });
 
@@ -85,14 +85,14 @@ describe('scrape-batch', () => {
       
       scrapeService.executeBatchScraping.mockResolvedValue({
         success: false,
-        message: '対象日付が設定されていません'
+        message: '練習日程が登録されていません'
       });
 
       const result = await scrapeBatchHandler(mockRequest, mockContext);
 
       expect(result.status).toBe(404);
       expect(result.jsonBody.success).toBe(false);
-      expect(result.jsonBody.message).toBe('対象日付が設定されていません');
+      expect(result.jsonBody.message).toBe('練習日程が登録されていません');
     });
 
     it('should handle service errors gracefully', async () => {
@@ -106,7 +106,7 @@ describe('scrape-batch', () => {
 
       expect(result.status).toBe(500);
       expect(result.jsonBody.success).toBe(false);
-      expect(result.jsonBody.message).toBe('スクレイピングの開始に失敗しました');
+      expect(result.jsonBody.message).toBe('空き状況取得は実行中の可能性があります');
       expect(mockContext.log.error).toHaveBeenCalled();
     });
 
@@ -115,7 +115,7 @@ describe('scrape-batch', () => {
       
       scrapeService.executeBatchScraping.mockResolvedValue({
         success: true,
-        message: 'スクレイピングを開始しました',
+        message: '空き状況取得を開始しました',
         targetDates: ['2025-09-15']
       });
 

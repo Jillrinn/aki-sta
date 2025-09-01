@@ -61,7 +61,7 @@ class ScrapeService {
       if (!targetDates || targetDates.length === 0) {
         return {
           success: false,
-          message: '対象日付が設定されていません'
+          message: '練習日程が登録されていません'
         };
       }
 
@@ -75,7 +75,7 @@ class ScrapeService {
 
       return {
         success: true,
-        message: 'スクレイピングを開始しました',
+        message: '空き状況取得を開始しました',
         targetDates: dateStrings
       };
       
@@ -84,7 +84,7 @@ class ScrapeService {
       
       return {
         success: false,
-        message: 'スクレイピングの開始に失敗しました'
+        message: '空き状況取得は実行中の可能性があります'
       };
     }
   }
@@ -99,7 +99,7 @@ class ScrapeService {
 
       return {
         success: true,
-        message: 'スクレイピングを開始しました'
+        message: '空き状況取得を開始しました'
       };
       
     } catch (error) {
@@ -107,7 +107,7 @@ class ScrapeService {
       
       return {
         success: false,
-        message: 'スクレイピングの開始に失敗しました'
+        message: '空き状況取得は実行中の可能性があります'
       };
     }
   }

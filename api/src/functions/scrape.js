@@ -20,7 +20,7 @@ async function scrapeHandler(request, context) {
       status: 500,
       jsonBody: {
         success: false,
-        message: 'スクレイピングの開始に失敗しました'
+        message: '空き状況取得は実行中の可能性があります'
       }
     };
   }

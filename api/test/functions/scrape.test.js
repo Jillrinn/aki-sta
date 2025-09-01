@@ -31,28 +31,28 @@ describe('Scrape Function', () => {
     it('should return 202 when scraping is initiated successfully', async () => {
       scrapeService.executeSingleScraping.mockResolvedValue({
         success: true,
-        message: 'スクレイピングを開始しました'
+        message: '空き状況取得を開始しました'
       });
 
       const result = await scrapeHandler(mockRequest, mockContext);
 
       expect(result.status).toBe(202);
       expect(result.jsonBody.success).toBe(true);
-      expect(result.jsonBody.message).toBe('スクレイピングを開始しました');
+      expect(result.jsonBody.message).toBe('空き状況取得を開始しました');
       expect(scrapeService.executeSingleScraping).toHaveBeenCalled();
     });
 
     it('should return 500 when scraping fails', async () => {
       scrapeService.executeSingleScraping.mockResolvedValue({
         success: false,
-        message: 'スクレイピングの開始に失敗しました'
+        message: '空き状況取得は実行中の可能性があります'
       });
 
       const result = await scrapeHandler(mockRequest, mockContext);
 
       expect(result.status).toBe(500);
       expect(result.jsonBody.success).toBe(false);
-      expect(result.jsonBody.message).toBe('スクレイピングの開始に失敗しました');
+      expect(result.jsonBody.message).toBe('空き状況取得は実行中の可能性があります');
     });
 
     it('should handle service errors', async () => {
@@ -64,7 +64,7 @@ describe('Scrape Function', () => {
 
       expect(result.status).toBe(500);
       expect(result.jsonBody.success).toBe(false);
-      expect(result.jsonBody.message).toBe('スクレイピングの開始に失敗しました');
+      expect(result.jsonBody.message).toBe('空き状況取得は実行中の可能性があります');
       expect(mockContext.log.error).toHaveBeenCalledWith(
         'Failed to initiate scraping: Service unavailable'
       );
