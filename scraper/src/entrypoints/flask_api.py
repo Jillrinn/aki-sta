@@ -169,9 +169,8 @@ def scrape():
         logger.info(f"Scraping {len(dates)} dates: {dates}")
         
         # Execute scraping for each date
-        results = []
-        success_count = 0
-        error_count = 0
+        scrape_data = {}
+        has_error = False
         
         for date in dates:
             try:
@@ -192,121 +191,63 @@ def scrape():
                 result = scraper.scrape_and_save(normalized_date)
                 
                 if result and result.get('status') == 'success':
-                    success_count += 1
-                    results.append({
-                        'date': normalized_date,
-                        'status': 'success',
-                        'facilities': len(result.get('data', {}).get(normalized_date, []))
-                    })
+                    # 成功した場合はデータを追加
+                    scrape_data[normalized_date] = result.get('data', {}).get(normalized_date, [])
                 else:
-                    error_count += 1
-                    error_info = {
-                        'date': normalized_date,
-                        'status': 'error',
-                        'error_type': result.get('error_type', 'SCRAPING_ERROR'),
-                        'message': result.get('message', 'Unknown error')
-                    }
-                    if result.get('details'):
-                        error_info['details'] = result.get('details')
-                    results.append(error_info)
+                    has_error = True
+                    # エラーの場合は空配列を設定（部分的成功を許可）
+                    scrape_data[normalized_date] = []
                     
             except ValueError as e:
                 # 日付フォーマットエラー・過去日付エラー
                 error_message = str(e)
                 logger.error(f"Date validation error for {date}: {error_message}")
-                error_count += 1
+                has_error = True
+                scrape_data[date] = []  # エラーの場合は空配列
                 
-                # エラータイプの判定
-                if "過去の日付" in error_message:
-                    error_type = 'PAST_DATE_ERROR'
-                    message = error_message
-                else:
-                    error_type = 'INVALID_DATE_FORMAT'
-                    message = f'Invalid date format. Expected YYYY-MM-DD or YYYY/MM/DD, got: {date}'
-                
-                results.append({
-                    'date': date,
-                    'status': 'error',
-                    'error_type': error_type,
-                    'message': message,
-                    'details': error_message
-                })
             except (PlaywrightError, FileNotFoundError) as e:
                 # Playwrightブラウザエラー
                 logger.error(f"Browser error for {date}: {str(e)}")
-                error_count += 1
-                error_message = str(e)
-                if "Executable doesn't exist" in error_message or "playwright install" in error_message:
-                    error_type = 'BROWSER_NOT_INSTALLED'
-                    message = 'Playwright browser not installed. Please run: playwright install chromium'
-                else:
-                    error_type = 'BROWSER_ERROR'
-                    message = 'Browser launch failed'
-                results.append({
-                    'date': date,
-                    'status': 'error',
-                    'error_type': error_type,
-                    'message': message,
-                    'details': error_message
-                })
+                has_error = True
+                scrape_data[date] = []
+                
             except ConnectionError as e:
                 # ネットワークエラー
                 logger.error(f"Network error for {date}: {str(e)}")
-                error_count += 1
-                results.append({
-                    'date': date,
-                    'status': 'error',
-                    'error_type': 'NETWORK_ERROR',
-                    'message': 'Failed to connect to target website',
-                    'details': str(e)
-                })
+                has_error = True
+                scrape_data[date] = []
+                
             except Exception as e:
                 # その他のエラー
                 logger.error(f"Error scraping {date}: {str(e)}")
                 logger.error(f"Traceback: {traceback.format_exc()}")
-                error_count += 1
-                error_details = {
-                    'date': date,
-                    'status': 'error',
-                    'error_type': 'SCRAPING_ERROR',
-                    'message': 'Failed to scrape data',
-                    'details': str(e),
-                    'error_class': e.__class__.__name__
-                }
-                # デバッグモードの場合はトレースバックを含める
-                if app.debug or os.environ.get('DEBUG', '').lower() == 'true':
-                    error_details['traceback'] = traceback.format_exc()
-                results.append(error_details)
+                has_error = True
+                scrape_data[date] = []
         
         # Rate limitsステータス更新
         if use_rate_limits and record_id and rate_limits_repo:
             try:
-                final_status = 'completed' if error_count == 0 else 'failed'
+                final_status = 'completed' if not has_error else 'failed'
                 rate_limits_repo.update_status(record_id, record_date, final_status)
                 logger.info(f"Rate limit status updated to: {final_status}")
             except Exception as e:
                 logger.error(f"Failed to update rate limit status: {str(e)}")
         
-        # Summary response
+        # シンプルな成功レスポンス
         response = {
-            'status': 'success' if error_count == 0 else 'partial',
-            'timestamp': datetime.now().isoformat(),
-            'triggeredBy': triggered_by,
-            'total_dates': len(dates),
-            'success_count': success_count,
-            'error_count': error_count,
-            'results': results
+            'status': 'success' if not has_error else 'partial',
+            'data': scrape_data,
+            'timestamp': datetime.now().isoformat()
         }
         
+        # データがある日付の数をログ出力
+        success_count = sum(1 for data in scrape_data.values() if data)
         logger.info(f"Scraping completed: {success_count}/{len(dates)} successful")
         
         # HTTPステータスコードの決定
-        if error_count == len(dates):
+        if all(not data for data in scrape_data.values()):
             # 全て失敗した場合
             status_code = 500
-        elif any(r.get('error_type') == 'INVALID_DATE_FORMAT' for r in results):
-            # バリデーションエラーがある場合
-            status_code = 400
         else:
             # 成功または部分的成功
             status_code = 200
@@ -416,14 +357,21 @@ def scrape_ensemble():
             except Exception as e:
                 logger.error(f"Failed to update rate limit status for ensemble: {str(e)}")
         
-        return jsonify({
-            'status': result.get('status'),
-            'facility': 'ensemble',
-            'date': date,
-            'source': 'request',
-            'data': result.get('data', {}),
-            'timestamp': datetime.now().isoformat()
-        }), 200 if result.get('status') == 'success' else 500
+        # シンプルな成功レスポンス（統一形式）
+        if result.get('status') == 'success':
+            return jsonify({
+                'status': 'success',
+                'data': result.get('data', {}),
+                'timestamp': datetime.now().isoformat()
+            }), 200
+        else:
+            # エラーレスポンスは変更なし
+            return jsonify({
+                'status': 'error',
+                'message': result.get('message', 'Scraping failed'),
+                'error_type': result.get('error_type', 'SCRAPING_ERROR'),
+                'timestamp': datetime.now().isoformat()
+            }), 500
             
     except Exception as e:
         # エラー時のrate limitsステータス更新

@@ -80,12 +80,10 @@ class TestScrapeEndpoint:
         
         assert response.status_code == 200
         assert data['status'] == 'success'
-        assert data['total_dates'] == 1
-        assert data['success_count'] == 1
-        assert data['error_count'] == 0
-        assert len(data['results']) == 1
-        assert data['results'][0]['date'] == '2025-11-15'
-        assert data['results'][0]['status'] == 'success'
+        assert '2025-11-15' in data['data']
+        assert len(data['data']['2025-11-15']) == 1
+        assert data['data']['2025-11-15'][0]['facilityName'] == 'テストスタジオ'
+        assert 'timestamp' in data
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_scrape_with_json_body(self, mock_scraper, client):
@@ -111,8 +109,8 @@ class TestScrapeEndpoint:
         
         assert response.status_code == 200
         assert data['status'] == 'success'
-        assert data['total_dates'] == 1
-        assert data['success_count'] == 1
+        assert '2025-11-15' in data['data']
+        assert len(data['data']['2025-11-15']) == 1
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_scrape_multiple_dates(self, mock_scraper, client):
@@ -138,10 +136,11 @@ class TestScrapeEndpoint:
         data = json.loads(response.data)
         
         assert response.status_code == 200
-        assert data['total_dates'] == 2
-        assert data['success_count'] == 2
-        assert data['error_count'] == 0
-        assert len(data['results']) == 2
+        assert data['status'] == 'success'
+        assert '2025-11-15' in data['data']
+        assert '2025-11-16' in data['data']
+        assert len(data['data']['2025-11-15']) == 1
+        assert len(data['data']['2025-11-16']) == 1
     
     def test_scrape_without_dates(self, client):
         """日付なしリクエストのテスト"""
@@ -212,9 +211,8 @@ class TestErrorHandling:
         # 全て失敗した場合は500を返す
         assert response.status_code == 500
         assert data['status'] == 'partial'
-        assert data['error_count'] == 1
-        assert data['results'][0]['status'] == 'error'
-        assert data['results'][0]['error_type'] == 'NO_DATA_FOUND'
+        assert '2025-11-15' in data['data']
+        assert data['data']['2025-11-15'] == []  # エラーの場合は空配列
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_playwright_error_handling(self, mock_scraper, client):
@@ -231,8 +229,8 @@ class TestErrorHandling:
         
         assert response.status_code == 500  # 全て失敗
         assert data['status'] == 'partial'
-        assert data['error_count'] == 1
-        assert data['results'][0]['error_type'] == 'BROWSER_NOT_INSTALLED'
+        assert '2025-11-15' in data['data']
+        assert data['data']['2025-11-15'] == []  # エラーの場合は空配列
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_network_error_handling(self, mock_scraper, client):
@@ -247,8 +245,8 @@ class TestErrorHandling:
         
         assert response.status_code == 500
         assert data['status'] == 'partial'
-        assert data['error_count'] == 1
-        assert data['results'][0]['error_type'] == 'NETWORK_ERROR'
+        assert '2025-11-15' in data['data']
+        assert data['data']['2025-11-15'] == []  # エラーの場合は空配列
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_generic_exception_handling(self, mock_scraper, client):
@@ -263,9 +261,8 @@ class TestErrorHandling:
         
         assert response.status_code == 500
         assert data['status'] == 'partial'
-        assert data['error_count'] == 1
-        assert data['results'][0]['error_type'] == 'SCRAPING_ERROR'
-        assert data['results'][0]['error_class'] == 'Exception'
+        assert '2025-11-15' in data['data']
+        assert data['data']['2025-11-15'] == []  # エラーの場合は空配列
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_partial_success(self, mock_scraper, client):
@@ -292,10 +289,10 @@ class TestErrorHandling:
         
         assert response.status_code == 200
         assert data['status'] == 'partial'
-        assert data['success_count'] == 1
-        assert data['error_count'] == 1
-        assert data['results'][0]['status'] == 'success'
-        assert data['results'][1]['status'] == 'error'
+        assert '2025-11-15' in data['data']
+        assert '2025-11-16' in data['data']
+        assert len(data['data']['2025-11-15']) == 1  # 成功
+        assert data['data']['2025-11-16'] == []  # 失敗
 
 
 class TestRequestFormats:
@@ -313,7 +310,9 @@ class TestRequestFormats:
         response = client.post('/scrape?date=2025-11-15&triggeredBy=timer')
         data = json.loads(response.data)
         
-        assert data['triggeredBy'] == 'timer'
+        # triggeredByは新しいレスポンス形式では削除された
+        assert 'timestamp' in data
+        assert '2025-11-15' in data['data']
         
         # JSONボディで指定
         response = client.post('/scrape',
@@ -321,14 +320,16 @@ class TestRequestFormats:
                              content_type='application/json')
         data = json.loads(response.data)
         
-        assert data['triggeredBy'] == 'manual'
+        # triggeredByは新しいレスポンス形式では削除された
+        assert 'timestamp' in data
+        assert '2025-11-15' in data['data']
     
     @patch('src.entrypoints.flask_api.scraper')
     def test_query_params_precedence(self, mock_scraper, client):
         """クエリパラメータがJSONボディより優先されることのテスト"""
         mock_scraper.scrape_and_save.return_value = {
             'status': 'success',
-            'data': {'2025-11-15': []}
+            'data': {'2025-11-15': [{'facilityName': 'Test', 'timeSlots': {}}]}
         }
         
         # クエリパラメータとJSONボディの両方を送信
@@ -338,8 +339,8 @@ class TestRequestFormats:
         data = json.loads(response.data)
         
         # クエリパラメータの日付が使用される
-        assert data['total_dates'] == 1
-        assert data['results'][0]['date'] == '2025-11-15'
+        assert '2025-11-15' in data['data']
+        assert len(data['data']['2025-11-15']) == 1
 
 
 class TestDebugMode:
@@ -355,8 +356,9 @@ class TestDebugMode:
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        assert 'traceback' in data['results'][0]
-        assert 'Test error' in data['results'][0]['details']
+        # 新しい形式では、エラー時でも空配列が返される
+        assert '2025-11-15' in data['data']
+        assert data['data']['2025-11-15'] == []
     
     @patch('src.entrypoints.flask_api.scraper')
     @patch.dict(os.environ, {'DEBUG': 'false'})
@@ -368,8 +370,9 @@ class TestDebugMode:
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        assert 'traceback' not in data['results'][0]
-        assert 'Test error' in data['results'][0]['details']
+        # 新しい形式では、エラー時でも空配列が返される
+        assert '2025-11-15' in data['data']
+        assert data['data']['2025-11-15'] == []
 
 
 class TestRateLimitErrors:
@@ -449,7 +452,8 @@ class TestRateLimitErrors:
         # 検証（rate limits失敗してもスクレイピングは成功）
         assert response.status_code == 200
         assert data['status'] == 'success'
-        assert data['success_count'] == 1
+        assert '2025-11-15' in data['data']
+        assert len(data['data']['2025-11-15']) == 1
         mock_scraper.scrape_and_save.assert_called_once()
 
 
@@ -473,9 +477,9 @@ class TestEnsembleEndpoint:
             
             assert response.status_code == 200
             assert data['status'] == 'success'
-            assert data['facility'] == 'ensemble'
-            assert data['date'] == '2025-11-15'
-            assert data['source'] == 'request'
+            # 新しい統一形式ではfacilityやdateフィールドは削除
+            assert '2025-11-15' in data['data']
+            assert 'timestamp' in data
     
     def test_post_ensemble_without_date(self, client):
         """POSTリクエストで日付なしエラーテスト"""
