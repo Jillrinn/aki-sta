@@ -6,6 +6,7 @@
   "scripts": {
     "setup": "node api/scripts/sync-env.js",
     "start": "npm run setup && concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:all": "npm run setup && concurrently -n \"backend,frontend,scraper\" -c \"blue,green,yellow\" \"npm run start:backend\" \"npm run start:frontend\" \"npm run start:scraper\"",
     "start:backend": "cd api && func start",
     "start:frontend": "wait-on http://localhost:7071 && cd frontend && npm start",
     "start:scraper": "cd scraper && ./docker-run.sh start",

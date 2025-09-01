@@ -109,7 +109,7 @@ HTTPアクションの設定で「Settings」を開き:
 ```json
 {
   "success": true,
-  "message": "スクレイピングを開始しました",
+  "message": "空き状況取得を開始しました",
   "targetDates": ["2025-09-15", "2025-09-20"]
 }
 ```
@@ -120,7 +120,7 @@ HTTPアクションの設定で「Settings」を開き:
 ```json
 {
   "success": false,
-  "message": "対象日付が設定されていません"
+  "message": "練習日程が登録されていません"
 }
 ```
 
