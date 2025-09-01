@@ -8,6 +8,7 @@ import sys
 import json
 import logging
 import traceback
+import threading
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, request, jsonify
@@ -81,6 +82,120 @@ def health():
     })
 
 
+def async_scraping_task(dates, record_id, record_date, use_rate_limits):
+    """
+    非同期でスクレイピングを実行するタスク
+    別スレッドで実行される
+    """
+    rate_limits_repo = None
+    has_error = False
+    
+    try:
+        # Rate limitsリポジトリの初期化
+        if use_rate_limits:
+            try:
+                from src.repositories.rate_limits_repository import RateLimitsRepository
+                rate_limits_repo = RateLimitsRepository()
+            except Exception as e:
+                logger.warning(f"Rate limits repo unavailable in async task: {str(e)}")
+                use_rate_limits = False
+        
+        # 各日付に対してスクレイピングを実行
+        for date in dates:
+            try:
+                # 日付フォーマット検証と正規化
+                normalized_date = None
+                for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
+                    try:
+                        parsed_date = datetime.strptime(date, fmt)
+                        normalized_date = parsed_date.strftime('%Y-%m-%d')
+                        break
+                    except ValueError:
+                        continue
+                
+                if normalized_date is None:
+                    raise ValueError(f"Invalid date format: {date}")
+                
+                logger.info(f"[Async] Scraping date: {normalized_date}")
+                result = scraper.scrape_and_save(normalized_date)
+                
+                if not result or result.get('status') != 'success':
+                    has_error = True
+                    logger.error(f"[Async] Failed to scrape {normalized_date}")
+                    
+            except Exception as e:
+                has_error = True
+                logger.error(f"[Async] Error scraping {date}: {str(e)}")
+                logger.error(f"[Async] Traceback: {traceback.format_exc()}")
+        
+        # Rate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                final_status = 'completed' if not has_error else 'failed'
+                rate_limits_repo.update_status(record_id, record_date, final_status)
+                logger.info(f"[Async] Rate limit status updated to: {final_status}")
+            except Exception as e:
+                logger.error(f"[Async] Failed to update rate limit status: {str(e)}")
+        
+        logger.info(f"[Async] Scraping task completed for {len(dates)} dates")
+        
+    except Exception as e:
+        logger.error(f"[Async] Fatal error in scraping task: {str(e)}")
+        
+        # エラー時のrate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                rate_limits_repo.update_status(record_id, record_date, 'failed')
+                logger.info("[Async] Rate limit status updated to: failed (due to exception)")
+            except:
+                pass
+
+
+def async_ensemble_scraping_task(date, record_id, record_date, use_rate_limits):
+    """
+    あんさんぶるスタジオ専用の非同期スクレイピングタスク
+    """
+    rate_limits_repo = None
+    
+    try:
+        # Rate limitsリポジトリの初期化
+        if use_rate_limits:
+            try:
+                from src.repositories.rate_limits_repository import RateLimitsRepository
+                rate_limits_repo = RateLimitsRepository()
+            except Exception as e:
+                logger.warning(f"Rate limits repo unavailable in async ensemble task: {str(e)}")
+                use_rate_limits = False
+        
+        logger.info(f"[Async Ensemble] Scraping date: {date}")
+        
+        # サービスを取得してスクレイピング実行
+        _, scraping_service = get_services()
+        result = scraping_service.scrape_facility('ensemble', date)
+        
+        # Rate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                final_status = 'completed' if result.get('status') == 'success' else 'failed'
+                rate_limits_repo.update_status(record_id, record_date, final_status)
+                logger.info(f"[Async Ensemble] Rate limit status updated to: {final_status}")
+            except Exception as e:
+                logger.error(f"[Async Ensemble] Failed to update rate limit status: {str(e)}")
+        
+        logger.info(f"[Async Ensemble] Scraping completed for {date}")
+        
+    except Exception as e:
+        logger.error(f"[Async Ensemble] Fatal error: {str(e)}")
+        
+        # エラー時のrate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                rate_limits_repo.update_status(record_id, record_date, 'failed')
+                logger.info("[Async Ensemble] Rate limit status updated to: failed")
+            except:
+                pass
+
+
 @app.route('/scrape', methods=['POST'])
 def scrape():
     """
@@ -108,12 +223,8 @@ def scrape():
             
             if rate_result.get('is_already_running'):
                 return jsonify({
-                    'status': 'error',
-                    'message': 'スクレイピング処理がすでに実行中です。しばらくお待ちください。',
-                    'error_type': 'RATE_LIMIT_ERROR',
-                    'currentStatus': rate_result['record']['status'],
-                    'lastRequestedAt': rate_result['record'].get('lastRequestedAt'),
-                    'timestamp': datetime.now().isoformat()
+                    'success': False,
+                    'message': '空き状況取得は実行中の可能性があります'
                 }), 409
             
             record_id = rate_result['record']['id']
@@ -140,9 +251,8 @@ def scrape():
         if not dates:
             logger.warning("No dates provided in request")
             return jsonify({
-                'status': 'error',
-                'message': 'At least one date is required. Use query parameter ?date=YYYY-MM-DD or JSON body {"dates": ["YYYY-MM-DD"]}',
-                'timestamp': datetime.now().isoformat()
+                'success': False,
+                'message': '練習日程が登録されていません'
             }), 400
         
         # Validate date formats and check past dates
@@ -153,106 +263,33 @@ def scrape():
                 # 過去日付チェック
                 if parsed_date.date() < today:
                     return jsonify({
-                        'status': 'error',
-                        'message': f'過去の日付は指定できません: {date_str}',
-                        'today': today.strftime('%Y-%m-%d'),
-                        'timestamp': datetime.now().isoformat()
+                        'success': False,
+                        'message': f'過去の日付は指定できません: {date_str}'
                     }), 400
             except ValueError:
                 return jsonify({
-                    'status': 'error',
-                    'message': f'Invalid date format: {date_str}. Use YYYY-MM-DD',
-                    'timestamp': datetime.now().isoformat()
+                    'success': False,
+                    'message': f'無効な日付形式です: {date_str}'
                 }), 400
         
         logger.info(f"Scraper triggered by: {triggered_by}")
         logger.info(f"Scraping {len(dates)} dates: {dates}")
         
-        # Execute scraping for each date
-        scrape_data = {}
-        has_error = False
+        # スクレイピングタスクを別スレッドで実行（fire and forget）
+        scraping_thread = threading.Thread(
+            target=async_scraping_task,
+            args=(dates, record_id, record_date, use_rate_limits),
+            daemon=True  # メインプロセスが終了しても続行
+        )
+        scraping_thread.start()
         
-        for date in dates:
-            try:
-                # 日付フォーマット検証と正規化
-                normalized_date = None
-                for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
-                    try:
-                        parsed_date = datetime.strptime(date, fmt)
-                        normalized_date = parsed_date.strftime('%Y-%m-%d')
-                        break
-                    except ValueError:
-                        continue
-                
-                if normalized_date is None:
-                    raise ValueError(f"Date must be in YYYY-MM-DD or YYYY/MM/DD format, got: {date}")
-                
-                logger.info(f"Scraping date: {normalized_date}")
-                result = scraper.scrape_and_save(normalized_date)
-                
-                if result and result.get('status') == 'success':
-                    # 成功した場合はデータを追加
-                    scrape_data[normalized_date] = result.get('data', {}).get(normalized_date, [])
-                else:
-                    has_error = True
-                    # エラーの場合は空配列を設定（部分的成功を許可）
-                    scrape_data[normalized_date] = []
-                    
-            except ValueError as e:
-                # 日付フォーマットエラー・過去日付エラー
-                error_message = str(e)
-                logger.error(f"Date validation error for {date}: {error_message}")
-                has_error = True
-                scrape_data[date] = []  # エラーの場合は空配列
-                
-            except (PlaywrightError, FileNotFoundError) as e:
-                # Playwrightブラウザエラー
-                logger.error(f"Browser error for {date}: {str(e)}")
-                has_error = True
-                scrape_data[date] = []
-                
-            except ConnectionError as e:
-                # ネットワークエラー
-                logger.error(f"Network error for {date}: {str(e)}")
-                has_error = True
-                scrape_data[date] = []
-                
-            except Exception as e:
-                # その他のエラー
-                logger.error(f"Error scraping {date}: {str(e)}")
-                logger.error(f"Traceback: {traceback.format_exc()}")
-                has_error = True
-                scrape_data[date] = []
+        logger.info(f"Scraping task started asynchronously for {len(dates)} dates")
         
-        # Rate limitsステータス更新
-        if use_rate_limits and record_id and rate_limits_repo:
-            try:
-                final_status = 'completed' if not has_error else 'failed'
-                rate_limits_repo.update_status(record_id, record_date, final_status)
-                logger.info(f"Rate limit status updated to: {final_status}")
-            except Exception as e:
-                logger.error(f"Failed to update rate limit status: {str(e)}")
-        
-        # シンプルな成功レスポンス
-        response = {
-            'status': 'success' if not has_error else 'partial',
-            'data': scrape_data,
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        # データがある日付の数をログ出力
-        success_count = sum(1 for data in scrape_data.values() if data)
-        logger.info(f"Scraping completed: {success_count}/{len(dates)} successful")
-        
-        # HTTPステータスコードの決定
-        if all(not data for data in scrape_data.values()):
-            # 全て失敗した場合
-            status_code = 500
-        else:
-            # 成功または部分的成功
-            status_code = 200
-            
-        return jsonify(response), status_code
+        # 即座にシンプルなレスポンスを返す
+        return jsonify({
+            'success': True,
+            'message': '空き状況取得を開始しました'
+        }), 202  # 202 Accepted
         
     except Exception as e:
         # エラー時のrate limitsステータス更新
@@ -265,9 +302,8 @@ def scrape():
         
         logger.error(f"Fatal error in scrape endpoint: {str(e)}")
         return jsonify({
-            'status': 'error',
-            'timestamp': datetime.now().isoformat(),
-            'error': str(e)
+            'success': False,
+            'message': '空き状況取得は実行中の可能性があります'
         }), 500
 
 
@@ -296,12 +332,8 @@ def scrape_ensemble():
             
             if rate_result.get('is_already_running'):
                 return jsonify({
-                    'status': 'error',
-                    'message': 'スクレイピング処理がすでに実行中です。しばらくお待ちください。',
-                    'error_type': 'RATE_LIMIT_ERROR',
-                    'currentStatus': rate_result['record']['status'],
-                    'lastRequestedAt': rate_result['record'].get('lastRequestedAt'),
-                    'timestamp': datetime.now().isoformat()
+                    'success': False,
+                    'message': '空き状況取得は実行中の可能性があります'
                 }), 409
             
             record_id = rate_result['record']['id']
@@ -344,34 +376,21 @@ def scrape_ensemble():
         
         logger.info(f"Scraping ensemble with specified date: {date}")
         
-        # サービスを取得
-        _, scraping_service = get_services()
-        result = scraping_service.scrape_facility('ensemble', date)
+        # スクレイピングタスクを別スレッドで実行（fire and forget）
+        scraping_thread = threading.Thread(
+            target=async_ensemble_scraping_task,
+            args=(date, record_id, record_date, use_rate_limits),
+            daemon=True
+        )
+        scraping_thread.start()
         
-        # Rate limitsステータス更新
-        if use_rate_limits and record_id and rate_limits_repo:
-            try:
-                final_status = 'completed' if result.get('status') == 'success' else 'failed'
-                rate_limits_repo.update_status(record_id, record_date, final_status)
-                logger.info(f"Rate limit status updated to: {final_status} for ensemble")
-            except Exception as e:
-                logger.error(f"Failed to update rate limit status for ensemble: {str(e)}")
+        logger.info(f"Ensemble scraping task started asynchronously for {date}")
         
-        # シンプルな成功レスポンス（統一形式）
-        if result.get('status') == 'success':
-            return jsonify({
-                'status': 'success',
-                'data': result.get('data', {}),
-                'timestamp': datetime.now().isoformat()
-            }), 200
-        else:
-            # エラーレスポンスは変更なし
-            return jsonify({
-                'status': 'error',
-                'message': result.get('message', 'Scraping failed'),
-                'error_type': result.get('error_type', 'SCRAPING_ERROR'),
-                'timestamp': datetime.now().isoformat()
-            }), 500
+        # 即座にシンプルなレスポンスを返す
+        return jsonify({
+            'success': True,
+            'message': '空き状況取得を開始しました'
+        }), 202
             
     except Exception as e:
         # エラー時のrate limitsステータス更新

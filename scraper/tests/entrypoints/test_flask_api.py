@@ -57,49 +57,34 @@ class TestBasicEndpoints:
 class TestScrapeEndpoint:
     """スクレイピングエンドポイントのテスト"""
     
+    @patch('src.entrypoints.flask_api.threading')
     @patch('src.entrypoints.flask_api.scraper')
-    def test_scrape_with_query_parameter(self, mock_scraper, client):
-        """クエリパラメータでの日付指定テスト"""
-        # スクレイパーのモック設定
-        mock_scraper.scrape_and_save.return_value = {
-            'status': 'success',
-            'data': {
-                '2025-11-15': [
-                    {
-                        'facilityName': 'テストスタジオ',
-                        'timeSlots': {'9-12': 'available'},
-                        'lastUpdated': '2025-08-30T10:00:00Z'
-                    }
-                ]
-            }
-        }
+    def test_scrape_with_query_parameter(self, mock_scraper, mock_threading, client):
+        """クエリパラメータでの日付指定テスト（非同期処理）"""
+        # スレッドのモック設定
+        mock_thread = Mock()
+        mock_threading.Thread.return_value = mock_thread
         
         # リクエスト実行
         response = client.post('/scrape?date=2025-11-15')
         data = json.loads(response.data)
         
-        assert response.status_code == 200
-        assert data['status'] == 'success'
-        assert '2025-11-15' in data['data']
-        assert len(data['data']['2025-11-15']) == 1
-        assert data['data']['2025-11-15'][0]['facilityName'] == 'テストスタジオ'
-        assert 'timestamp' in data
+        # 非同期処理のため、即座にレスポンスが返る
+        assert response.status_code == 202
+        assert data['success'] is True
+        assert data['message'] == '空き状況取得を開始しました'
+        
+        # スレッドが開始されたことを確認
+        mock_threading.Thread.assert_called_once()
+        mock_thread.start.assert_called_once()
     
+    @patch('src.entrypoints.flask_api.threading')
     @patch('src.entrypoints.flask_api.scraper')
-    def test_scrape_with_json_body(self, mock_scraper, client):
-        """JSONボディでの日付指定テスト"""
-        # スクレイパーのモック設定
-        mock_scraper.scrape_and_save.return_value = {
-            'status': 'success',
-            'data': {
-                '2025-11-15': [
-                    {
-                        'facilityName': 'テストスタジオ',
-                        'timeSlots': {'9-12': 'available'}
-                    }
-                ]
-            }
-        }
+    def test_scrape_with_json_body(self, mock_scraper, mock_threading, client):
+        """JSONボディでの日付指定テスト（非同期処理）"""
+        # スレッドのモック設定
+        mock_thread = Mock()
+        mock_threading.Thread.return_value = mock_thread
         
         # リクエスト実行
         response = client.post('/scrape',
@@ -107,40 +92,31 @@ class TestScrapeEndpoint:
                              content_type='application/json')
         data = json.loads(response.data)
         
-        assert response.status_code == 200
-        assert data['status'] == 'success'
-        assert '2025-11-15' in data['data']
-        assert len(data['data']['2025-11-15']) == 1
-    
-    @patch('src.entrypoints.flask_api.scraper')
-    def test_scrape_multiple_dates(self, mock_scraper, client):
-        """複数日付のスクレイピングテスト"""
-        # スクレイパーのモック設定
-        def mock_scrape(date):
-            return {
-                'status': 'success',
-                'data': {
-                    date: [
-                        {
-                            'facilityName': f'スタジオ - {date}',
-                            'timeSlots': {'9-12': 'available'}
-                        }
-                    ]
-                }
-            }
+        assert response.status_code == 202
+        assert data['success'] is True
+        assert data['message'] == '空き状況取得を開始しました'
         
-        mock_scraper.scrape_and_save.side_effect = mock_scrape
+        # スレッドが開始されたことを確認
+        mock_thread.start.assert_called_once()
+    
+    @patch('src.entrypoints.flask_api.threading')
+    @patch('src.entrypoints.flask_api.scraper')
+    def test_scrape_multiple_dates(self, mock_scraper, mock_threading, client):
+        """複数日付のスクレイピングテスト（非同期処理）"""
+        # スレッドのモック設定
+        mock_thread = Mock()
+        mock_threading.Thread.return_value = mock_thread
         
         # リクエスト実行
         response = client.post('/scrape?date=2025-11-15&date=2025-11-16')
         data = json.loads(response.data)
         
-        assert response.status_code == 200
-        assert data['status'] == 'success'
-        assert '2025-11-15' in data['data']
-        assert '2025-11-16' in data['data']
-        assert len(data['data']['2025-11-15']) == 1
-        assert len(data['data']['2025-11-16']) == 1
+        assert response.status_code == 202
+        assert data['success'] is True
+        assert data['message'] == '空き状況取得を開始しました'
+        
+        # スレッドが開始されたことを確認
+        mock_thread.start.assert_called_once()
     
     def test_scrape_without_dates(self, client):
         """日付なしリクエストのテスト"""
@@ -151,8 +127,8 @@ class TestScrapeEndpoint:
         data = json.loads(response.data)
         
         assert response.status_code == 400
-        assert data['status'] == 'error'
-        assert 'At least one date is required' in data['message']
+        assert data['success'] is False
+        assert data['message'] == '練習日程が登録されていません'
     
     def test_scrape_with_past_date(self, client):
         """過去日付のバリデーションテスト"""
@@ -162,7 +138,7 @@ class TestScrapeEndpoint:
         data = json.loads(response.data)
         
         assert response.status_code == 400
-        assert data['status'] == 'error'
+        assert data['success'] is False
         assert '過去の日付は指定できません' in data['message']
     
     def test_scrape_with_invalid_date_format(self, client):
@@ -171,8 +147,8 @@ class TestScrapeEndpoint:
         data = json.loads(response.data)
         
         assert response.status_code == 400
-        assert data['status'] == 'error'
-        assert 'Invalid date format' in data['message']
+        assert data['success'] is False
+        assert '無効な日付形式です' in data['message']
     
     def test_scrape_with_slash_date_format_rejected(self, client):
         """スラッシュ区切り日付形式が拒否されることのテスト"""
@@ -187,9 +163,8 @@ class TestScrapeEndpoint:
         
         # 400エラーが返される
         assert response.status_code == 400
-        assert data['status'] == 'error'
-        assert 'Invalid date format' in data['message']
-        assert 'Use YYYY-MM-DD' in data['message']
+        assert data['success'] is False
+        assert '無効な日付形式です' in data['message']
 
 
 class TestErrorHandling:

@@ -70,8 +70,11 @@ health_check() {
 case "$1" in
     start)
         echo "Starting Scraper Docker environment..."
+        # Stop existing containers if running
+        docker-compose down 2>/dev/null || true
         check_env
-        docker-compose build
+        # Always build fresh to ensure latest code
+        docker-compose build --no-cache
         docker-compose up -d
         health_check
         ;;

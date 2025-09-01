@@ -1,0 +1,131 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.13, pytest-7.4.4, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /app
+configfile: pytest.ini
+plugins: cov-4.1.0
+collecting ... collected 98 items
+
+tests/entrypoints/test_cli.py::TestDateFormat::test_date_format_with_hyphen PASSED [  1%]
+tests/entrypoints/test_cli.py::TestDateFormat::test_date_format_with_slash PASSED [  2%]
+tests/entrypoints/test_cli.py::TestDateFormat::test_invalid_date_format PASSED [  3%]
+tests/entrypoints/test_cli.py::TestDateFormat::test_invalid_date_value PASSED [  4%]
+tests/entrypoints/test_cli.py::TestDateFormat::test_normalize_date_for_cosmos_db PASSED [  5%]
+tests/entrypoints/test_cli.py::TestDateFormat::test_app_endpoint_date_normalization PASSED [  6%]
+tests/entrypoints/test_cli.py::TestDateFormat::test_multiple_date_formats PASSED [  7%]
+tests/entrypoints/test_cli.py::TestDateFormat::test_past_date_validation_logic PASSED [  8%]
+tests/entrypoints/test_flask_api.py::TestBasicEndpoints::test_index_endpoint PASSED [  9%]
+tests/entrypoints/test_flask_api.py::TestBasicEndpoints::test_health_endpoint PASSED [ 10%]
+tests/entrypoints/test_flask_api.py::TestBasicEndpoints::test_404_error PASSED [ 11%]
+tests/entrypoints/test_flask_api.py::TestScrapeEndpoint::test_scrape_with_query_parameter PASSED [ 12%]
+tests/entrypoints/test_flask_api.py::TestScrapeEndpoint::test_scrape_with_json_body PASSED [ 13%]
+tests/entrypoints/test_flask_api.py::TestScrapeEndpoint::test_scrape_multiple_dates PASSED [ 14%]
+tests/entrypoints/test_flask_api.py::TestScrapeEndpoint::test_scrape_without_dates PASSED [ 15%]
+tests/entrypoints/test_flask_api.py::TestScrapeEndpoint::test_scrape_with_past_date PASSED [ 16%]
+tests/entrypoints/test_flask_api.py::TestScrapeEndpoint::test_scrape_with_invalid_date_format PASSED [ 17%]
+tests/entrypoints/test_flask_api.py::TestScrapeEndpoint::test_scrape_with_slash_date_format_rejected PASSED [ 18%]
+tests/entrypoints/test_flask_api.py::TestErrorHandling::test_scraper_error_handling PASSED [ 19%]
+tests/entrypoints/test_flask_api.py::TestErrorHandling::test_playwright_error_handling PASSED [ 20%]
+tests/entrypoints/test_flask_api.py::TestErrorHandling::test_network_error_handling PASSED [ 21%]
+tests/entrypoints/test_flask_api.py::TestErrorHandling::test_generic_exception_handling PASSED [ 22%]
+tests/entrypoints/test_flask_api.py::TestErrorHandling::test_partial_success PASSED [ 23%]
+tests/entrypoints/test_flask_api.py::TestRequestFormats::test_triggered_by_parameter PASSED [ 24%]
+tests/entrypoints/test_flask_api.py::TestRequestFormats::test_query_params_precedence PASSED [ 25%]
+tests/entrypoints/test_flask_api.py::TestDebugMode::test_debug_mode_traceback PASSED [ 26%]
+tests/entrypoints/test_flask_api.py::TestDebugMode::test_production_mode_no_traceback PASSED [ 27%]
+tests/entrypoints/test_flask_api.py::TestRateLimitErrors::test_scrape_with_rate_limit_error PASSED [ 28%]
+tests/entrypoints/test_flask_api.py::TestRateLimitErrors::test_scrape_ensemble_with_rate_limit_error PASSED [ 29%]
+tests/entrypoints/test_flask_api.py::TestRateLimitErrors::test_scrape_continues_without_rate_limits_on_cosmos_error PASSED [ 30%]
+tests/entrypoints/test_flask_api.py::TestEnsembleEndpoint::test_post_ensemble_with_date PASSED [ 31%]
+tests/entrypoints/test_flask_api.py::TestEnsembleEndpoint::test_post_ensemble_without_date PASSED [ 32%]
+tests/entrypoints/test_flask_api.py::TestEnsembleEndpoint::test_post_ensemble_with_past_date PASSED [ 33%]
+tests/repositories/test_cosmos_repository.py::TestCosmosWriter::test_generate_facility_id PASSED [ 34%]
+tests/repositories/test_cosmos_repository.py::TestCosmosWriter::test_missing_connection_settings PASSED [ 35%]
+tests/repositories/test_cosmos_repository.py::TestCosmosWriter::test_save_availability_cosmos_error PASSED [ 36%]
+tests/repositories/test_cosmos_repository.py::TestCosmosWriter::test_save_availability_success PASSED [ 37%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_init_with_valid_env PASSED [ 38%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_init_without_env PASSED [ 39%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_get_today_record_success PASSED [ 40%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_get_today_record_not_found PASSED [ 41%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_create_or_update_record_new PASSED [ 42%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_create_or_update_record_already_running PASSED [ 43%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_create_or_update_record_completed PASSED [ 44%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_update_status_success PASSED [ 45%]
+tests/repositories/test_rate_limits_repository.py::TestRateLimitsRepository::test_update_status_not_found PASSED [ 46%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_init_with_valid_env PASSED [ 47%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_init_without_env PASSED [ 48%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_get_target_dates_success PASSED [ 50%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_get_target_dates_empty PASSED [ 51%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_get_target_dates_cosmos_error PASSED [ 52%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_get_single_target_date PASSED [ 53%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_add_target_date_success PASSED [ 54%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_add_target_date_invalid_format PASSED [ 55%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_remove_target_date_success PASSED [ 56%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_remove_target_date_not_found PASSED [ 57%]
+tests/repositories/test_target_date_repository.py::TestTargetDateRepository::test_get_default_dates PASSED [ 58%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_convert_time_to_slot_morning PASSED [ 59%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_convert_time_to_slot_afternoon PASSED [ 60%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_convert_time_to_slot_evening PASSED [ 61%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_convert_time_to_slot_invalid PASSED [ 62%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_parse_japanese_year_month_valid PASSED [ 63%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_parse_japanese_year_month_double_digit PASSED [ 64%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_parse_japanese_year_month_invalid PASSED [ 65%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_save_to_json PASSED [ 66%]
+tests/scrapers/test_base_scraper.py::TestBaseScraperUtilities::test_scrape_availability_error_handling PASSED [ 67%]
+tests/scrapers/test_ensemble_studio.py::TestEnsembleStudioScraper::test_find_date_cell PASSED [ 68%]
+tests/scrapers/test_ensemble_studio.py::TestEnsembleStudioScraper::test_extract_time_slots_disabled PASSED [ 69%]
+tests/scrapers/test_ensemble_studio.py::TestEnsembleStudioScraper::test_extract_time_slots_with_marks PASSED [ 70%]
+tests/scrapers/test_error_handling.py::TestErrorHandling::test_skip_studio_when_navigate_fails PASSED [ 71%]
+tests/scrapers/test_error_handling.py::TestErrorHandling::test_skip_studio_when_date_cell_not_found PASSED [ 72%]
+tests/scrapers/test_error_handling.py::TestErrorHandling::test_empty_result_when_all_studios_fail PASSED [ 73%]
+tests/scrapers/test_error_handling.py::TestErrorHandling::test_scrape_and_save_with_no_valid_data PASSED [ 74%]
+tests/scrapers/test_error_handling.py::TestErrorHandling::test_time_slot_unknown_preserved PASSED [ 75%]
+tests/services/test_scrape_service.py::TestScrapeService::test_init_with_dependencies PASSED [ 76%]
+tests/services/test_scrape_service.py::TestScrapeService::test_get_scraper_class_exact_match PASSED [ 77%]
+tests/services/test_scrape_service.py::TestScrapeService::test_get_scraper_class_case_insensitive PASSED [ 78%]
+tests/services/test_scrape_service.py::TestScrapeService::test_get_scraper_class_partial_match PASSED [ 79%]
+tests/services/test_scrape_service.py::TestScrapeService::test_get_scraper_class_not_found PASSED [ 80%]
+tests/services/test_scrape_service.py::TestScrapeService::test_scrape_facility_success PASSED [ 81%]
+tests/services/test_scrape_service.py::TestScrapeService::test_scrape_facility_unknown PASSED [ 82%]
+tests/services/test_scrape_service.py::TestScrapeService::test_scrape_facility_error PASSED [ 83%]
+tests/services/test_scrape_service.py::TestScrapeService::test_scrape_all_facilities PASSED [ 84%]
+tests/services/test_scrape_service.py::TestScrapeService::test_scrape_with_dates_specific_facility PASSED [ 85%]
+tests/services/test_scrape_service.py::TestScrapeService::test_scrape_with_dates_all_facilities PASSED [ 86%]
+tests/services/test_scrape_service.py::TestScrapeService::test_get_available_facilities PASSED [ 87%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_get_dates_to_scrape_with_requested_dates PASSED [ 88%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_get_dates_to_scrape_from_repository PASSED [ 89%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_get_dates_to_scrape_default PASSED [ 90%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_get_dates_to_scrape_repository_error PASSED [ 91%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_get_single_date_to_scrape_with_requested PASSED [ 92%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_get_single_date_to_scrape_from_repository PASSED [ 93%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_validate_dates_multiple_formats PASSED [ 94%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_validate_dates_invalid_format PASSED [ 95%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_add_target_date_success PASSED [ 96%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_add_target_date_error PASSED [ 97%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_remove_target_date_success PASSED [ 98%]
+tests/services/test_target_date_service.py::TestTargetDateService::test_remove_target_date_error PASSED [100%]
+
+---------- coverage: platform linux, python 3.11.13-final-0 ----------
+Name                                         Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------------
+src/__init__.py                                  0      0   100%
+src/entrypoints/__init__.py                      0      0   100%
+src/entrypoints/cli.py                          52     24    54%   48, 57-90
+src/entrypoints/flask_api.py                   220     72    67%   42-59, 119-122, 185-186, 189, 210, 215-227, 243-244, 283-288, 309, 316-326, 366-369, 397-398, 412-417, 428-438, 458-459, 468-469
+src/repositories/__init__.py                     3      0   100%
+src/repositories/cosmos_repository.py           38      3    92%   68-70
+src/repositories/rate_limits_repository.py      67     19    72%   55-60, 124-129, 151, 171-176
+src/repositories/target_date_repository.py      76     15    80%   57-59, 102-107, 144-149
+src/scrapers/__init__.py                         0      0   100%
+src/scrapers/base.py                           161     65    60%   28, 33, 88-95, 118-129, 144, 159, 173, 186, 209-263, 277, 301, 311-329, 356-394
+src/scrapers/ensemble_studio.py                142     83    42%   33-79, 88-147, 179-180, 227-228, 234-235, 240-241, 246-247
+src/services/__init__.py                         3      0   100%
+src/services/scrape_service.py                  65      3    95%   114, 124-125
+src/services/target_date_service.py             50      3    94%   66-70
+src/utils/__init__.py                            0      0   100%
+src/utils/playwright_wrapper.py                104    104     0%   11-159
+--------------------------------------------------------------------------
+TOTAL                                          981    391    60%
+
+
+============================= 98 passed in 33.58s ==============================
