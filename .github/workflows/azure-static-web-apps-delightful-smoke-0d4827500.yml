@@ -38,6 +38,7 @@ jobs:
           COSMOS_ENDPOINT: ${{ secrets.COSMOS_ENDPOINT }}
           COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
           COSMOS_DATABASE: ${{ secrets.COSMOS_DATABASE }}
+          SCRAPER_API_URL: ${{ secrets.SCRAPER_API_URL }}
           FUNCTIONS_WORKER_RUNTIME: node
           AzureWebJobsFeatureFlags: EnableWorkerIndexing
 
