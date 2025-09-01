@@ -43,7 +43,7 @@ describe('target-dates-repository', () => {
       const result = await targetDatesRepository.getAllTargetDates();
 
       expect(cosmosClient.initialize).toHaveBeenCalled();
-      expect(cosmosClient.getContainer).toHaveBeenCalledWith('targetDates');
+      expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
       expect(result).toHaveLength(3);
       // ソートされていることを確認
       expect(result[0].date).toBe('2025-11-15');
@@ -83,7 +83,7 @@ describe('target-dates-repository', () => {
       const result = await targetDatesRepository.deleteTargetDate('2025-11-15');
 
       expect(cosmosClient.initialize).toHaveBeenCalled();
-      expect(cosmosClient.getContainer).toHaveBeenCalledWith('targetDates');
+      expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
       expect(mockContainer.item).toHaveBeenCalledWith('2025-11-15', '2025-11-15');
       expect(mockItem.delete).toHaveBeenCalled();
       expect(result).toEqual({
@@ -134,7 +134,7 @@ describe('target-dates-repository', () => {
       const result = await targetDatesRepository.insertTargetDate(mockDate, mockLabel);
 
       expect(cosmosClient.initialize).toHaveBeenCalled();
-      expect(cosmosClient.getContainer).toHaveBeenCalledWith('targetDates');
+      expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
       expect(mockItems.create).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockDate,
