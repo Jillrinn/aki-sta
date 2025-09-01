@@ -93,7 +93,38 @@ def scrape():
     Query parameters take precedence over body.
     At least one date is required.
     """
+    # Rate limits制御の初期化
+    use_rate_limits = False
+    record_id = None
+    record_date = None
+    rate_limits_repo = None
+    
     try:
+        # Rate limits制御を試みる
+        try:
+            from src.repositories.rate_limits_repository import RateLimitsRepository
+            rate_limits_repo = RateLimitsRepository()
+            rate_result = rate_limits_repo.create_or_update_record('running')
+            
+            if rate_result.get('is_already_running'):
+                return jsonify({
+                    'status': 'error',
+                    'message': 'スクレイピング処理がすでに実行中です。しばらくお待ちください。',
+                    'error_type': 'RATE_LIMIT_ERROR',
+                    'currentStatus': rate_result['record']['status'],
+                    'lastRequestedAt': rate_result['record'].get('lastRequestedAt'),
+                    'timestamp': datetime.now().isoformat()
+                }), 409
+            
+            record_id = rate_result['record']['id']
+            record_date = rate_result['record']['date']
+            use_rate_limits = True
+            logger.info(f"Rate limit check passed. Record ID: {record_id}")
+            
+        except Exception as e:
+            # Cosmos DB接続失敗時はrate_limits無効で続行
+            logger.warning(f"Rate limits unavailable, continuing without rate limit control: {str(e)}")
+            use_rate_limits = False
         # 1. Try query parameters first
         dates = request.args.getlist('date')
         
@@ -247,6 +278,15 @@ def scrape():
                     error_details['traceback'] = traceback.format_exc()
                 results.append(error_details)
         
+        # Rate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                final_status = 'completed' if error_count == 0 else 'failed'
+                rate_limits_repo.update_status(record_id, record_date, final_status)
+                logger.info(f"Rate limit status updated to: {final_status}")
+            except Exception as e:
+                logger.error(f"Failed to update rate limit status: {str(e)}")
+        
         # Summary response
         response = {
             'status': 'success' if error_count == 0 else 'partial',
@@ -274,6 +314,14 @@ def scrape():
         return jsonify(response), status_code
         
     except Exception as e:
+        # エラー時のrate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                rate_limits_repo.update_status(record_id, record_date, 'failed')
+                logger.info("Rate limit status updated to: failed (due to exception)")
+            except:
+                pass  # ステータス更新失敗は無視
+        
         logger.error(f"Fatal error in scrape endpoint: {str(e)}")
         return jsonify({
             'status': 'error',
@@ -292,7 +340,38 @@ def scrape_ensemble():
     
     POST: 指定日付でスクレイピング
     """
+    # Rate limits制御の初期化
+    use_rate_limits = False
+    record_id = None
+    record_date = None
+    rate_limits_repo = None
+    
     try:
+        # Rate limits制御を試みる
+        try:
+            from src.repositories.rate_limits_repository import RateLimitsRepository
+            rate_limits_repo = RateLimitsRepository()
+            rate_result = rate_limits_repo.create_or_update_record('running')
+            
+            if rate_result.get('is_already_running'):
+                return jsonify({
+                    'status': 'error',
+                    'message': 'スクレイピング処理がすでに実行中です。しばらくお待ちください。',
+                    'error_type': 'RATE_LIMIT_ERROR',
+                    'currentStatus': rate_result['record']['status'],
+                    'lastRequestedAt': rate_result['record'].get('lastRequestedAt'),
+                    'timestamp': datetime.now().isoformat()
+                }), 409
+            
+            record_id = rate_result['record']['id']
+            record_date = rate_result['record']['date']
+            use_rate_limits = True
+            logger.info(f"Rate limit check passed for ensemble. Record ID: {record_id}")
+            
+        except Exception as e:
+            # Cosmos DB接続失敗時はrate_limits無効で続行
+            logger.warning(f"Rate limits unavailable for ensemble, continuing without rate limit control: {str(e)}")
+            use_rate_limits = False
         # リクエストから日付を取得
         date = request.args.get('date')
         if not date:
@@ -328,6 +407,15 @@ def scrape_ensemble():
         _, scraping_service = get_services()
         result = scraping_service.scrape_facility('ensemble', date)
         
+        # Rate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                final_status = 'completed' if result.get('status') == 'success' else 'failed'
+                rate_limits_repo.update_status(record_id, record_date, final_status)
+                logger.info(f"Rate limit status updated to: {final_status} for ensemble")
+            except Exception as e:
+                logger.error(f"Failed to update rate limit status for ensemble: {str(e)}")
+        
         return jsonify({
             'status': result.get('status'),
             'facility': 'ensemble',
@@ -338,6 +426,14 @@ def scrape_ensemble():
         }), 200 if result.get('status') == 'success' else 500
             
     except Exception as e:
+        # エラー時のrate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                rate_limits_repo.update_status(record_id, record_date, 'failed')
+                logger.info("Rate limit status updated to: failed for ensemble (due to exception)")
+            except:
+                pass  # ステータス更新失敗は無視
+        
         logger.error(f"Error in scrape_ensemble endpoint: {str(e)}")
         return jsonify({
             'status': 'error',

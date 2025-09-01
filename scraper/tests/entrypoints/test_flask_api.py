@@ -372,6 +372,87 @@ class TestDebugMode:
         assert 'Test error' in data['results'][0]['details']
 
 
+class TestRateLimitErrors:
+    """Rate limit制限のテスト"""
+    
+    @patch('src.repositories.rate_limits_repository.RateLimitsRepository')
+    def test_scrape_with_rate_limit_error(self, mock_repo_class, client):
+        """Rate limit制限時の409エラーテスト（/scrapeエンドポイント）"""
+        # モックインスタンスの設定
+        mock_instance = Mock()
+        mock_repo_class.return_value = mock_instance
+        mock_instance.create_or_update_record.return_value = {
+            'is_already_running': True,
+            'record': {
+                'id': '2025-01-09',
+                'date': '2025-01-09',
+                'status': 'running',
+                'lastRequestedAt': '2025-01-09T10:00:00Z'
+            }
+        }
+        
+        # リクエスト実行
+        response = client.post('/scrape?date=2025-11-15')
+        data = json.loads(response.data)
+        
+        # 検証
+        assert response.status_code == 409
+        assert data['status'] == 'error'
+        assert data['error_type'] == 'RATE_LIMIT_ERROR'
+        assert 'すでに実行中' in data['message']
+        assert data['currentStatus'] == 'running'
+        assert data['lastRequestedAt'] == '2025-01-09T10:00:00Z'
+    
+    @patch('src.repositories.rate_limits_repository.RateLimitsRepository')
+    def test_scrape_ensemble_with_rate_limit_error(self, mock_repo_class, client):
+        """Rate limit制限時の409エラーテスト（/scrape/ensembleエンドポイント）"""
+        # モックインスタンスの設定
+        mock_instance = Mock()
+        mock_repo_class.return_value = mock_instance
+        mock_instance.create_or_update_record.return_value = {
+            'is_already_running': True,
+            'record': {
+                'id': '2025-01-09',
+                'date': '2025-01-09',
+                'status': 'running',
+                'lastRequestedAt': '2025-01-09T10:00:00Z'
+            }
+        }
+        
+        # リクエスト実行
+        response = client.post('/scrape/ensemble?date=2025-11-15')
+        data = json.loads(response.data)
+        
+        # 検証
+        assert response.status_code == 409
+        assert data['status'] == 'error'
+        assert data['error_type'] == 'RATE_LIMIT_ERROR'
+        assert 'すでに実行中' in data['message']
+    
+    @patch('src.entrypoints.flask_api.scraper')
+    @patch('src.repositories.rate_limits_repository.RateLimitsRepository')
+    def test_scrape_continues_without_rate_limits_on_cosmos_error(self, mock_repo_class, mock_scraper, client):
+        """Cosmos DB接続失敗時でもスクレイピングが続行されることのテスト"""
+        # Rate limitsリポジトリが例外を発生させる
+        mock_repo_class.side_effect = Exception("Cosmos DB connection failed")
+        
+        # スクレイパーのモック設定
+        mock_scraper.scrape_and_save.return_value = {
+            'status': 'success',
+            'data': {'2025-11-15': [{'facilityName': 'Test', 'timeSlots': {}}]}
+        }
+        
+        # リクエスト実行
+        response = client.post('/scrape?date=2025-11-15')
+        data = json.loads(response.data)
+        
+        # 検証（rate limits失敗してもスクレイピングは成功）
+        assert response.status_code == 200
+        assert data['status'] == 'success'
+        assert data['success_count'] == 1
+        mock_scraper.scrape_and_save.assert_called_once()
+
+
 class TestEnsembleEndpoint:
     """あんさんぶるスタジオ専用エンドポイントのテスト"""
     
