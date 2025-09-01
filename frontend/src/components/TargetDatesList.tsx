@@ -202,10 +202,10 @@ const TargetDatesList: React.FC = () => {
       />
       
       {/* 左下固定の戻るボタン */}
-      <div className="fixed bottom-4 left-4 z-40">
+      <div className="fixed bottom-20 left-12 sm:left-20 z-40">
         <Link
           to="/"
-          className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base"
+          className="px-6 py-3 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base inline-block"
         >
           ← 空き状況に戻る
         </Link>

@@ -77,24 +77,25 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
         <h2 className="text-xl font-bold text-gray-800 mb-4">練習日程登録</h2>
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
-              日付 <span className="text-red-500">*</span>
+          <div className="mb-6">
+            <label htmlFor="date" className="block text-base font-semibold text-gray-900 mb-2">
+              日付 <span className="text-red-500 text-sm">*</span>
             </label>
             <input
               type="date"
               id="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+              style={{ WebkitAppearance: 'none' }}
               disabled={isLoading}
               required
             />
           </div>
 
-          <div className="mb-4">
-            <label htmlFor="label" className="block text-sm font-medium text-gray-700 mb-1">
-              ラベル <span className="text-red-500">*</span>
+          <div className="mb-6">
+            <label htmlFor="label" className="block text-base font-semibold text-gray-900 mb-2">
+              ラベル <span className="text-red-500 text-sm">*</span>
             </label>
             <input
               type="text"
@@ -102,7 +103,7 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="例：本番ライブ"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={isLoading}
               required
             />
@@ -123,18 +124,18 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
           )}
 
           {/* ボタン */}
-          <div className="flex gap-3 justify-end">
+          <div className="flex gap-3 justify-end mt-6">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+              className="px-6 py-3 text-base font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
               disabled={isLoading}
             >
               キャンセル
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading ? '登録中...' : '登録'}

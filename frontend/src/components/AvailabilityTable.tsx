@@ -29,6 +29,14 @@ const AvailabilityTable: React.FC = () => {
     return map;
   }, [targetDates]);
 
+  // target_datesとavailabilityの両方の日付を統合したリストを作成
+  const sortedDates = useMemo(() => {
+    const availabilityDates = Object.keys(data || {});
+    const targetDatesList = targetDates?.map(td => td.date) || [];
+    const allDatesSet = new Set([...availabilityDates, ...targetDatesList]);
+    return Array.from(allDatesSet).sort();
+  }, [data, targetDates]);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640);
@@ -48,11 +56,10 @@ const AvailabilityTable: React.FC = () => {
     return <ErrorState error={error} />;
   }
 
-  if (!data || Object.keys(data).length === 0) {
+  // 表示する日付がない場合
+  if (sortedDates.length === 0) {
     return <EmptyState />;
   }
-
-  const sortedDates = Object.keys(data).sort();
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
@@ -91,7 +98,11 @@ const AvailabilityTable: React.FC = () => {
             )}
           </h2>
           
-          {isMobile ? (
+          {!data || !data[date] ? (
+            <div className="p-8 text-center bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+              <p className="text-gray-600 text-lg">空き状況はまだ取得されていません。</p>
+            </div>
+          ) : isMobile ? (
             <div className="space-y-4">
               {(data[date] || []).map((facility: Facility, facilityIndex: number) => (
                 <MobileCardView
