@@ -85,9 +85,10 @@ class ScrapeService {
         responseData = JSON.parse(scraperResponse.data);
       } catch (parseError) {
         console.error('Failed to parse scraper response:', parseError);
+        console.error('Raw response:', scraperResponse.data);
         return {
           success: false,
-          message: '空き状況取得は実行中の可能性があります'
+          message: 'スクレイパーからのレスポンス解析に失敗しました'
         };
       }
       
@@ -99,25 +100,48 @@ class ScrapeService {
           targetDates: dateStrings
         };
       } else if (scraperResponse.statusCode === 409) {
-        // Rate limit error
+        // Rate limit error - 実行中
         return {
           success: false,
-          message: responseData.message || '空き状況取得は実行中の可能性があります'
+          message: responseData.message || '現在スクレイピング処理が実行中です。しばらくお待ちください'
+        };
+      } else if (scraperResponse.statusCode === 400) {
+        // Bad request
+        return {
+          success: false,
+          message: responseData.message || '不正なリクエストです'
         };
       } else {
         // その他のエラー
+        console.error('Unexpected scraper response:', scraperResponse.statusCode, responseData);
         return {
           success: false,
-          message: responseData.message || '空き状況取得は実行中の可能性があります'
+          message: responseData.message || 'スクレイピング処理でエラーが発生しました'
         };
       }
       
     } catch (error) {
       console.error(`Failed to initiate batch scraping: ${error.message}`);
       
+      // タイムアウトエラーの場合
+      if (error.message && error.message.includes('timeout')) {
+        return {
+          success: false,
+          message: 'スクレイパーへの接続がタイムアウトしました。しばらく待ってから再試行してください'
+        };
+      }
+      
+      // 接続エラーの場合
+      if (error.code === 'ECONNREFUSED') {
+        return {
+          success: false,
+          message: 'スクレイパーサービスに接続できません。システム管理者にお問い合わせください'
+        };
+      }
+      
       return {
         success: false,
-        message: '空き状況取得は実行中の可能性があります'
+        message: `エラーが発生しました: ${error.message || '不明なエラー'}`
       };
     }
   }
@@ -144,9 +168,10 @@ class ScrapeService {
         responseData = JSON.parse(scraperResponse.data);
       } catch (parseError) {
         console.error('Failed to parse scraper response:', parseError);
+        console.error('Raw response:', scraperResponse.data);
         return {
           success: false,
-          message: '空き状況取得は実行中の可能性があります'
+          message: 'スクレイパーからのレスポンス解析に失敗しました'
         };
       }
       
@@ -158,16 +183,23 @@ class ScrapeService {
           targetDates: dateStrings
         };
       } else if (scraperResponse.statusCode === 409) {
-        // Rate limit error
+        // Rate limit error - 実行中
         return {
           success: false,
-          message: responseData.message || '空き状況取得は実行中の可能性があります'
+          message: responseData.message || '現在スクレイピング処理が実行中です。しばらくお待ちください'
+        };
+      } else if (scraperResponse.statusCode === 400) {
+        // Bad request
+        return {
+          success: false,
+          message: responseData.message || '不正なリクエストです'
         };
       } else {
         // その他のエラー
+        console.error('Unexpected scraper response:', scraperResponse.statusCode, responseData);
         return {
           success: false,
-          message: responseData.message || '空き状況取得は実行中の可能性があります'
+          message: responseData.message || 'スクレイピング処理でエラーが発生しました'
         };
       }
       

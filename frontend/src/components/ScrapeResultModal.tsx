@@ -36,15 +36,38 @@ const ScrapeResultModal: React.FC<ScrapeResultModalProps> = ({
             </div>
           ) : (
             <div className={`p-4 rounded-lg ${
-              isError 
+              message.includes('実行中') 
+                ? 'bg-yellow-50 border border-yellow-200'
+                : isError 
                 ? 'bg-red-50 border border-red-200' 
                 : 'bg-green-50 border border-green-200'
             }`}>
-              <p className={`${
-                isError ? 'text-red-700' : 'text-green-700'
-              }`}>
-                {message}
-              </p>
+              <div className="flex items-start">
+                <div className="mr-3 text-2xl">
+                  {message.includes('実行中') ? '⏳' : isError ? '❌' : '✅'}
+                </div>
+                <div className="flex-1">
+                  <p className={`${
+                    message.includes('実行中')
+                      ? 'text-yellow-700'
+                      : isError 
+                      ? 'text-red-700' 
+                      : 'text-green-700'
+                  } font-medium`}>
+                    {message}
+                  </p>
+                  {message.includes('実行中') && (
+                    <p className="mt-2 text-sm text-yellow-600">
+                      前回の処理が完了するまでお待ちください
+                    </p>
+                  )}
+                  {!isError && !message.includes('実行中') && (
+                    <p className="mt-2 text-sm text-green-600">
+                      データの反映には数分かかる場合があります
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
