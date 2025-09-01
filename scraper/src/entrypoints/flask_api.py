@@ -285,78 +285,57 @@ def scrape():
 # Single date endpoint removed - use POST /scrape?date=YYYY-MM-DD instead
 
 
-@app.route('/scrape/ensemble', methods=['GET', 'POST'])
+@app.route('/scrape/ensemble', methods=['POST'])
 def scrape_ensemble():
     """
     あんさんぶるスタジオ専用エンドポイント
     
-    GET: target_dateから日付を取得してスクレイピング
     POST: 指定日付でスクレイピング
     """
     try:
-        if request.method == 'GET':
-            # サービスを取得
-            target_service, scraping_service = get_services()
-            
-            # target_dateから日付を取得
-            date = target_service.get_single_date_to_scrape()
-            logger.info(f"Scraping ensemble with target date: {date}")
-            
-            result = scraping_service.scrape_facility('ensemble', date)
-            
+        # リクエストから日付を取得
+        date = request.args.get('date')
+        if not date:
+            data = request.get_json() or {}
+            date = data.get('date')
+        
+        if not date:
             return jsonify({
-                'status': result.get('status'),
-                'facility': 'ensemble',
-                'date': date,
-                'source': 'target_date',
-                'data': result.get('data', {}),
+                'status': 'error',
+                'message': 'Date is required. Use ?date=YYYY-MM-DD or JSON body {"date": "YYYY-MM-DD"}',
                 'timestamp': datetime.now().isoformat()
-            }), 200 if result.get('status') == 'success' else 500
-            
-        else:  # POST
-            # リクエストから日付を取得
-            date = request.args.get('date')
-            if not date:
-                data = request.get_json() or {}
-                date = data.get('date')
-            
-            if not date:
+            }), 400
+        
+        # 日付フォーマット検証
+        try:
+            parsed_date = datetime.strptime(date, '%Y-%m-%d')
+            if parsed_date.date() < datetime.now().date():
                 return jsonify({
                     'status': 'error',
-                    'message': 'Date is required. Use ?date=YYYY-MM-DD or JSON body {"date": "YYYY-MM-DD"}',
+                    'message': f'過去の日付は指定できません: {date}',
                     'timestamp': datetime.now().isoformat()
                 }), 400
-            
-            # 日付フォーマット検証
-            try:
-                parsed_date = datetime.strptime(date, '%Y-%m-%d')
-                if parsed_date.date() < datetime.now().date():
-                    return jsonify({
-                        'status': 'error',
-                        'message': f'過去の日付は指定できません: {date}',
-                        'timestamp': datetime.now().isoformat()
-                    }), 400
-            except ValueError:
-                return jsonify({
-                    'status': 'error',
-                    'message': f'Invalid date format: {date}. Use YYYY-MM-DD',
-                    'timestamp': datetime.now().isoformat()
-                }), 400
-            
-            logger.info(f"Scraping ensemble with specified date: {date}")
-            
-            # サービスを取得
-            _, scraping_service = get_services()
-            result = scraping_service.scrape_facility('ensemble', date)
-            
+        except ValueError:
             return jsonify({
-                'status': result.get('status'),
-                'facility': 'ensemble',
-                'date': date,
-                'source': 'request',
-                'data': result.get('data', {}),
+                'status': 'error',
+                'message': f'Invalid date format: {date}. Use YYYY-MM-DD',
                 'timestamp': datetime.now().isoformat()
-            }), 200 if result.get('status') == 'success' else 500
+            }), 400
+        
+        logger.info(f"Scraping ensemble with specified date: {date}")
+        
+        # サービスを取得
+        _, scraping_service = get_services()
+        result = scraping_service.scrape_facility('ensemble', date)
+        
+        return jsonify({
+            'status': result.get('status'),
+            'facility': 'ensemble',
+            'date': date,
+            'source': 'request',
+            'data': result.get('data', {}),
+            'timestamp': datetime.now().isoformat()
+        }), 200 if result.get('status') == 'success' else 500
             
     except Exception as e:
         logger.error(f"Error in scrape_ensemble endpoint: {str(e)}")

@@ -375,29 +375,6 @@ class TestDebugMode:
 class TestEnsembleEndpoint:
     """あんさんぶるスタジオ専用エンドポイントのテスト"""
     
-    def test_get_ensemble_with_target_date(self, client):
-        """GETリクエストでtarget_dateを使用するテスト"""
-        # get_services関数をモック化
-        with patch('src.entrypoints.flask_api.get_services') as mock_get_services:
-            # モックサービスを作成
-            mock_target_service = Mock()
-            mock_scrape_service = Mock()
-            mock_target_service.get_single_date_to_scrape.return_value = '2025-11-20'
-            mock_scrape_service.scrape_facility.return_value = {
-                'status': 'success',
-                'data': {'2025-11-20': [{'facilityName': 'ensemble', 'timeSlots': {}}]}
-            }
-            mock_get_services.return_value = (mock_target_service, mock_scrape_service)
-            
-            response = client.get('/scrape/ensemble')
-            data = json.loads(response.data)
-            
-            assert response.status_code == 200
-            assert data['status'] == 'success'
-            assert data['facility'] == 'ensemble'
-            assert data['date'] == '2025-11-20'
-            assert data['source'] == 'target_date'
-    
     def test_post_ensemble_with_date(self, client):
         """POSTリクエストで日付指定するテスト"""
         # get_services関数をモック化
