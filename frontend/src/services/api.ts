@@ -6,7 +6,7 @@ import {
   CreateTargetDateResponse,
   DeleteTargetDateResponse 
 } from '../types/targetDates';
-import { ScraperResponse } from '../types/scraper';
+import { ScraperResponse, ScrapeBatchResponse } from '../types/scraper';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
@@ -88,6 +88,23 @@ export const scraperApi = {
         return error.response.data;
       }
       console.error('Failed to trigger scraping:', error);
+      throw error;
+    }
+  },
+
+  async triggerBatchScraping(): Promise<ScrapeBatchResponse> {
+    try {
+      const response = await axios.post<ScrapeBatchResponse>(
+        `${API_BASE_URL}/scrape/batch`,
+        { includeAllTargetDates: true }
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        // エラーレスポンスがある場合はそのデータを返す
+        return error.response.data;
+      }
+      console.error('Failed to trigger batch scraping:', error);
       throw error;
     }
   }

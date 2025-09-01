@@ -1,11 +1,37 @@
 import React, { useState } from 'react';
+import { scraperApi } from '../services/api';
+import ScrapeResultModal from './ScrapeResultModal';
 
 const ActionButtons: React.FC = () => {
-  const [showNotImplemented, setShowNotImplemented] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
 
-  const handleManualFetchClick = () => {
-    setShowNotImplemented(true);
-    setTimeout(() => setShowNotImplemented(false), 3000);
+  const handleManualFetchClick = async () => {
+    setIsModalOpen(true);
+    setIsLoading(true);
+    setIsError(false);
+    setMessage('');
+
+    try {
+      const response = await scraperApi.triggerBatchScraping();
+      
+      setIsLoading(false);
+      setMessage(response.message);
+      setIsError(!response.success);
+      
+      // 成功時は3秒後に自動で閉じる
+      if (response.success) {
+        setTimeout(() => {
+          setIsModalOpen(false);
+        }, 3000);
+      }
+    } catch (error) {
+      setIsLoading(false);
+      setMessage('通信エラーが発生しました');
+      setIsError(true);
+    }
   };
 
   return (
@@ -15,20 +41,19 @@ const ActionButtons: React.FC = () => {
           onClick={handleManualFetchClick}
           className="px-4 py-2 bg-brand-orange-dark text-white rounded-lg hover:bg-brand-orange transition-colors shadow-lg font-bold text-sm sm:text-base"
           aria-label="空き状況取得（手動）"
+          disabled={isLoading}
         >
           空き状況取得（手動）
         </button>
       </div>
 
-      {/* 未実装アラート */}
-      {showNotImplemented && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-lg">
-            <p className="font-bold">機能未実装です！</p>
-            <p className="text-sm">この機能は現在開発中です。</p>
-          </div>
-        </div>
-      )}
+      <ScrapeResultModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        message={message}
+        isLoading={isLoading}
+        isError={isError}
+      />
     </>
   );
 };

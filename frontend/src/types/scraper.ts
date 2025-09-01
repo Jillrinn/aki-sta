@@ -20,3 +20,9 @@ export interface ScraperErrorResponse {
 }
 
 export type ScraperResponse = ScraperSuccessResponse | ScraperAlreadyRunningResponse | ScraperErrorResponse;
+
+export interface ScrapeBatchResponse {
+  success: boolean;
+  message: string;
+  targetDates?: string[];
+}

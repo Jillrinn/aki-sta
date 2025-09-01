@@ -56,7 +56,14 @@ const AvailabilityTable: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
-      <h1 className="text-2xl sm:text-3xl text-gray-800 text-center mb-2 font-bold">空きスタサーチくん</h1>
+      <div className="flex items-center justify-center mb-2">
+        <h1 className="text-2xl sm:text-3xl text-gray-800 font-bold">空きスタサーチくん</h1>
+        <img 
+          src="/aki-sta-search-kun.png" 
+          alt="サーチくん" 
+          className="w-12 h-12 sm:w-16 sm:h-16 ml-3"
+        />
+      </div>
       <p className="text-center text-gray-600 mb-4">施設空き状況一覧</p>
       
       <div className="flex justify-center mb-4">

@@ -1,6 +1,13 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ActionButtons from './ActionButtons';
+import { scraperApi } from '../services/api';
+
+jest.mock('../services/api', () => ({
+  scraperApi: {
+    triggerBatchScraping: jest.fn(),
+  },
+}));
 
 describe('ActionButtons', () => {
   beforeEach(() => {
@@ -14,27 +21,70 @@ describe('ActionButtons', () => {
     expect(screen.queryByLabelText('新規登録')).not.toBeInTheDocument();
   });
 
-  test('shows "機能未実装" alert when "空き状況取得（手動）" button is clicked', async () => {
+  test('triggers batch scraping and shows success modal when button is clicked', async () => {
+    (scraperApi.triggerBatchScraping as jest.Mock).mockResolvedValue({
+      success: true,
+      message: '空き状況取得を開始しました',
+      targetDates: ['2025-09-15', '2025-09-20'],
+    });
+
     render(<ActionButtons />);
-    
-    // 初期状態ではアラートは表示されない
-    expect(screen.queryByText('機能未実装です！')).not.toBeInTheDocument();
     
     // ボタンをクリック
     const fetchButton = screen.getByLabelText('空き状況取得（手動）');
     fireEvent.click(fetchButton);
     
-    // アラートが表示される
-    expect(screen.getByText('機能未実装です！')).toBeInTheDocument();
-    expect(screen.getByText('この機能は現在開発中です。')).toBeInTheDocument();
+    // ローディング中の表示
+    expect(screen.getByText('処理中...')).toBeInTheDocument();
     
-    // 3秒後にアラートが消える
+    // API呼び出しを待つ
+    await waitFor(() => {
+      expect(screen.getByText('空き状況取得を開始しました')).toBeInTheDocument();
+    });
+    
+    expect(scraperApi.triggerBatchScraping).toHaveBeenCalledTimes(1);
+    
+    // 成功時は3秒後に自動で閉じる
     await waitFor(
       () => {
-        expect(screen.queryByText('機能未実装です！')).not.toBeInTheDocument();
+        expect(screen.queryByText('空き状況取得を開始しました')).not.toBeInTheDocument();
       },
       { timeout: 4000 }
     );
+  });
+
+  test('shows error modal when no target dates are found', async () => {
+    (scraperApi.triggerBatchScraping as jest.Mock).mockResolvedValue({
+      success: false,
+      message: '練習日程が登録されていません',
+    });
+
+    render(<ActionButtons />);
+    
+    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    fireEvent.click(fetchButton);
+    
+    await waitFor(() => {
+      expect(screen.getByText('練習日程が登録されていません')).toBeInTheDocument();
+    });
+    
+    // エラー時は自動で閉じない
+    expect(screen.getByText('閉じる')).toBeInTheDocument();
+  });
+
+  test('shows error modal when API call fails', async () => {
+    (scraperApi.triggerBatchScraping as jest.Mock).mockRejectedValue(new Error('Network error'));
+
+    render(<ActionButtons />);
+    
+    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    fireEvent.click(fetchButton);
+    
+    await waitFor(() => {
+      expect(screen.getByText('通信エラーが発生しました')).toBeInTheDocument();
+    });
+    
+    expect(screen.getByText('閉じる')).toBeInTheDocument();
   });
 
   test('button has correct styling', () => {
