@@ -30,6 +30,28 @@ jobs:
         docker run --rm aki-sta-scraper:test python -m pytest tests/ -v
       working-directory: ./scraper
     
+    - name: Check coverage threshold
+      run: |
+        # Run tests with coverage and extract percentage
+        docker run --rm aki-sta-scraper:test python -m pytest tests/ --cov=src --cov-report=term 2>&1 | tee coverage.txt
+        COVERAGE=$(grep "TOTAL" coverage.txt | awk '{print $4}' | sed 's/%//')
+        echo "Scraper test coverage: $COVERAGE%"
+        
+        if [[ -z "$COVERAGE" ]]; then
+          echo "⚠️ Could not extract coverage percentage"
+          exit 0
+        fi
+        
+        # Use awk for numeric comparison (bc might not be available)
+        if awk "BEGIN {exit !($COVERAGE < 80)}"; then
+          echo "⚠️ Coverage is below 80% threshold (Current: $COVERAGE%)"
+          echo "Please consider adding more tests to improve coverage."
+          exit 0
+        else
+          echo "✅ Coverage meets the 80% threshold"
+        fi
+      working-directory: ./scraper
+    
     - name: Test scraper execution (dry run)
       run: |
         # テスト環境変数でスクレイパーの起動確認（環境変数はイメージに含まれている）
