@@ -26,7 +26,8 @@ class ScrapeService {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(postData)
-        }
+        },
+        timeout: 10000 // 10秒のタイムアウト
       };
 
       // Use appropriate client based on protocol
@@ -49,6 +50,12 @@ class ScrapeService {
       req.on('error', (error) => {
         console.error('Error calling scraper API:', error);
         reject(error);
+      });
+
+      req.on('timeout', () => {
+        console.error('Request to scraper API timed out');
+        req.destroy();
+        reject(new Error('Request timeout: Scraper API did not respond within 10 seconds'));
       });
 
       req.write(postData);
