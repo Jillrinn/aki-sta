@@ -41,7 +41,7 @@ class TestRateLimitsRepository:
             assert repo.database == mock_database
             assert repo.container == mock_container
             mock_client_instance.get_database_client.assert_called_with('test-db')
-            mock_database.get_container_client.assert_called_with('rateLimits')
+            mock_database.get_container_client.assert_called_with('rate_limits')
     
     def test_init_without_env(self):
         """環境変数なしでの初期化エラーテスト"""
