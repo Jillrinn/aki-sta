@@ -3,7 +3,7 @@ const cosmosClient = require('./cosmos-client');
 class RateLimitsRepository {
   async initialize() {
     await cosmosClient.initialize();
-    this.container = cosmosClient.getContainer('rateLimits');
+    this.container = cosmosClient.getContainer('rate_limits');
   }
 
   async getTodayRecord() {

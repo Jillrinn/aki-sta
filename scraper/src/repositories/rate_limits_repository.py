@@ -29,7 +29,7 @@ class RateLimitsRepository:
         
         self.client = CosmosClient(endpoint, key)
         self.database = self.client.get_database_client(database_name)
-        self.container = self.database.get_container_client('rateLimits')
+        self.container = self.database.get_container_client('rate_limits')
     
     def get_today_record(self) -> Optional[Dict[str, Any]]:
         """

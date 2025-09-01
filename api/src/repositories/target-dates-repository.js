@@ -4,7 +4,7 @@ module.exports = {
   getAllTargetDates: async () => {
     try {
       await cosmosClient.initialize();
-      const container = cosmosClient.getContainer('targetDates');
+      const container = cosmosClient.getContainer('target_dates');
       
       const { resources } = await container.items
         .readAll()
@@ -25,7 +25,7 @@ module.exports = {
   deleteTargetDate: async (id) => {
     try {
       await cosmosClient.initialize();
-      const container = cosmosClient.getContainer('targetDates');
+      const container = cosmosClient.getContainer('target_dates');
       
       // IDとパーティションキーが同じ（日付）
       await container.item(id, id).delete();
@@ -58,7 +58,7 @@ module.exports = {
       }
       
       await cosmosClient.initialize();
-      const container = cosmosClient.getContainer('targetDates');
+      const container = cosmosClient.getContainer('target_dates');
       
       const targetDate = {
         id: date,

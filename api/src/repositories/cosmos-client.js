@@ -49,14 +49,14 @@ class CosmosDBClient {
       id: 'target_dates',
       partitionKey: { paths: ['/date'] }
     });
-    this.containers.targetDates = targetDates;
+    this.containers.target_dates = targetDates;
 
     // rate_limitsコンテナ
     const { container: rateLimits } = await this.database.containers.createIfNotExists({
       id: 'rate_limits',
       partitionKey: { paths: ['/date'] }
     });
-    this.containers.rateLimits = rateLimits;
+    this.containers.rate_limits = rateLimits;
   }
 
   getContainer(name) {
