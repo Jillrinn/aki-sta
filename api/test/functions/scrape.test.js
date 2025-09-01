@@ -31,7 +31,8 @@ describe('Scrape Function', () => {
     it('should return 202 when scraping is initiated successfully', async () => {
       scrapeService.executeSingleScraping.mockResolvedValue({
         success: true,
-        message: '空き状況取得を開始しました'
+        message: '空き状況取得を開始しました',
+        targetDates: ['2025-09-15']
       });
 
       const result = await scrapeHandler(mockRequest, mockContext);

@@ -69,17 +69,41 @@ class ScrapeService {
 
       const dateStrings = targetDates.map(td => td.date);
       
-      // Fire and forget
-      this.triggerScraperApi(dateStrings)
-        .catch((error) => {
-          console.error('Failed to trigger batch scraper API:', error);
-        });
-
-      return {
-        success: true,
-        message: '空き状況取得を開始しました',
-        targetDates: dateStrings
-      };
+      // Scraperのレスポンスを待つ
+      const scraperResponse = await this.triggerScraperApi(dateStrings);
+      
+      // Scraperのレスポンスを解析
+      let responseData;
+      try {
+        responseData = JSON.parse(scraperResponse.data);
+      } catch (parseError) {
+        console.error('Failed to parse scraper response:', parseError);
+        return {
+          success: false,
+          message: '空き状況取得は実行中の可能性があります'
+        };
+      }
+      
+      // Scraperのレスポンスに基づいて返却
+      if (scraperResponse.statusCode === 202 && responseData.success) {
+        return {
+          success: true,
+          message: responseData.message || '空き状況取得を開始しました',
+          targetDates: dateStrings
+        };
+      } else if (scraperResponse.statusCode === 409) {
+        // Rate limit error
+        return {
+          success: false,
+          message: responseData.message || '空き状況取得は実行中の可能性があります'
+        };
+      } else {
+        // その他のエラー
+        return {
+          success: false,
+          message: responseData.message || '空き状況取得は実行中の可能性があります'
+        };
+      }
       
     } catch (error) {
       console.error(`Failed to initiate batch scraping: ${error.message}`);
@@ -104,17 +128,41 @@ class ScrapeService {
 
       const dateStrings = targetDates.map(td => td.date);
       
-      // Fire and forget
-      this.triggerScraperApi(dateStrings)
-        .catch((error) => {
-          console.error('Failed to trigger scraper API:', error);
-        });
-
-      return {
-        success: true,
-        message: '空き状況取得を開始しました',
-        targetDates: dateStrings
-      };
+      // Scraperのレスポンスを待つ
+      const scraperResponse = await this.triggerScraperApi(dateStrings);
+      
+      // Scraperのレスポンスを解析
+      let responseData;
+      try {
+        responseData = JSON.parse(scraperResponse.data);
+      } catch (parseError) {
+        console.error('Failed to parse scraper response:', parseError);
+        return {
+          success: false,
+          message: '空き状況取得は実行中の可能性があります'
+        };
+      }
+      
+      // Scraperのレスポンスに基づいて返却
+      if (scraperResponse.statusCode === 202 && responseData.success) {
+        return {
+          success: true,
+          message: responseData.message || '空き状況取得を開始しました',
+          targetDates: dateStrings
+        };
+      } else if (scraperResponse.statusCode === 409) {
+        // Rate limit error
+        return {
+          success: false,
+          message: responseData.message || '空き状況取得は実行中の可能性があります'
+        };
+      } else {
+        // その他のエラー
+        return {
+          success: false,
+          message: responseData.message || '空き状況取得は実行中の可能性があります'
+        };
+      }
       
     } catch (error) {
       console.error(`Failed to initiate scraping: ${error.message}`);
