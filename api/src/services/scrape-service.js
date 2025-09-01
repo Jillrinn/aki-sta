@@ -1,4 +1,5 @@
 const https = require('https');
+const http = require('http');
 const targetDatesRepository = require('../repositories/target-dates-repository');
 
 class ScrapeService {
@@ -14,14 +15,13 @@ class ScrapeService {
     return new Promise((resolve, reject) => {
       const url = new URL(this.scraperApiUrl);
       const postData = JSON.stringify({
-        targetDates: targetDates,
-        source: 'batch-api'
+        dates: targetDates
       });
 
       const options = {
         hostname: url.hostname,
         port: url.port || (url.protocol === 'https:' ? 443 : 80),
-        path: '/api/scrape',
+        path: '/scrape',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -29,7 +29,9 @@ class ScrapeService {
         }
       };
 
-      const req = https.request(options, (res) => {
+      // Use appropriate client based on protocol
+      const client = url.protocol === 'https:' ? https : http;
+      const req = client.request(options, (res) => {
         let data = '';
         
         res.on('data', (chunk) => {
@@ -91,15 +93,27 @@ class ScrapeService {
 
   async executeSingleScraping() {
     try {
+      const targetDates = await targetDatesRepository.getAllTargetDates();
+      
+      if (!targetDates || targetDates.length === 0) {
+        return {
+          success: false,
+          message: '練習日程が登録されていません'
+        };
+      }
+
+      const dateStrings = targetDates.map(td => td.date);
+      
       // Fire and forget
-      this.triggerScraperApi()
+      this.triggerScraperApi(dateStrings)
         .catch((error) => {
           console.error('Failed to trigger scraper API:', error);
         });
 
       return {
         success: true,
-        message: '空き状況取得を開始しました'
+        message: '空き状況取得を開始しました',
+        targetDates: dateStrings
       };
       
     } catch (error) {
