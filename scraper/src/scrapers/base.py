@@ -37,19 +37,19 @@ class BaseScraper(ABC):
     def convert_time_to_slot(self, time_str: str) -> Optional[str]:
         """
         時刻文字列を時間帯に変換
-        "09:00" → "9-12"
-        "13:00" → "13-17" 
-        "18:00" → "18-21"
+        "09:00" → "morning"
+        "13:00" → "afternoon" 
+        "18:00" → "evening"
         """
         if not time_str:
             return None
             
         if "09:00" in time_str or "9:00" in time_str:
-            return "9-12"
+            return "morning"
         elif "13:00" in time_str:
-            return "13-17"
+            return "afternoon"
         elif "18:00" in time_str:
-            return "18-21"
+            return "evening"
         else:
             return None
     

@@ -1,5 +1,11 @@
-export const TIME_SLOTS = ['9-12', '13-17', '18-21'] as const;
+export const TIME_SLOTS = ['morning', 'afternoon', 'evening'] as const;
 export type TimeSlot = typeof TIME_SLOTS[number];
+
+export const TIME_SLOT_DISPLAY: Record<TimeSlot, string> = {
+  morning: '9-12時',
+  afternoon: '13-17時',
+  evening: '18-21時'
+};
 
 export const STATUS_VALUES = ['available', 'booked', 'lottery', 'unknown'] as const;
 export type StatusValue = typeof STATUS_VALUES[number];

@@ -94,7 +94,7 @@ class TestDateFormat:
                 mock_scrape.return_value = [
                     {
                         'facilityName': 'Test Studio',
-                        'timeSlots': {'9-12': 'available'},
+                        'timeSlots': {'morning': 'available'},
                         'lastUpdated': '2025-08-29T10:00:00Z'
                     }
                 ]

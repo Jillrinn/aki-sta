@@ -184,7 +184,7 @@ class EnsembleStudioScraper(BaseScraper):
         日付セルから時刻情報を抽出
         
         Returns:
-            {"9-12": "available|booked|unknown", ...}
+            {"morning": "available|booked|unknown", ...}
         """
         time_slots = {}
         
@@ -193,9 +193,9 @@ class EnsembleStudioScraper(BaseScraper):
             disable_text = day_box.locator(".calendar-time-disable").first.text_content()
             print(f"Day is disabled: {disable_text}")
             return {
-                "9-12": "unknown",
-                "13-17": "unknown",
-                "18-21": "unknown"
+                "morning": "unknown",
+                "afternoon": "unknown",
+                "evening": "unknown"
             }
         
         # 時刻マークを探す
@@ -241,7 +241,7 @@ class EnsembleStudioScraper(BaseScraper):
                                 print(f"  {slot_key}: unknown")
         
         # 見つからない時間帯はunknown
-        for slot in ["9-12", "13-17", "18-21"]:
+        for slot in ["morning", "afternoon", "evening"]:
             if slot not in time_slots:
                 time_slots[slot] = "unknown"
                 print(f"  {slot}: unknown (not found)")

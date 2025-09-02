@@ -38,7 +38,7 @@ export async function validateFacilityStructure(page: Page) {
   }
 
   // テーブルヘッダーの存在確認
-  const headers = ['施設名', '9-12', '13-17', '18-21', '更新日時'];
+  const headers = ['施設名', '9-12時', '13-17時', '18-21時', '更新日時'];
   for (const header of headers) {
     const headerElements = page.locator(`th:has-text("${header}")`);
     const headerCount = await headerElements.count();

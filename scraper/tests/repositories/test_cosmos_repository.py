@@ -39,9 +39,9 @@ class TestCosmosWriter(unittest.TestCase):
             {
                 'facilityName': 'あんさんぶるStudio和(本郷)',
                 'timeSlots': {
-                    '9-12': 'available',
-                    '13-17': 'booked',
-                    '18-21': 'available'
+                    'morning': 'available',
+                    'afternoon': 'booked',
+                    'evening': 'available'
                 },
                 'lastUpdated': '2025-08-25T10:00:00Z'
             }
@@ -64,7 +64,7 @@ class TestCosmosWriter(unittest.TestCase):
         self.assertEqual(saved_item['id'], '2025-11-15_ensemble-hongo')
         self.assertEqual(saved_item['date'], '2025-11-15')
         self.assertEqual(saved_item['facilityName'], 'あんさんぶるStudio和(本郷)')
-        self.assertEqual(saved_item['timeSlots']['13-17'], 'booked')
+        self.assertEqual(saved_item['timeSlots']['afternoon'], 'booked')
     
     def test_save_availability_cosmos_error(self):
         """Cosmos DBエラー時の処理を確認"""

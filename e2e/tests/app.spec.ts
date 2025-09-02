@@ -59,10 +59,10 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     
     if (hasData) {
       // 各時間帯のヘッダーが表示されることを確認
-      const timeSlots = ['9-12', '13-17', '18-21'];
+      const timeSlotDisplays = ['9-12時', '13-17時', '18-21時'];
       
-      for (const slot of timeSlots) {
-        const headers = page.locator(`th:has-text("${slot}")`);
+      for (const slotDisplay of timeSlotDisplays) {
+        const headers = page.locator(`th:has-text("${slotDisplay}")`);
         const count = await headers.count();
         expect(count).toBeGreaterThan(0);
       }

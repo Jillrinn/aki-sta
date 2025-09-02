@@ -16,9 +16,9 @@ describe('App', () => {
         {
           facilityName: 'Test Facility',
           timeSlots: { 
-            '9-12': 'available',
-            '13-17': 'available',
-            '18-21': 'available'
+            'morning': 'available',
+            'afternoon': 'available',
+            'evening': 'available'
           },
           lastUpdated: '2025-08-20T10:00:00Z',
         },

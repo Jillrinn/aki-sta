@@ -45,9 +45,9 @@ class TestEnsembleStudioScraper:
         
         result = scraper.extract_time_slots(mock_day_box)
         assert result == {
-            "9-12": "unknown",
-            "13-17": "unknown",
-            "18-21": "unknown"
+            "morning": "unknown",
+            "afternoon": "unknown",
+            "evening": "unknown"
         }
     
     def test_extract_time_slots_with_marks(self, scraper):
@@ -107,7 +107,7 @@ class TestEnsembleStudioScraper:
         mock_day_box.locator = day_box_locator
         
         result = scraper.extract_time_slots(mock_day_box)
-        assert result["9-12"] == "booked"
-        assert result["13-17"] == "available"
-        assert result["18-21"] == "booked"
+        assert result["morning"] == "booked"
+        assert result["afternoon"] == "available"
+        assert result["evening"] == "booked"
     

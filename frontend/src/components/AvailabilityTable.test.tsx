@@ -43,18 +43,18 @@ describe('AvailabilityTable', () => {
         {
           facilityName: 'あんさんぶるStudio和(本郷)',
           timeSlots: { 
-            '9-12': 'unknown',
-            '13-17': 'unknown',
-            '18-21': 'unknown'
+            'morning': 'unknown',
+            'afternoon': 'unknown',
+            'evening': 'unknown'
           },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
         {
           facilityName: 'あんさんぶるStudio音(初台)',
           timeSlots: { 
-            '9-12': 'unknown',
-            '13-17': 'unknown',
-            '18-21': 'unknown'
+            'morning': 'unknown',
+            'afternoon': 'unknown',
+            'evening': 'unknown'
           },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
@@ -63,18 +63,18 @@ describe('AvailabilityTable', () => {
         {
           facilityName: 'あんさんぶるStudio和(本郷)',
           timeSlots: { 
-            '9-12': 'booked',
-            '13-17': 'available',
-            '18-21': 'available'
+            'morning': 'booked',
+            'afternoon': 'available',
+            'evening': 'available'
           },
           lastUpdated: '2025-08-21T13:47:14Z',
         },
         {
           facilityName: 'あんさんぶるStudio音(初台)',
           timeSlots: { 
-            '9-12': 'available',
-            '13-17': 'booked',
-            '18-21': 'available'
+            'morning': 'available',
+            'afternoon': 'booked',
+            'evening': 'available'
           },
           lastUpdated: '2025-08-21T13:47:14Z',
         },
@@ -102,9 +102,9 @@ describe('AvailabilityTable', () => {
     expect(hatsudai.length).toBeGreaterThan(0);
 
     // 全時間帯のヘッダーが表示されていることを確認
-    const morningSlots = screen.getAllByText('9-12');
-    const afternoonSlots = screen.getAllByText('13-17');
-    const eveningSlots = screen.getAllByText('18-21');
+    const morningSlots = screen.getAllByText('9-12時');
+    const afternoonSlots = screen.getAllByText('13-17時');
+    const eveningSlots = screen.getAllByText('18-21時');
     
     expect(morningSlots.length).toBeGreaterThan(0);
     expect(afternoonSlots.length).toBeGreaterThan(0);
@@ -126,18 +126,18 @@ describe('AvailabilityTable', () => {
         {
           facilityName: 'あんさんぶるStudio和(本郷)',
           timeSlots: { 
-            '9-12': 'available',
-            '13-17': 'booked',
-            '18-21': 'available'
+            'morning': 'available',
+            'afternoon': 'booked',
+            'evening': 'available'
           },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
         {
           facilityName: 'あんさんぶるStudio音(初台)',
           timeSlots: { 
-            '9-12': 'booked',
-            '13-17': 'available',
-            '18-21': 'booked'
+            'morning': 'booked',
+            'afternoon': 'available',
+            'evening': 'booked'
           },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
@@ -146,9 +146,9 @@ describe('AvailabilityTable', () => {
         {
           facilityName: 'あんさんぶるStudio和(本郷)',
           timeSlots: { 
-            '9-12': 'booked',
-            '13-17': 'available',
-            '18-21': 'available'
+            'morning': 'booked',
+            'afternoon': 'available',
+            'evening': 'available'
           },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
@@ -178,9 +178,9 @@ describe('AvailabilityTable', () => {
         {
           facilityName: 'テスト施設',
           timeSlots: { 
-            '9-12': 'available',
-            '13-17': 'booked',
-            '18-21': 'unknown'
+            'morning': 'available',
+            'afternoon': 'booked',
+            'evening': 'unknown'
           },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
@@ -195,9 +195,9 @@ describe('AvailabilityTable', () => {
 
     await waitFor(() => {
       // 全時間帯のステータスが表示されていることを確認
-      expect(screen.getByText('9-12')).toBeInTheDocument();
-      expect(screen.getByText('13-17')).toBeInTheDocument();
-      expect(screen.getByText('18-21')).toBeInTheDocument();
+      expect(screen.getByText('9-12時')).toBeInTheDocument();
+      expect(screen.getByText('13-17時')).toBeInTheDocument();
+      expect(screen.getByText('18-21時')).toBeInTheDocument();
       
       // 各ステータスが正しく表示されていることを確認（複数の要素がある場合を考慮）
       const availableElements = screen.getAllByText('○');
@@ -315,21 +315,21 @@ describe('AvailabilityTable', () => {
       '2025-11-20': [
         {
           facilityName: 'テスト施設3',
-          timeSlots: { '9-12': 'available', '13-17': 'available', '18-21': 'available' },
+          timeSlots: { 'morning': 'available', 'afternoon': 'available', 'evening': 'available' },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
       ],
       '2025-11-15': [
         {
           facilityName: 'テスト施設1',
-          timeSlots: { '9-12': 'available', '13-17': 'available', '18-21': 'available' },
+          timeSlots: { 'morning': 'available', 'afternoon': 'available', 'evening': 'available' },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
       ],
       '2025-11-17': [
         {
           facilityName: 'テスト施設2',
-          timeSlots: { '9-12': 'available', '13-17': 'available', '18-21': 'available' },
+          timeSlots: { 'morning': 'available', 'afternoon': 'available', 'evening': 'available' },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
       ],
@@ -470,9 +470,9 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'あんさんぶるStudio和(本郷)',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'booked',
-              '18-21': 'unknown'
+              'morning': 'available',
+              'afternoon': 'booked',
+              'evening': 'unknown'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
@@ -516,9 +516,9 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'あんさんぶるStudio和(本郷)',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'booked',
-              '18-21': 'unknown'
+              'morning': 'available',
+              'afternoon': 'booked',
+              'evening': 'unknown'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
@@ -537,14 +537,11 @@ describe('AvailabilityTable', () => {
         expect(tables).toHaveLength(1);
 
         // Check that time slot headers are in table format
-        expect(screen.getByText('9-12')).toBeInTheDocument();
-        expect(screen.getByText('13-17')).toBeInTheDocument();
-        expect(screen.getByText('18-21')).toBeInTheDocument();
+        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        expect(screen.getByText('13-17時')).toBeInTheDocument();
+        expect(screen.getByText('18-21時')).toBeInTheDocument();
 
-        // Mobile-specific time labels should NOT be present
-        expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
-        expect(screen.queryByText('13-17時')).not.toBeInTheDocument();
-        expect(screen.queryByText('18-21時')).not.toBeInTheDocument();
+        // Headers are properly displayed in desktop view
       });
     });
 
@@ -561,9 +558,9 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'テスト施設',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'available',
-              '18-21': 'available'
+              'morning': 'available',
+              'afternoon': 'available',
+              'evening': 'available'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
@@ -611,9 +608,9 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'テスト施設',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'available',
-              '18-21': 'available'
+              'morning': 'available',
+              'afternoon': 'available',
+              'evening': 'available'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
@@ -645,7 +642,8 @@ describe('AvailabilityTable', () => {
       // Should now show table
       await waitFor(() => {
         expect(screen.getAllByRole('table')).toHaveLength(1);
-        expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+        // Time slot headers should be visible in desktop table
+        expect(screen.getByText('9-12時')).toBeInTheDocument();
       });
     });
 
@@ -662,18 +660,18 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'あんさんぶるStudio和(本郷)',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'booked',
-              '18-21': 'unknown'
+              'morning': 'available',
+              'afternoon': 'booked',
+              'evening': 'unknown'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
           {
             facilityName: 'あんさんぶるStudio音(初台)',
             timeSlots: { 
-              '9-12': 'booked',
-              '13-17': 'available',
-              '18-21': 'available'
+              'morning': 'booked',
+              'afternoon': 'available',
+              'evening': 'available'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
@@ -711,9 +709,9 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'テスト施設',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'available',
-              '18-21': 'available'
+              'morning': 'available',
+              'afternoon': 'available',
+              'evening': 'available'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
@@ -745,9 +743,9 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'テスト施設',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'available',
-              '18-21': 'available'
+              'morning': 'available',
+              'afternoon': 'available',
+              'evening': 'available'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
@@ -763,7 +761,8 @@ describe('AvailabilityTable', () => {
       await waitFor(() => {
         // At 640px, should show desktop table view
         expect(screen.getAllByRole('table')).toHaveLength(1);
-        expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+        // Time slot headers should be visible in desktop table
+        expect(screen.getByText('9-12時')).toBeInTheDocument();
       });
     });
 
@@ -780,9 +779,9 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'テスト施設',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'available',
-              '18-21': 'available'
+              'morning': 'available',
+              'afternoon': 'available',
+              'evening': 'available'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },
@@ -810,9 +809,9 @@ describe('AvailabilityTable', () => {
           {
             facilityName: 'テスト施設',
             timeSlots: { 
-              '9-12': 'available',
-              '13-17': 'available',
-              '18-21': 'available'
+              'morning': 'available',
+              'afternoon': 'available',
+              'evening': 'available'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
           },

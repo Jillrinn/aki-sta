@@ -16,17 +16,17 @@ class TestBaseScraperUtilities:
         return EnsembleStudioScraper()
     
     def test_convert_time_to_slot_morning(self, scraper):
-        """9:00 → 9-12 への変換"""
-        assert scraper.convert_time_to_slot("09:00") == "9-12"
-        assert scraper.convert_time_to_slot("9:00") == "9-12"
+        """9:00 → morning への変換"""
+        assert scraper.convert_time_to_slot("09:00") == "morning"
+        assert scraper.convert_time_to_slot("9:00") == "morning"
     
     def test_convert_time_to_slot_afternoon(self, scraper):
-        """13:00 → 13-17 への変換"""
-        assert scraper.convert_time_to_slot("13:00") == "13-17"
+        """13:00 → afternoon への変換"""
+        assert scraper.convert_time_to_slot("13:00") == "afternoon"
     
     def test_convert_time_to_slot_evening(self, scraper):
-        """18:00 → 18-21 への変換"""
-        assert scraper.convert_time_to_slot("18:00") == "18-21"
+        """18:00 → evening への変換"""
+        assert scraper.convert_time_to_slot("18:00") == "evening"
     
     def test_convert_time_to_slot_invalid(self, scraper):
         """無効な時間の処理"""
@@ -62,7 +62,7 @@ class TestBaseScraperUtilities:
                 "2025-11-15": [
                     {
                         "facilityName": "あんさんぶるStudio和(本郷)",
-                        "timeSlots": {"9-12": "available"},
+                        "timeSlots": {"morning": "available"},
                         "lastUpdated": "2025-08-21T12:00:00Z"
                     }
                 ]

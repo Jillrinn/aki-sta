@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Facility } from '../../types/availability';
-import { TIME_SLOTS } from '../../constants/availability';
+import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../constants/availability';
 import StatusBadge from './StatusBadge';
 
 interface MobileCardViewProps {
@@ -8,11 +8,7 @@ interface MobileCardViewProps {
   formatUpdateTime: (dateString: string) => string;
 }
 
-const TIME_SLOT_LABELS: Record<string, string> = {
-  '9-12': '9-12時',
-  '13-17': '13-17時',
-  '18-21': '18-21時'
-};
+const TIME_SLOT_LABELS = TIME_SLOT_DISPLAY;
 
 const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateTime }) => {
   const getStatusText = (status: string): string => {
@@ -29,7 +25,7 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
   const hasAvailable = TIME_SLOTS.some(slot => facility.timeSlots[slot] === 'available');
   const allBooked = TIME_SLOTS.every(slot => facility.timeSlots[slot] === 'booked');
   const allUnknown = TIME_SLOTS.every(slot => facility.timeSlots[slot] === 'unknown');
-  const afternoonBooked = facility.timeSlots['13-17'] === 'booked';
+  const afternoonBooked = facility.timeSlots['afternoon'] === 'booked';
   
   // ヘッダーの色を決定
   const getHeaderColorClass = () => {

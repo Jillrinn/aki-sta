@@ -13,9 +13,9 @@ describe('MobileCardView', () => {
   const mockFacility: Facility = {
     facilityName: 'あんさんぶるStudio和(本郷)',
     timeSlots: {
-      '9-12': 'available',
-      '13-17': 'booked',
-      '18-21': 'unknown'
+      'morning': 'available',
+      'afternoon': 'booked',
+      'evening': 'unknown'
     },
     lastUpdated: '2025-08-24T14:18:03Z'
   };
@@ -36,9 +36,9 @@ describe('MobileCardView', () => {
     const expandedFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'available',
-        '13-17': 'available',
-        '18-21': 'unknown'
+        'morning': 'available',
+        'afternoon': 'available',
+        'evening': 'unknown'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -60,9 +60,9 @@ describe('MobileCardView', () => {
     const expandedFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'available',
-        '13-17': 'lottery',
-        '18-21': 'unknown'
+        'morning': 'available',
+        'afternoon': 'lottery',
+        'evening': 'unknown'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -88,7 +88,7 @@ describe('MobileCardView', () => {
       />
     );
     
-    // Should show "希望時間は予約済み" since 13-17 is booked
+    // Should show "希望時間は予約済み" since afternoon is booked
     expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
     
     // Should not show time slots since it's collapsed
@@ -111,9 +111,9 @@ describe('MobileCardView', () => {
     const expandedFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'available',
-        '13-17': 'available',
-        '18-21': 'booked'
+        'morning': 'available',
+        'afternoon': 'available',
+        'evening': 'booked'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -134,9 +134,9 @@ describe('MobileCardView', () => {
     const expandedFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'available',
-        '13-17': 'unknown',
-        '18-21': 'booked'
+        'morning': 'available',
+        'afternoon': 'unknown',
+        'evening': 'booked'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -181,9 +181,9 @@ describe('MobileCardView', () => {
     const allAvailableFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'available',
-        '13-17': 'available',
-        '18-21': 'available'
+        'morning': 'available',
+        'afternoon': 'available',
+        'evening': 'available'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -206,9 +206,9 @@ describe('MobileCardView', () => {
     const allBookedFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'booked',
-        '13-17': 'booked',
-        '18-21': 'booked'
+        'morning': 'booked',
+        'afternoon': 'booked',
+        'evening': 'booked'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -236,9 +236,9 @@ describe('MobileCardView', () => {
     const lotteryFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'lottery',
-        '13-17': 'available',
-        '18-21': 'booked'
+        'morning': 'lottery',
+        'afternoon': 'available',
+        'evening': 'booked'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -268,9 +268,9 @@ describe('MobileCardView', () => {
     const allUnknownFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'unknown',
-        '13-17': 'unknown',
-        '18-21': 'unknown'
+        'morning': 'unknown',
+        'afternoon': 'unknown',
+        'evening': 'unknown'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -297,9 +297,9 @@ describe('MobileCardView', () => {
     const afternoonBookedFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'available',
-        '13-17': 'booked',
-        '18-21': 'available'
+        'morning': 'available',
+        'afternoon': 'booked',
+        'evening': 'available'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };
@@ -322,9 +322,9 @@ describe('MobileCardView', () => {
     const noAfternoonFacility: Facility = {
       facilityName: 'テスト施設',
       timeSlots: {
-        '9-12': 'available',
-        '13-17': 'available',
-        '18-21': 'booked'
+        'morning': 'available',
+        'afternoon': 'available',
+        'evening': 'booked'
       },
       lastUpdated: '2025-08-24T14:18:03Z'
     };

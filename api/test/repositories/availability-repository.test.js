@@ -23,9 +23,9 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
                 {
                   facilityName: 'あんさんぶるStudio和(本郷)',
                   timeSlots: {
-                    '9-12': 'available',
-                    '13-17': 'booked',
-                    '18-21': 'available'
+                    'morning': 'available',
+                    'afternoon': 'booked',
+                    'evening': 'available'
                   },
                   updatedAt: '2025-08-24T14:18:03Z'
                 }
@@ -43,9 +43,9 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
       expect(result).toHaveLength(1);
       expect(result[0].facilityName).toBe('あんさんぶるStudio和(本郷)');
       expect(result[0].timeSlots).toEqual({
-        '9-12': 'available',
-        '13-17': 'booked',
-        '18-21': 'available'
+        'morning': 'available',
+        'afternoon': 'booked',
+        'evening': 'available'
       });
       expect(result[0].lastUpdated).toBe('2025-08-24T14:18:03Z');
     });
@@ -84,13 +84,13 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
                 {
                   date: '2025-11-15',
                   facilityName: 'あんさんぶるStudio和(本郷)',
-                  timeSlots: { '9-12': 'available' },
+                  timeSlots: { 'morning': 'available' },
                   updatedAt: '2025-08-24T14:18:03Z'
                 },
                 {
                   date: '2025-11-16',
                   facilityName: 'あんさんぶるStudio音(初台)',
-                  timeSlots: { '9-12': 'booked' },
+                  timeSlots: { 'morning': 'booked' },
                   updatedAt: '2025-08-24T14:20:03Z'
                 }
               ]
@@ -180,12 +180,12 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
             expect(typeof facility.timeSlots).toBe('object');
             
             // 時間帯スロットの検証
-            expect(facility.timeSlots).toHaveProperty('9-12');
-            expect(facility.timeSlots).toHaveProperty('13-17');
-            expect(facility.timeSlots).toHaveProperty('18-21');
+            expect(facility.timeSlots).toHaveProperty('morning');
+            expect(facility.timeSlots).toHaveProperty('afternoon');
+            expect(facility.timeSlots).toHaveProperty('evening');
             
             // 各スロットの値が有効か検証
-            ['9-12', '13-17', '18-21'].forEach(slot => {
+            ['morning', 'afternoon', 'evening'].forEach(slot => {
               const value = facility.timeSlots[slot];
               expect(['available', 'booked', 'unknown']).toContain(value);
             });
@@ -227,9 +227,9 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
         result.forEach(facility => {
           expect(facility).toHaveProperty('facilityName');
           expect(facility).toHaveProperty('timeSlots');
-          expect(facility.timeSlots).toHaveProperty('9-12');
-          expect(facility.timeSlots).toHaveProperty('13-17');
-          expect(facility.timeSlots).toHaveProperty('18-21');
+          expect(facility.timeSlots).toHaveProperty('morning');
+          expect(facility.timeSlots).toHaveProperty('afternoon');
+          expect(facility.timeSlots).toHaveProperty('evening');
         });
         console.log(`✅ Retrieved ${result.length} facility record(s) for ${testDate}`);
       } else {

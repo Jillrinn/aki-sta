@@ -77,9 +77,9 @@ class TestErrorHandling:
                     # extract_time_slotsのモック
                     with patch.object(scraper, 'extract_time_slots') as mock_extract:
                         mock_extract.return_value = {
-                            "9-12": "available",
-                            "13-17": "booked",
-                            "18-21": "available"
+                            "morning": "available",
+                            "afternoon": "booked",
+                            "evening": "available"
                         }
                         
                         # テスト実行
@@ -88,7 +88,7 @@ class TestErrorHandling:
                         # スタジオ1はスキップされ、スタジオ2のみ結果に含まれることを確認
                         assert len(results) == 1
                         assert results[0]["facilityName"] == "スタジオ2"
-                        assert results[0]["timeSlots"]["9-12"] == "available"
+                        assert results[0]["timeSlots"]["morning"] == "available"
     
     @patch('src.scrapers.ensemble_studio.sync_playwright')
     def test_skip_studio_when_date_cell_not_found(self, mock_playwright, scraper):
@@ -134,9 +134,9 @@ class TestErrorHandling:
                     # extract_time_slotsのモック
                     with patch.object(scraper, 'extract_time_slots') as mock_extract:
                         mock_extract.return_value = {
-                            "9-12": "booked",
-                            "13-17": "booked",
-                            "18-21": "available"
+                            "morning": "booked",
+                            "afternoon": "booked",
+                            "evening": "available"
                         }
                         
                         # テスト実行
@@ -145,7 +145,7 @@ class TestErrorHandling:
                         # スタジオAはスキップされ、スタジオBのみ結果に含まれることを確認
                         assert len(results) == 1
                         assert results[0]["facilityName"] == "スタジオB"
-                        assert results[0]["timeSlots"]["18-21"] == "available"
+                        assert results[0]["timeSlots"]["evening"] == "available"
     
     @patch('src.scrapers.ensemble_studio.sync_playwright')
     def test_empty_result_when_all_studios_fail(self, mock_playwright, scraper):
@@ -269,9 +269,9 @@ class TestErrorHandling:
                     # extract_time_slotsのモック（一部unknownを含む）
                     with patch.object(scraper, 'extract_time_slots') as mock_extract:
                         mock_extract.return_value = {
-                            "9-12": "available",
-                            "13-17": "unknown",  # 時間帯が見つからない場合
-                            "18-21": "booked"
+                            "morning": "available",
+                            "afternoon": "unknown",  # 時間帯が見つからない場合
+                            "evening": "booked"
                         }
                         
                         # テスト実行
@@ -279,6 +279,6 @@ class TestErrorHandling:
                         
                         # unknownが保持されていることを確認
                         assert len(results) == 1
-                        assert results[0]["timeSlots"]["13-17"] == "unknown"
-                        assert results[0]["timeSlots"]["9-12"] == "available"
-                        assert results[0]["timeSlots"]["18-21"] == "booked"
+                        assert results[0]["timeSlots"]["afternoon"] == "unknown"
+                        assert results[0]["timeSlots"]["morning"] == "available"
+                        assert results[0]["timeSlots"]["evening"] == "booked"

@@ -22,7 +22,7 @@ describe('availabilityApi', () => {
         facilities: [
           {
             facilityName: 'Test Facility',
-            timeSlots: { '13-17': 'available' },
+            timeSlots: { 'afternoon': 'available' },
             lastUpdated: '2025-08-20T10:00:00Z',
           },
         ],

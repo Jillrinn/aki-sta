@@ -4,7 +4,7 @@ import { Facility } from '../types/availability';
 import { useAvailabilityData } from '../hooks/useAvailabilityData';
 import { useTargetDates } from '../hooks/useTargetDates';
 import { formatUpdateTime } from '../utils/dateFormatter';
-import { TIME_SLOTS } from '../constants/availability';
+import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../constants/availability';
 import {
   LoadingState,
   ErrorState,
@@ -129,7 +129,7 @@ const AvailabilityTable: React.FC = () => {
                         key={slot}
                         className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[100px]"
                       >
-                        {slot}
+                        {TIME_SLOT_DISPLAY[slot as keyof typeof TIME_SLOT_DISPLAY]}
                       </th>
                     ))}
                     <th className="p-4 text-center border-b border-gray-200 font-semibold uppercase text-sm tracking-wider min-w-[140px]">
