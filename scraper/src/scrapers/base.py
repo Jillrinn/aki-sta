@@ -114,19 +114,11 @@ class BaseScraper(ABC):
             json.dump(data, f, ensure_ascii=False, indent=2)
     
     def _get_default_data(self) -> List[Dict]:
-        """エラー時のデフォルトデータ"""
-        default_data = []
-        for studio_name in self.studios:
-            default_data.append({
-                "facilityName": studio_name,
-                "timeSlots": {
-                    "9-12": "unknown",
-                    "13-17": "unknown",
-                    "18-21": "unknown"
-                },
-                "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-            })
-        return default_data
+        """
+        エラー時のデフォルトデータ
+        注意: このメソッドは例外を発生させ、不正なデータの保存を防ぐ
+        """
+        raise RuntimeError("Scraping failed - no default data should be saved")
     
     # ===== 施設固有の実装が必要な抽象メソッド =====
     
@@ -308,6 +300,19 @@ class BaseScraper(ABC):
             print(f"\nスクレイピング開始: {normalized_date}")
             try:
                 facilities = self.scrape_availability(normalized_date)
+            except RuntimeError as e:
+                # _get_default_dataからのエラーをキャッチ
+                if "no default data should be saved" in str(e):
+                    print("ERROR: Scraping failed, not saving any data to DB")
+                    return {
+                        "status": "error",
+                        "message": "Scraping failed - navigation error",
+                        "error_type": "NAVIGATION_ERROR",
+                        "details": "Failed to navigate to the required page"
+                    }
+                else:
+                    # その他のRuntimeErrorは再発生
+                    raise
             except Exception as scrape_error:
                 # Playwrightエラーを含むスクレイピングエラーをキャッチ
                 error_message = str(scrape_error)
@@ -333,11 +338,14 @@ class BaseScraper(ABC):
                         "details": error_message
                     }
             
+            # データが空または無効な場合はエラーを返す
             if not facilities:
+                print("ERROR: No facilities data retrieved")
                 return {
                     "status": "error",
                     "message": f"No data found for date: {normalized_date}",
-                    "error_type": "NO_DATA_FOUND"
+                    "error_type": "NO_DATA_FOUND",
+                    "details": "Scraping completed but no facility data was found"
                 }
             
             # Cosmos DBに保存（正規化された日付を使用）
