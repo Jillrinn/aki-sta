@@ -1,4 +1,5 @@
 import React from 'react';
+import Modal from 'react-modal';
 
 interface ScrapeResultModalProps {
   isOpen: boolean;
@@ -8,6 +9,27 @@ interface ScrapeResultModalProps {
   isError: boolean;
 }
 
+const customStyles: Modal.Styles = {
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 50,
+  },
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    maxWidth: '28rem',
+    width: '90%',
+    padding: '1.5rem',
+    border: 'none',
+    borderRadius: '0.5rem',
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+  },
+};
+
 const ScrapeResultModal: React.FC<ScrapeResultModalProps> = ({ 
   isOpen, 
   onClose, 
@@ -15,13 +37,15 @@ const ScrapeResultModal: React.FC<ScrapeResultModalProps> = ({
   isLoading,
   isError 
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
-      
-      <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onClose}
+      style={customStyles}
+      contentLabel="空き状況取得結果"
+      shouldCloseOnOverlayClick={!isLoading}
+    >
+      <div>
         <div className="mb-4">
           <h3 className="text-lg font-bold text-gray-900">
             空き状況取得
@@ -83,7 +107,7 @@ const ScrapeResultModal: React.FC<ScrapeResultModalProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -3,6 +3,13 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
+import Modal from 'react-modal';
+
+// Set up react-modal for testing
+const mockElement = document.createElement('div');
+mockElement.setAttribute('id', 'root');
+document.body.appendChild(mockElement);
+Modal.setAppElement(mockElement);
 
 // Mock axios to avoid ESM issues in tests
 jest.mock('axios', () => ({

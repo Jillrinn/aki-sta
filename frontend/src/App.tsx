@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Modal from 'react-modal';
 import AvailabilityTable from './components/AvailabilityTable';
 import TargetDatesList from './components/TargetDatesList';
 
 function App() {
+  useEffect(() => {
+    // Set app element for react-modal (accessibility)
+    Modal.setAppElement('#root');
+  }, []);
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-5">

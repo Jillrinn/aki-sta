@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ScrapeResultModal from './ScrapeResultModal';
 
 describe('ScrapeResultModal', () => {
@@ -17,7 +17,8 @@ describe('ScrapeResultModal', () => {
 
   it('should not render when isOpen is false', () => {
     render(<ScrapeResultModal {...defaultProps} isOpen={false} />);
-    expect(screen.queryByText('空き状況取得')).not.toBeInTheDocument();
+    const modalRoot = document.querySelector('.ReactModal__Content');
+    expect(modalRoot).not.toBeInTheDocument();
   });
 
   it('should render loading state', () => {
@@ -67,7 +68,7 @@ describe('ScrapeResultModal', () => {
 
   it('should call onClose when backdrop is clicked', () => {
     const onClose = jest.fn();
-    const { container } = render(
+    render(
       <ScrapeResultModal 
         {...defaultProps} 
         onClose={onClose}
@@ -75,9 +76,10 @@ describe('ScrapeResultModal', () => {
       />
     );
     
-    const backdrop = container.querySelector('.bg-black.bg-opacity-50');
-    if (backdrop) {
-      fireEvent.click(backdrop);
+    // react-modalのオーバーレイをクリック
+    const overlay = document.querySelector('.ReactModal__Overlay');
+    if (overlay) {
+      fireEvent.click(overlay);
       expect(onClose).toHaveBeenCalledTimes(1);
     }
   });

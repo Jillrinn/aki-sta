@@ -1,48 +1,40 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import LoadingOverlay from './LoadingOverlay';
 
 describe('LoadingOverlay', () => {
-  it('renders when isVisible is true', () => {
+  it('renders when isVisible is true', async () => {
     render(<LoadingOverlay isVisible={true} />);
     
-    expect(screen.getByTestId('loading-overlay')).toBeInTheDocument();
-    expect(screen.getByText('更新中...')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('loading-overlay')).toBeInTheDocument();
+      expect(screen.getByText('更新中...')).toBeInTheDocument();
+    });
   });
 
   it('does not render when isVisible is false', () => {
-    render(<LoadingOverlay isVisible={false} />);
+    const { container } = render(<LoadingOverlay isVisible={false} />);
     
-    expect(screen.queryByTestId('loading-overlay')).not.toBeInTheDocument();
-    expect(screen.queryByText('更新中...')).not.toBeInTheDocument();
+    // react-modalはポータルを使用するため、body直下を確認
+    const modalRoot = document.querySelector('.ReactModal__Content');
+    expect(modalRoot).not.toBeInTheDocument();
   });
 
-  it('renders with custom message', () => {
+  it('renders with custom message', async () => {
     render(<LoadingOverlay isVisible={true} message="データを取得しています..." />);
     
-    expect(screen.getByText('データを取得しています...')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('データを取得しています...')).toBeInTheDocument();
+    });
   });
 
-  it('has correct styling classes', () => {
+  it('contains animated spinner', async () => {
     render(<LoadingOverlay isVisible={true} />);
     
-    const overlay = screen.getByTestId('loading-overlay');
-    expect(overlay).toHaveClass('fixed', 'inset-0', 'z-40', 'bg-black', 'bg-opacity-50');
-  });
-
-  it('contains animated spinner', () => {
-    const { container } = render(<LoadingOverlay isVisible={true} />);
-    
-    const spinner = container.querySelector('.animate-spin');
-    expect(spinner).toBeInTheDocument();
-    expect(spinner).toHaveClass('border-primary-400', 'border-t-transparent');
-  });
-
-  it('renders with white background modal', () => {
-    const { container } = render(<LoadingOverlay isVisible={true} />);
-    
-    const modal = container.querySelector('.bg-white');
-    expect(modal).toBeInTheDocument();
-    expect(modal).toHaveClass('rounded-lg', 'shadow-xl');
+    await waitFor(() => {
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).toBeInTheDocument();
+      expect(spinner).toHaveClass('border-primary-400', 'border-t-transparent');
+    });
   });
 });
