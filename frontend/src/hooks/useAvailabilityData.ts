@@ -34,7 +34,7 @@ export const useAvailabilityData = () => {
         setLoading(true);
       }
       
-      // 最小表示時間100msを保証するためのタイムスタンプ記録
+      // 最小表示時間300msを保証するためのタイムスタンプ記録
       const startTime = Date.now();
       
       const response = await availabilityApi.getAllAvailability();
@@ -43,10 +43,10 @@ export const useAvailabilityData = () => {
         throw new Error('Invalid API response structure');
       }
       
-      // 最小表示時間100ms（0.1秒）を保証
+      // 最小表示時間300ms（0.3秒）を保証
       const elapsed = Date.now() - startTime;
-      if (isRefresh && elapsed < 100) {
-        await new Promise(resolve => setTimeout(resolve, 100 - elapsed));
+      if (isRefresh && elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed));
       }
       
       setData(response);

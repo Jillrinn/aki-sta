@@ -17,7 +17,7 @@ describe('ActionButtons', () => {
   test('renders manual fetch button only', () => {
     render(<ActionButtons />);
     
-    expect(screen.getByLabelText('空き状況取得（手動）')).toBeInTheDocument();
+    expect(screen.getByLabelText('今すぐ情報を集める')).toBeInTheDocument();
     expect(screen.queryByLabelText('新規登録')).not.toBeInTheDocument();
   });
 
@@ -31,7 +31,7 @@ describe('ActionButtons', () => {
     render(<ActionButtons />);
     
     // ボタンをクリック
-    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
     fireEvent.click(fetchButton);
     
     // ローディング中の表示
@@ -61,7 +61,7 @@ describe('ActionButtons', () => {
 
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
     fireEvent.click(fetchButton);
     
     await waitFor(() => {
@@ -77,7 +77,7 @@ describe('ActionButtons', () => {
 
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
     fireEvent.click(fetchButton);
     
     await waitFor(() => {
@@ -90,7 +90,7 @@ describe('ActionButtons', () => {
   test('button has correct styling', () => {
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
     expect(fetchButton).toHaveClass('bg-brand-orange-dark');
     expect(fetchButton).toHaveClass('text-white');
   });
@@ -98,7 +98,7 @@ describe('ActionButtons', () => {
   test('button has proper sizing', () => {
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('空き状況取得（手動）');
+    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
     expect(fetchButton).toHaveClass('px-4');
     expect(fetchButton).toHaveClass('py-2');
   });

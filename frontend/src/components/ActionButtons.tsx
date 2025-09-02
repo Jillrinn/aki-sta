@@ -39,10 +39,10 @@ const ActionButtons: React.FC = () => {
       <button
         onClick={handleManualFetchClick}
         className="px-4 py-2 bg-brand-orange-dark text-white rounded-lg hover:bg-brand-orange transition-colors shadow-lg font-bold text-sm sm:text-base"
-        aria-label="空き状況取得（手動）"
+        aria-label="今すぐ情報を集める"
         disabled={isLoading}
       >
-        空き状況取得（手動）
+        今すぐ情報を集める
       </button>
 
       <ScrapeResultModal

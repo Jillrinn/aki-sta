@@ -17,6 +17,7 @@ import ActionButtons from './ActionButtons';
 import RefreshButton from './RefreshButton';
 import PullToRefresh from './PullToRefresh';
 import LoadingOverlay from './LoadingOverlay';
+import HowToUse from './HowToUse';
 
 const AvailabilityTable: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
@@ -76,6 +77,8 @@ const AvailabilityTable: React.FC = () => {
         />
       </div>
       <p className="text-center text-gray-600 mb-4">施設空き状況一覧</p>
+      
+      <HowToUse />
       
       <div className="flex justify-center mb-4">
         <Link
