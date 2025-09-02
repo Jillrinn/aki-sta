@@ -95,14 +95,6 @@ describe('ActionButtons', () => {
     expect(fetchButton).toHaveClass('text-white');
   });
 
-  test('button container has right alignment', () => {
-    const { container } = render(<ActionButtons />);
-    
-    const buttonsContainer = container.querySelector('.flex');
-    expect(buttonsContainer).toBeInTheDocument();
-    expect(buttonsContainer).toHaveClass('justify-end');
-  });
-
   test('button has proper sizing', () => {
     render(<ActionButtons />);
     

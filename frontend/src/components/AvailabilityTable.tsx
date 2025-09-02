@@ -14,11 +14,15 @@ import {
   MobileCardView
 } from './availability';
 import ActionButtons from './ActionButtons';
+import RefreshButton from './RefreshButton';
+import PullToRefresh from './PullToRefresh';
+import LoadingOverlay from './LoadingOverlay';
 
 const AvailabilityTable: React.FC = () => {
-  const { data, loading, error } = useAvailabilityData();
+  const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
   const { data: targetDates } = useTargetDates();
   const [isMobile, setIsMobile] = useState(false);
+  const [showRefreshOverlay, setShowRefreshOverlay] = useState(false);
 
   // 日付とラベルのマッピングを作成
   const labelMap = useMemo(() => {
@@ -61,8 +65,8 @@ const AvailabilityTable: React.FC = () => {
     return <EmptyState />;
   }
 
-  return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
+  const mainContent = (
+    <>
       <div className="flex items-center justify-center mb-2">
         <h1 className="text-2xl sm:text-3xl text-gray-800 font-bold">空きスタサーチくん</h1>
         <img 
@@ -81,29 +85,28 @@ const AvailabilityTable: React.FC = () => {
           練習日程一覧を見る →
         </Link>
       </div>
-      
-      <ActionButtons />
-      
-      {sortedDates.map((date, dateIndex) => (
-        <div key={date} className="mb-8">
-          <h2 
-            className="text-xl text-gray-700 mb-3 font-semibold"
-            data-testid={`date-header-${dateIndex}`}
-          >
-            {date}
-            {labelMap[date] && (
-              <span className="ml-2 text-lg text-gray-600">
-                - {labelMap[date]}
-              </span>
-            )}
-          </h2>
-          
-          {!data || !data[date] ? (
-            <div className="p-8 text-center bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
-              <p className="text-gray-600 text-lg">空き状況はまだ取得されていません。</p>
-            </div>
-          ) : isMobile ? (
-            <div className="space-y-4">
+
+      <div className={`${isRefreshing ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-300`}>
+        {sortedDates.map((date, dateIndex) => (
+          <div key={date} className="mb-8">
+            <h2 
+              className="text-xl text-gray-700 mb-3 font-semibold"
+              data-testid={`date-header-${dateIndex}`}
+            >
+              {date}
+              {labelMap[date] && (
+                <span className="ml-2 text-lg text-gray-600">
+                  - {labelMap[date]}
+                </span>
+              )}
+            </h2>
+            
+            {!data || !data[date] ? (
+              <div className="p-8 text-center bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+                <p className="text-gray-600 text-lg">空き状況はまだ取得されていません。</p>
+              </div>
+            ) : isMobile ? (
+              <div className="space-y-4">
               {(data[date] || []).map((facility: Facility, facilityIndex: number) => (
                 <MobileCardView
                   key={facilityIndex}
@@ -150,10 +153,46 @@ const AvailabilityTable: React.FC = () => {
             </div>
           )}
         </div>
-      ))}
+        ))}
+      </div>
       
       <LegendSection />
-    </div>
+      
+      <div className="flex justify-end gap-2 mt-6">
+        <RefreshButton
+          onClick={async () => {
+            setShowRefreshOverlay(true);
+            await refetch();
+            setShowRefreshOverlay(false);
+          }}
+          isRefreshing={isRefreshing}
+          disabled={loading}
+        />
+        <ActionButtons />
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      <LoadingOverlay isVisible={showRefreshOverlay} />
+      <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
+        {isMobile ? (
+          <PullToRefresh
+            onRefresh={async () => {
+              setShowRefreshOverlay(true);
+              await refetch();
+              setShowRefreshOverlay(false);
+            }}
+            disabled={loading || isRefreshing}
+          >
+            {mainContent}
+          </PullToRefresh>
+        ) : (
+          mainContent
+        )}
+      </div>
+    </>
   );
 };
 

@@ -36,16 +36,14 @@ const ActionButtons: React.FC = () => {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={handleManualFetchClick}
-          className="px-4 py-2 bg-brand-orange-dark text-white rounded-lg hover:bg-brand-orange transition-colors shadow-lg font-bold text-sm sm:text-base"
-          aria-label="空き状況取得（手動）"
-          disabled={isLoading}
-        >
-          空き状況取得（手動）
-        </button>
-      </div>
+      <button
+        onClick={handleManualFetchClick}
+        className="px-4 py-2 bg-brand-orange-dark text-white rounded-lg hover:bg-brand-orange transition-colors shadow-lg font-bold text-sm sm:text-base"
+        aria-label="空き状況取得（手動）"
+        disabled={isLoading}
+      >
+        空き状況取得（手動）
+      </button>
 
       <ScrapeResultModal
         isOpen={isModalOpen}
