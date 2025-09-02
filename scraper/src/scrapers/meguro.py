@@ -395,75 +395,142 @@ class MeguroScraper(BaseScraper):
         max_iterations = 12
         
         for iteration in range(max_iterations):
-            print(f"Iteration {iteration + 1}")
+            print(f"\nIteration {iteration + 1}/{max_iterations}")
             
-            # カレンダーの日付セルから年月を推測
-            # まず、カレンダーテーブルを探す
-            calendar_tables = page.locator("table.calendar, table").all()
+            # 年月表示を探す（複数の方法を試す）
+            current_year = None
+            current_month = None
             
-            if not calendar_tables:
-                print("Warning: No calendar tables found")
-                return False
+            # 方法1: カレンダーのヘッダーから年月を取得
+            print("Method 1: Looking for calendar headers...")
+            calendar_headers = page.locator("th").all()
+            for header in calendar_headers[:10]:  # 最初の10個をチェック
+                header_text = header.text_content()
+                if header_text:
+                    import re
+                    # "2025年10月5日(日)"のような形式から年月を抽出
+                    match = re.search(r'(\d{4})年(\d{1,2})月', header_text)
+                    if match:
+                        current_year = int(match.group(1))
+                        current_month = int(match.group(2))
+                        print(f"Found date in header: {header_text}")
+                        print(f"Extracted: {current_year}年{current_month}月")
+                        break
             
-            # 最初のカレンダーから日付を取得
-            first_calendar = calendar_tables[0]
-            
-            # 日付リンクを探す
-            date_cells = first_calendar.locator("td a").all()
-            
-            if date_cells:
-                # 最初の日付リンクのhrefから年月を抽出
-                for cell in date_cells[:5]:  # 最初の5つをチェック
-                    href = cell.get_attribute("href")
-                    if href:
-                        # hrefから日付情報を抽出 (YYYYMMDD形式を期待)
-                        import re
-                        date_match = re.search(r'(\d{8})', href)
-                        if date_match:
-                            date_str = date_match.group(1)
-                            current_year = int(date_str[:4])
-                            current_month = int(date_str[4:6])
-                            print(f"Current calendar shows: {current_year}年{current_month}月")
+            # 方法2: カレンダーテーブルの日付リンクから推測
+            if not current_year:
+                print("Method 2: Looking for date links in calendar...")
+                # カレンダーテーブルを探す
+                calendar_tables = page.locator("table").all()
+                print(f"Found {len(calendar_tables)} tables")
+                
+                if calendar_tables:
+                    # 各テーブルから日付リンクを探す
+                    for i, table in enumerate(calendar_tables[:3]):  # 最初の3つのテーブルをチェック
+                        date_links = table.locator("a").all()
+                        print(f"Table {i}: Found {len(date_links)} links")
+                        
+                        for link in date_links[:5]:  # 各テーブルの最初の5つのリンクをチェック
+                            link_text = link.text_content()
+                            if link_text and link_text.strip().isdigit():
+                                # 日付リンクの可能性がある
+                                href = link.get_attribute("href")
+                                if href:
+                                    # hrefから日付情報を抽出
+                                    date_match = re.search(r'(\d{8})', href)
+                                    if date_match:
+                                        date_str = date_match.group(1)
+                                        current_year = int(date_str[:4])
+                                        current_month = int(date_str[4:6])
+                                        print(f"Found date in link href: {date_str}")
+                                        print(f"Extracted: {current_year}年{current_month}月")
+                                        break
+                        if current_year:
                             break
-                else:
-                    # hrefから取得できない場合、テキストから推測
-                    print("Could not extract date from href, trying alternative method...")
-                    # 現在の月のデフォルト値を使用
-                    from datetime import datetime as dt
-                    current_year = dt.now().year
-                    current_month = dt.now().month
-                    print(f"Using current date as fallback: {current_year}年{current_month}月")
             
-            else:
-                print("Warning: No date cells found in calendar")
-                return False
+            # 年月が取得できなかった場合はエラー
+            if not current_year:
+                print("ERROR: Could not determine current calendar month")
+                print("Trying to find any text containing year/month...")
+                page_text = page.content()
+                year_month_matches = re.findall(r'(\d{4})年(\d{1,2})月', page_text)
+                if year_month_matches:
+                    print(f"Found {len(year_month_matches)} year/month patterns in page")
+                    # 最初のマッチを使用
+                    current_year = int(year_month_matches[0][0])
+                    current_month = int(year_month_matches[0][1])
+                    print(f"Using first match: {current_year}年{current_month}月")
+                else:
+                    print("No year/month pattern found in page")
+                    return False
+            
             
             # 目標月に到達したか確認
-            if current_year == target_year and current_month == target_month:
-                print(f"Reached target month: {target_year}年{target_month}月")
-                return True
+            if current_year and current_month:
+                if current_year == target_year and current_month == target_month:
+                    print(f"Reached target month: {target_year}年{target_month}月")
+                    return True
             
-            # 移動方向を決定
-            if target_year > current_year or (target_year == current_year and target_month > current_month):
-                # 次月へ移動（右矢印）
-                print("Moving to next month...")
-                next_arrows = page.locator("a[title='次へ'], button:has-text('>')").all()
-                if next_arrows:
-                    next_arrows[0].click()
-                    page.wait_for_timeout(2000)
+            # 移動方向を決定（年月が取得できた場合のみ）
+            if current_year and current_month:
+                if target_year > current_year or (target_year == current_year and target_month > current_month):
+                    # 次月へ移動（右矢印）
+                    print("Moving to next month...")
+                    # より多くのセレクタパターンを試す
+                    next_selectors = [
+                        "a[title='次へ']",
+                        "button:has-text('>')",
+                        "a:has-text('>')",
+                        "button.next",
+                        "a.next-month"
+                    ]
+                    
+                    moved = False
+                    for selector in next_selectors:
+                        try:
+                            next_button = page.locator(selector).first
+                            if next_button.count() > 0 and next_button.is_visible():
+                                print(f"Found next button with selector: {selector}")
+                                next_button.click()
+                                page.wait_for_timeout(2000)
+                                moved = True
+                                break
+                        except:
+                            continue
+                    
+                    if not moved:
+                        print("ERROR: No next month button found")
+                        return False
                 else:
-                    print("No next month button found")
-                    return False
+                    # 前月へ移動（左矢印）
+                    print("Moving to previous month...")
+                    prev_selectors = [
+                        "a[title='前へ']",
+                        "button:has-text('<')",
+                        "a:has-text('<')",
+                        "button.prev",
+                        "a.prev-month"
+                    ]
+                    
+                    moved = False
+                    for selector in prev_selectors:
+                        try:
+                            prev_button = page.locator(selector).first
+                            if prev_button.count() > 0 and prev_button.is_visible():
+                                print(f"Found prev button with selector: {selector}")
+                                prev_button.click()
+                                page.wait_for_timeout(2000)
+                                moved = True
+                                break
+                        except:
+                            continue
+                    
+                    if not moved:
+                        print("ERROR: No previous month button found")
+                        return False
             else:
-                # 前月へ移動（左矢印）
-                print("Moving to previous month...")
-                prev_arrows = page.locator("a[title='前へ'], button:has-text('<')").all()
-                if prev_arrows:
-                    prev_arrows[0].click()
-                    page.wait_for_timeout(2000)
-                else:
-                    print("No previous month button found")
-                    return False
+                print("ERROR: Cannot navigate without knowing current month")
+                return False
         
         print(f"Could not reach target month after {max_iterations} iterations")
         return False
@@ -614,12 +681,19 @@ class MeguroScraper(BaseScraper):
                             room_slots[slot_key] = status
                             print(f"    {slot_key}: {status}")
                     
-                    # 午後1と午後2を統合
+                    # 午後1と午後2を統合（パターンBの場合）
                     if "afternoon_1" in room_slots and "afternoon_2" in room_slots:
-                        # 両方空いている場合のみavailable
+                        # 両方空いている場合
                         if room_slots["afternoon_1"] == "available" and room_slots["afternoon_2"] == "available":
                             room_slots["afternoon"] = "available"
-                        elif room_slots["afternoon_1"] == "booked" or room_slots["afternoon_2"] == "booked":
+                        # 午後1のみ予約済み
+                        elif room_slots["afternoon_1"] == "booked" and room_slots["afternoon_2"] == "available":
+                            room_slots["afternoon"] = "booked_1"
+                        # 午後2のみ予約済み
+                        elif room_slots["afternoon_1"] == "available" and room_slots["afternoon_2"] == "booked":
+                            room_slots["afternoon"] = "booked_2"
+                        # 両方予約済み
+                        elif room_slots["afternoon_1"] == "booked" and room_slots["afternoon_2"] == "booked":
                             room_slots["afternoon"] = "booked"
                         else:
                             room_slots["afternoon"] = "unknown"
@@ -753,10 +827,22 @@ class MeguroScraper(BaseScraper):
                                 combined_slots["9-12"] = "booked"
                             
                             # afternoon -> 13-17
-                            if room_slots.get("afternoon") == "available":
+                            afternoon_status = room_slots.get("afternoon")
+                            if afternoon_status == "available":
                                 combined_slots["13-17"] = "available"
-                            elif combined_slots["13-17"] != "available" and room_slots.get("afternoon") == "booked":
-                                combined_slots["13-17"] = "booked"
+                            elif afternoon_status in ["booked", "booked_1", "booked_2"]:
+                                # 既存の状態と比較して最も制限の強い状態を採用
+                                current_status = combined_slots["13-17"]
+                                if current_status == "available":
+                                    combined_slots["13-17"] = afternoon_status
+                                elif current_status == "unknown":
+                                    combined_slots["13-17"] = afternoon_status
+                                elif afternoon_status == "booked":
+                                    combined_slots["13-17"] = "booked"
+                                elif current_status in ["booked_1", "booked_2"] and afternoon_status in ["booked_1", "booked_2"]:
+                                    # 両方が部分的に予約済みの場合
+                                    if current_status != afternoon_status:
+                                        combined_slots["13-17"] = "booked"  # 異なる部分が予約済みなら全体をbookedに
                             
                             # evening -> 18-21
                             if room_slots.get("evening") == "available":
