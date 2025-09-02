@@ -285,13 +285,21 @@ class TestMeguroScraper:
         # 検証
         assert result == {}
     
-    @patch('src.scrapers.meguro.datetime')
-    @patch('src.scrapers.meguro.sync_playwright')
-    def test_scrape_availability_success(self, mock_playwright, mock_datetime_module, scraper):
+    @patch('src.scrapers.base.sync_playwright')
+    @patch.object(MeguroScraper, 'extract_all_time_slots')
+    @patch.object(MeguroScraper, 'select_date_and_navigate')
+    @patch.object(MeguroScraper, 'navigate_to_target_month')
+    @patch.object(MeguroScraper, 'navigate_to_calendar')
+    @patch.object(MeguroScraper, 'select_facilities')
+    @patch.object(MeguroScraper, 'navigate_to_facility_search')
+    @patch.object(MeguroScraper, 'create_browser_context')
+    @patch.object(MeguroScraper, 'setup_browser')
+    def test_scrape_availability_success(self, mock_setup_browser, mock_create_context,
+                                        mock_navigate_search, mock_select_facilities,
+                                        mock_navigate_calendar, mock_navigate_month,
+                                        mock_select_date, mock_extract_slots,
+                                        mock_playwright, scraper):
         """スクレイピング成功テスト"""
-        # datetimeのモック設定
-        mock_datetime_module.strptime.return_value = datetime(2025, 10, 15)
-        mock_datetime_module.utcnow.return_value = datetime(2025, 10, 15, 12, 0, 0)
         
         # Playwrightのモック設定
         mock_p = MagicMock()
@@ -301,17 +309,17 @@ class TestMeguroScraper:
         mock_context = MagicMock()
         mock_page = MagicMock()
         
-        scraper.setup_browser = MagicMock(return_value=mock_browser)
-        scraper.create_browser_context = MagicMock(return_value=mock_context)
+        mock_setup_browser.return_value = mock_browser
+        mock_create_context.return_value = mock_context
         mock_context.new_page.return_value = mock_page
         
         # 各メソッドのモック
-        scraper.navigate_to_facility_search = MagicMock(return_value=True)
-        scraper.select_facilities = MagicMock(return_value=True)
-        scraper.navigate_to_calendar = MagicMock(return_value=True)
-        scraper.navigate_to_target_month = MagicMock(return_value=True)
-        scraper.select_date_and_navigate = MagicMock(return_value=True)
-        scraper.extract_all_time_slots = MagicMock(return_value={
+        mock_navigate_search.return_value = True
+        mock_select_facilities.return_value = True
+        mock_navigate_calendar.return_value = True
+        mock_navigate_month.return_value = True
+        mock_select_date.return_value = True
+        mock_extract_slots.return_value = {
             "田道住区センター三田分室": {
                 "別館B101（音楽室）": {
                     "morning": "available",
@@ -319,7 +327,7 @@ class TestMeguroScraper:
                     "evening": "available"
                 }
             }
-        })
+        }
         
         # テスト実行
         result = scraper.scrape_availability("2025-10-15")
@@ -332,20 +340,20 @@ class TestMeguroScraper:
         assert result[0]["timeSlots"]["18-21"] == "available"
         
         # 各メソッドが呼ばれたことを確認
-        scraper.navigate_to_facility_search.assert_called_once()
-        scraper.select_facilities.assert_called_once()
-        scraper.navigate_to_calendar.assert_called_once()
-        scraper.navigate_to_target_month.assert_called_once()
-        scraper.select_date_and_navigate.assert_called_once()
-        scraper.extract_all_time_slots.assert_called_once()
+        mock_navigate_search.assert_called_once_with(mock_page)
+        mock_select_facilities.assert_called_once_with(mock_page)
+        mock_navigate_calendar.assert_called_once_with(mock_page)
+        mock_navigate_month.assert_called_once()
+        mock_select_date.assert_called_once()
+        mock_extract_slots.assert_called_once_with(mock_page)
     
-    @patch('src.scrapers.meguro.datetime')
-    @patch('src.scrapers.meguro.sync_playwright')
-    def test_scrape_availability_navigation_failure(self, mock_playwright, mock_datetime_module, scraper):
+    @patch('src.scrapers.base.sync_playwright')
+    @patch.object(MeguroScraper, 'navigate_to_facility_search')
+    @patch.object(MeguroScraper, 'create_browser_context')
+    @patch.object(MeguroScraper, 'setup_browser')
+    def test_scrape_availability_navigation_failure(self, mock_setup_browser, mock_create_context,
+                                                   mock_navigate_search, mock_playwright, scraper):
         """スクレイピング失敗テスト（ナビゲーションエラー）"""
-        # datetimeのモック設定
-        mock_datetime_module.strptime.return_value = datetime(2025, 10, 15)
-        mock_datetime_module.utcnow.return_value = datetime(2025, 10, 15, 12, 0, 0)
         
         # Playwrightのモック設定
         mock_p = MagicMock()
@@ -355,12 +363,12 @@ class TestMeguroScraper:
         mock_context = MagicMock()
         mock_page = MagicMock()
         
-        scraper.setup_browser = MagicMock(return_value=mock_browser)
-        scraper.create_browser_context = MagicMock(return_value=mock_context)
+        mock_setup_browser.return_value = mock_browser
+        mock_create_context.return_value = mock_context
         mock_context.new_page.return_value = mock_page
         
         # 施設検索画面への遷移で失敗
-        scraper.navigate_to_facility_search = MagicMock(return_value=False)
+        mock_navigate_search.return_value = False
         
         # テスト実行
         result = scraper.scrape_availability("2025-10-15")

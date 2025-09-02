@@ -59,6 +59,7 @@ case "$1" in
         ;;
     
     test)
+        shift # 最初の引数(test)を削除
         info "Building test Docker image..."
         # テスト用イメージをビルド
         docker build -t ${IMAGE_NAME}:test -f Dockerfile.test . || error "Failed to build test Docker image"
@@ -66,7 +67,12 @@ case "$1" in
         
         info "Running tests in Docker..."
         # テスト用イメージで実行（環境変数は既にイメージに含まれている）
-        docker run --rm ${IMAGE_NAME}:test python -m pytest tests/ -v
+        # 引数がある場合はそれを使用、ない場合はデフォルト
+        if [ $# -eq 0 ]; then
+            docker run --rm ${IMAGE_NAME}:test python -m pytest tests/ -v
+        else
+            docker run --rm ${IMAGE_NAME}:test python -m pytest "$@"
+        fi
         ;;
     
     run)
