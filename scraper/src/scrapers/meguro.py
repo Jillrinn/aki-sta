@@ -41,7 +41,6 @@ class MeguroScraper(BaseScraper):
             成功した場合True
         """
         print("Navigating to facility search...")
-        print(f"Current URL: {page.url}")
         
         try:
             # ページが完全に読み込まれるまで待つ
@@ -88,7 +87,6 @@ class MeguroScraper(BaseScraper):
             
             # 「集会施設・学校施設」をクリック
             print("Looking for '集会施設・学校施設' option...")
-            print(f"Current URL after first click: {page.url}")
             
             # 複数のセレクタを試す
             meeting_selectors = [
@@ -125,7 +123,6 @@ class MeguroScraper(BaseScraper):
             
             # 「音楽室」をクリック
             print("Looking for '音楽室' category...")
-            print(f"Current URL after second click: {page.url}")
             
             # 複数のセレクタを試す
             music_selectors = [
@@ -217,7 +214,6 @@ class MeguroScraper(BaseScraper):
             
             # 施設検索画面に到達したか確認
             print("Verifying navigation to facility search page...")
-            print(f"Current URL after search: {page.url}")
             
             # URLで判定
             if "WgR_ModeSelect" not in page.url:
@@ -248,12 +244,10 @@ class MeguroScraper(BaseScraper):
                 print(f"Error checking page content: {e}")
                 
             print("Warning: Could not confirm facility search page")
-            print("Current URL:", page.url)
             return False
             
         except Exception as e:
             print(f"ERROR in navigate_to_facility_search: {e}")
-            print(f"Final URL: {page.url}")
             print(f"Page title: {page.title()}")
             import traceback
             print(f"Traceback: {traceback.format_exc()}")
@@ -355,7 +349,6 @@ class MeguroScraper(BaseScraper):
             
             # 施設別空き状況画面に到達したか確認
             print("Verifying navigation to calendar page...")
-            print(f"Current URL: {page.url}")
             
             # ページ内容で確認
             if "施設別空き状況" in page.content():
