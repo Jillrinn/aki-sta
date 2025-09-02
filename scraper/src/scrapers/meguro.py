@@ -321,51 +321,180 @@ class MeguroScraper(BaseScraper):
         try:
             # 「次へ進む」ボタンをクリック
             print("Looking for '次へ進む' button...")
-            next_selectors = [
-                "button:has-text('次へ進む'):visible",
-                "input[type='submit'][value='次へ進む']:visible",
-                "button.btn:has-text('次へ進む')",
-                "text=次へ進む"
-            ]
             
-            clicked = False
-            for selector in next_selectors:
+            # まず、画面上のボタンやリンクを詳しく調査
+            all_buttons = page.locator("button, input[type='submit'], input[type='button'], a").all()
+            print(f"Found {len(all_buttons)} button/link elements")
+            
+            # デバッグ: すべてのボタン/リンクを表示
+            for i, btn in enumerate(all_buttons[:10]):  # 最初の10個だけ
                 try:
-                    element = page.locator(selector).first
-                    if element.count() > 0:
-                        print(f"Found '次へ進む' button with selector: {selector}")
-                        element.click()
-                        clicked = True
-                        break
+                    if btn.is_visible():
+                        btn_text = btn.text_content() or ""
+                        btn_value = btn.get_attribute("value") or ""
+                        btn_type = btn.get_attribute("type") or ""
+                        tag_name = btn.evaluate("el => el.tagName")
+                        if btn_text or btn_value:
+                            print(f"  Button {i}: tag={tag_name}, type={btn_type}, text='{btn_text[:30]}', value='{btn_value[:30]}'")
+                except:
+                    pass
+            
+            # 「次へ」や「進む」を含むテキストを持つ要素を探す
+            next_button = None
+            for btn in all_buttons:
+                try:
+                    if btn.is_visible():
+                        btn_text = btn.text_content() or ""
+                        btn_value = btn.get_attribute("value") or ""
+                        
+                        if "次" in btn_text or "進" in btn_text or "次" in btn_value or "進" in btn_value or "Next" in btn_value:
+                            print(f"  >>> Found potential next button: text='{btn_text}', value='{btn_value}'")
+                            next_button = btn
+                            break
                 except:
                     continue
             
-            if not clicked:
+            if not next_button:
+                # より広範囲に探す
+                print("Searching more broadly for navigation buttons...")
+                next_button = page.locator("*:has-text('次へ'):visible").first
+                if next_button.count() == 0:
+                    next_button = page.locator("*:has-text('進む'):visible").first
+            
+            if next_button and next_button.count() > 0:
+                print("Clicking next/forward button...")
+                
+                # クリック前に少し待つ（ページが完全に読み込まれることを確実にする）
+                page.wait_for_timeout(1000)
+                
+                # フォーム送信の準備（必要な場合）
+                # 施設が選択されているか確認
+                selected_facilities = page.locator("input[name='checkShisetsu']:checked").all()
+                print(f"  {len(selected_facilities)} facilities are checked before clicking next")
+                
+                # JavaScriptでクリック（通常のクリックが効かない場合のため）
+                try:
+                    next_button.click(force=True)
+                    print("Button clicked with force=True")
+                except:
+                    # 通常のクリック
+                    next_button.click()
+                    print("Button clicked normally")
+            else:
                 print("ERROR: Could not find '次へ進む' button")
                 return False
             
             print("Clicked '次へ進む' button, waiting for navigation...")
-            page.wait_for_timeout(3000)
+            
+            # ページ遷移を待つ（URLの変化またはコンテンツの変化を待つ）
+            try:
+                # SPAなのでコンテンツの変化を待つ
+                print("Waiting for page transition in SPA...")
+                
+                # 施設のチェックボックスが消えるのを待つ（ページが切り替わった証拠）
+                try:
+                    page.wait_for_function(
+                        "document.querySelectorAll('input[name=\"checkShisetsu\"]:visible').length === 0",
+                        timeout=10000
+                    )
+                    print("Facility checkboxes disappeared - page likely changed")
+                except:
+                    print("Warning: Facility checkboxes still visible after timeout")
+                
+                # さらに待機
+                page.wait_for_timeout(3000)
+                
+                # ページが更新されるのを待つ（日付入力フィールドが現れるまで待つ）
+                print("Waiting for calendar page elements...")
+                try:
+                    # 日付入力フィールドが存在するか確認（これが施設別空き状況画面の特徴）
+                    page.wait_for_selector("#dpStartDate, input[name='textDate'], .joken", timeout=10000)
+                    print("Date input field or .joken section appeared")
+                except:
+                    print("Warning: Date input field did not appear within timeout")
+                
+            except Exception as e:
+                print(f"Error waiting for page transition: {e}")
             
             # 施設別空き状況画面に到達したか確認
             print("Verifying navigation to calendar page...")
             
+            # デバッグ: 現在のURLを確認
+            current_url = page.url
+            print(f"Current page URL (partial): ...{current_url[-50:]}")
+            
+            # ページタイトルを確認
+            page_title = page.title()
+            print(f"Page title: {page_title}")
+            
             # ページ内容で確認
-            if "施設別空き状況" in page.content():
-                print("Successfully reached calendar page (confirmed by page content)")
-                return True
+            page_content = page.content()
+            if "施設別空き状況" in page_content:
+                print("Found '施設別空き状況' in page content")
+                
+                # 施設別空き状況が見つかった場合、実際にその画面要素が表示されているか確認
+                # SPAの場合、テキストは存在するが非表示の可能性がある
+                try:
+                    # 施設別空き状況のヘッダーまたはタイトルが表示されているか
+                    header = page.locator("h1:has-text('施設別空き状況'), h2:has-text('施設別空き状況'), .title:has-text('施設別空き状況')").first
+                    if header.count() > 0 and header.is_visible():
+                        print("  '施設別空き状況' header is visible")
+                        return True
+                    else:
+                        print("  '施設別空き状況' text found but header not visible")
+                except:
+                    pass
+                    
+            if "表示開始日" in page_content:
+                print("Found '表示開始日' in page content")
+                
+                # 表示開始日のラベルが実際に表示されているか確認
+                try:
+                    date_label = page.locator("label:has-text('表示開始日'), dt:has-text('表示開始日')").first
+                    if date_label.count() > 0 and date_label.is_visible():
+                        print("  '表示開始日' label is visible - on calendar page")
+                        return True
+                    else:
+                        print("  '表示開始日' text found but label not visible")
+                except:
+                    pass
             
             # breadcrumbでも確認
             try:
-                breadcrumb = page.locator(".breadcrumbs").first
+                breadcrumb = page.locator(".breadcrumbs, .topicpath").first
                 if breadcrumb.count() > 0:
                     breadcrumb_text = breadcrumb.text_content()
                     print(f"Breadcrumb text: {breadcrumb_text}")
-                    if "施設別空き状況" in breadcrumb_text:
+                    if "施設別空き状況" in breadcrumb_text or "空き状況" in breadcrumb_text:
                         print("Successfully reached calendar page (confirmed by breadcrumb)")
                         return True
             except:
                 pass
+            
+            # 施設のチェックボックスが残っているか確認（まだ施設選択画面の可能性）
+            facility_checkboxes = page.locator("input[name='checkShisetsu']").all()
+            if len(facility_checkboxes) > 0:
+                print(f"Warning: Still seeing {len(facility_checkboxes)} facility checkboxes - might still be on facility selection page")
+                
+                # デバッグ用スクリーンショット（必要に応じて）
+                # page.screenshot(path="/tmp/debug_after_next.png")
+                # print("Screenshot saved to /tmp/debug_after_next.png")
+                
+                # もう一度「次へ進む」を探してクリック
+                print("Trying to click '次へ進む' again...")
+                try:
+                    next_button = page.locator("button:has-text('次へ進む'):visible, input[value='次へ進む']:visible").first
+                    if next_button.count() > 0:
+                        next_button.click()
+                        page.wait_for_timeout(5000)
+                        print("Clicked '次へ進む' again, checking result...")
+                        
+                        # 再度確認
+                        if "施設別空き状況" in page.content() or "表示開始日" in page.content():
+                            print("Successfully navigated after second click")
+                            return True
+                except:
+                    pass
                 
             print("Warning: Could not confirm calendar page")
             return False
@@ -376,187 +505,320 @@ class MeguroScraper(BaseScraper):
     
     def navigate_to_target_month(self, page: Page, target_date: datetime) -> bool:
         """
-        カレンダーを目標の月まで移動（目黒区用）
+        表示開始日を入力してカレンダーを更新（目黒区用）
         
         Returns:
             成功した場合True
         """
-        target_year = target_date.year
-        target_month = target_date.month
-        print(f"Navigating to {target_year}年{target_month}月...")
+        # 日付を YYYY/MM/DD 形式に変換
+        date_str = target_date.strftime("%Y/%m/%d")
+        print(f"Setting display start date to {date_str}...")
         
-        max_iterations = 12
-        
-        for iteration in range(max_iterations):
-            print(f"\nIteration {iteration + 1}/{max_iterations}")
+        try:
+            # ページが完全にロードされるまで待つ
+            print("Waiting for page elements to load...")
+            page.wait_for_timeout(2000)
             
-            # 年月表示を探す（複数の方法を試す）
-            current_year = None
-            current_month = None
+            # タブやステップがある場合、施設別空き状況タブをクリック
+            print("Checking for tabs or steps...")
+            try:
+                # 施設別空き状況タブまたはステップを探す
+                tab = page.locator("a:has-text('施設別空き状況'), li:has-text('施設別空き状況'), .tab:has-text('施設別空き状況')").first
+                if tab.count() > 0 and tab.is_visible():
+                    print("Found '施設別空き状況' tab/step, clicking it...")
+                    tab.click()
+                    page.wait_for_timeout(2000)
+            except:
+                pass
             
-            # 方法1: カレンダーのヘッダーから年月を取得
-            print("Method 1: Looking for calendar headers...")
-            calendar_headers = page.locator("th").all()
-            for header in calendar_headers[:10]:  # 最初の10個をチェック
-                header_text = header.text_content()
-                if header_text:
-                    import re
-                    # "2025年10月5日(日)"のような形式から年月を抽出
-                    match = re.search(r'(\d{4})年(\d{1,2})月', header_text)
-                    if match:
-                        current_year = int(match.group(1))
-                        current_month = int(match.group(2))
-                        print(f"Found date in header: {header_text}")
-                        print(f"Extracted: {current_year}年{current_month}月")
-                        break
+            # 「表示開始日」のinput要素を探す（ID指定）
+            print("Looking for display start date input...")
             
-            # 方法2: カレンダーテーブルの日付リンクから推測
-            if not current_year:
-                print("Method 2: Looking for date links in calendar...")
-                # カレンダーテーブルを探す
-                calendar_tables = page.locator("table").all()
-                print(f"Found {len(calendar_tables)} tables")
-                
-                if calendar_tables:
-                    # 各テーブルから日付リンクを探す
-                    for i, table in enumerate(calendar_tables[:3]):  # 最初の3つのテーブルをチェック
-                        date_links = table.locator("a").all()
-                        print(f"Table {i}: Found {len(date_links)} links")
+            # まず要素が存在するのを待つ
+            try:
+                page.wait_for_selector("#dpStartDate", timeout=5000)
+                date_input = page.locator("#dpStartDate")
+                print("Found date input with id='dpStartDate'")
+            except:
+                # ID指定で見つからない場合、代替セレクタを試す
+                print("ID selector failed, trying alternative selectors...")
+                try:
+                    page.wait_for_selector("input[name='textDate']", timeout=3000)
+                    date_input = page.locator("input[name='textDate']")
+                    print("Found date input with name='textDate'")
+                except:
+                    try:
+                        page.wait_for_selector("input.hasDatepicker", timeout=3000)
+                        date_input = page.locator("input.hasDatepicker")
+                        print("Found date input with class='hasDatepicker'")
+                    except:
+                        # より広範囲に探す - すべてのinput要素を調査
+                        print("Searching for any input field...")
+                        all_inputs = page.locator("input").all()
+                        print(f"Found {len(all_inputs)} input fields total")
                         
-                        for link in date_links[:5]:  # 各テーブルの最初の5つのリンクをチェック
-                            link_text = link.text_content()
-                            if link_text and link_text.strip().isdigit():
-                                # 日付リンクの可能性がある
-                                href = link.get_attribute("href")
-                                if href:
-                                    # hrefから日付情報を抽出
-                                    date_match = re.search(r'(\d{8})', href)
-                                    if date_match:
-                                        date_str = date_match.group(1)
-                                        current_year = int(date_str[:4])
-                                        current_month = int(date_str[4:6])
-                                        print(f"Found date in link href: {date_str}")
-                                        print(f"Extracted: {current_year}年{current_month}月")
+                        # デバッグ: すべてのinput要素の詳細を表示
+                        date_input = None
+                        for i, inp in enumerate(all_inputs):
+                            try:
+                                input_type = inp.get_attribute("type") or "none"
+                                input_id = inp.get_attribute("id") or ""
+                                input_name = inp.get_attribute("name") or ""
+                                input_value = inp.get_attribute("value") or ""
+                                input_placeholder = inp.get_attribute("placeholder") or ""
+                                is_visible = inp.is_visible()
+                                
+                                if is_visible:
+                                    print(f"  Input {i}: type={input_type}, id={input_id}, name={input_name}, value={input_value[:20] if len(input_value) > 20 else input_value}, visible={is_visible}")
+                                    
+                                    # dpStartDate IDを持つものを優先
+                                    if input_id == "dpStartDate":
+                                        date_input = inp
+                                        print(f"    >>> Found target input with id='dpStartDate'!")
                                         break
-                        if current_year:
-                            break
+                                    
+                                    # 日付っぽい値を持つものを探す
+                                    if "/" in input_value or "/" in input_placeholder or "date" in input_name.lower() or "Date" in input_id:
+                                        date_input = inp
+                                        print(f"    >>> Selected as date input candidate")
+                            except Exception as e:
+                                print(f"  Error checking input {i}: {e}")
+                        
+                        if not date_input:
+                            print("ERROR: Could not find date input field with any method")
+                            # ページの一部を表示してデバッグ
+                            try:
+                                print("\nDebugging page content...")
+                                
+                                # スクリーンショットを撮影
+                                screenshot_path = "/tmp/debug_calendar_page.png"
+                                page.screenshot(path=screenshot_path)
+                                print(f"Screenshot saved to {screenshot_path}")
+                                
+                                # .jokenセクションを探す
+                                joken = page.locator(".joken")
+                                if joken.count() > 0:
+                                    print(f"Found {joken.count()} .joken section(s)")
+                                    # 最初のjokenセクションの内容を表示
+                                    inner_text = joken.first.inner_text()[:500]
+                                    print(f"Joken section text: {inner_text}")
+                                else:
+                                    print("No .joken section found")
+                                
+                                # フォーム要素を探す
+                                forms = page.locator("form")
+                                print(f"Found {forms.count()} form(s)")
+                                
+                                # 表示開始日というテキストを探す
+                                start_date_label = page.locator("text=表示開始日")
+                                if start_date_label.count() > 0:
+                                    print(f"Found '表示開始日' label")
+                                    # ラベルの親要素を取得
+                                    parent = start_date_label.first.locator("..")
+                                    parent_html = parent.inner_html()[:500]
+                                    print(f"Parent element HTML: {parent_html}")
+                                else:
+                                    print("No '表示開始日' label found")
+                                    
+                                # ページタイトルの確認
+                                title = page.title()
+                                print(f"Page title: {title}")
+                                
+                            except Exception as e:
+                                print(f"Debug error: {e}")
+                            return False
             
-            # 年月が取得できなかった場合はエラー
-            if not current_year:
-                print("ERROR: Could not determine current calendar month")
-                print("Trying to find any text containing year/month...")
-                page_text = page.content()
-                year_month_matches = re.findall(r'(\d{4})年(\d{1,2})月', page_text)
-                if year_month_matches:
-                    print(f"Found {len(year_month_matches)} year/month patterns in page")
-                    # 最初のマッチを使用
-                    current_year = int(year_month_matches[0][0])
-                    current_month = int(year_month_matches[0][1])
-                    print(f"Using first match: {current_year}年{current_month}月")
-                else:
-                    print("No year/month pattern found in page")
-                    return False
+            # 既存の値をクリアして新しい日付を入力
+            date_input.click()
+            page.wait_for_timeout(500)
             
+            # Control+Aで全選択してから入力
+            date_input.press("Control+a")
+            page.wait_for_timeout(100)
+            date_input.fill(date_str)
+            page.wait_for_timeout(500)
+            print(f"Entered date: {date_str}")
             
-            # 目標月に到達したか確認
-            if current_year and current_month:
-                if current_year == target_year and current_month == target_month:
-                    print(f"Reached target month: {target_year}年{target_month}月")
-                    return True
+            # 「表示」ボタンをクリック
+            print("Looking for display button...")
             
-            # 移動方向を決定（年月が取得できた場合のみ）
-            if current_year and current_month:
-                if target_year > current_year or (target_year == current_year and target_month > current_month):
-                    # 次月へ移動（右矢印）
-                    print("Moving to next month...")
-                    # より多くのセレクタパターンを試す
-                    next_selectors = [
-                        "a[title='次へ']",
-                        "button:has-text('>')",
-                        "a:has-text('>')",
-                        "button.next",
-                        "a.next-month"
-                    ]
-                    
-                    moved = False
-                    for selector in next_selectors:
-                        try:
-                            next_button = page.locator(selector).first
-                            if next_button.count() > 0 and next_button.is_visible():
-                                print(f"Found next button with selector: {selector}")
-                                next_button.click()
-                                page.wait_for_timeout(2000)
-                                moved = True
+            # まずすべてのボタンを調査
+            all_buttons = page.locator("button, input[type='submit'], input[type='button'], a.btn").all()
+            print(f"Found {len(all_buttons)} button elements on page")
+            
+            # 表示ボタンを探す
+            display_button = None
+            for btn in all_buttons:
+                try:
+                    if btn.is_visible():
+                        btn_text = btn.text_content() or ""
+                        btn_value = btn.get_attribute("value") or ""
+                        btn_onclick = btn.get_attribute("onclick") or ""
+                        
+                        # デバッグ出力（表示に関連するボタンのみ）
+                        if "表示" in btn_text or "表示" in btn_value or "Display" in btn_value or "search" in btn_onclick.lower():
+                            tag_name = btn.evaluate("el => el.tagName")
+                            print(f"  Potential display button: tag={tag_name}, text='{btn_text}', value='{btn_value}', onclick='{btn_onclick[:50] if btn_onclick else ''}'")
+                            
+                            if "表示" in btn_text or "表示" in btn_value:
+                                display_button = btn
+                                print(f"    >>> Selected as display button")
                                 break
-                        except:
-                            continue
-                    
-                    if not moved:
-                        print("ERROR: No next month button found")
-                        return False
-                else:
-                    # 前月へ移動（左矢印）
-                    print("Moving to previous month...")
-                    prev_selectors = [
-                        "a[title='前へ']",
-                        "button:has-text('<')",
-                        "a:has-text('<')",
-                        "button.prev",
-                        "a.prev-month"
-                    ]
-                    
-                    moved = False
-                    for selector in prev_selectors:
-                        try:
-                            prev_button = page.locator(selector).first
-                            if prev_button.count() > 0 and prev_button.is_visible():
-                                print(f"Found prev button with selector: {selector}")
-                                prev_button.click()
-                                page.wait_for_timeout(2000)
-                                moved = True
-                                break
-                        except:
-                            continue
-                    
-                    if not moved:
-                        print("ERROR: No previous month button found")
-                        return False
+                except:
+                    continue
+            
+            if not display_button:
+                # より広範囲に探す
+                print("Searching more broadly for display button...")
+                display_button = page.locator("*:has-text('表示'):visible").first
+                if display_button.count() == 0:
+                    # 画像ボタンの可能性もチェック
+                    display_button = page.locator("input[type='image'][alt*='表示']").first
+            
+            if display_button and display_button.count() > 0:
+                print("Clicking display button...")
+                try:
+                    display_button.click(force=True)
+                    print("Display button clicked with force=True")
+                except:
+                    display_button.click()
+                    print("Display button clicked normally")
             else:
-                print("ERROR: Cannot navigate without knowing current month")
+                print("ERROR: Could not find display button")
+                
+                # デバッグ: 日付入力フィールド周辺のHTML構造を確認
+                try:
+                    date_input_parent = date_input.locator("../..")
+                    parent_html = date_input_parent.inner_html()[:1000]
+                    print(f"Date input parent HTML: {parent_html}")
+                except:
+                    pass
+                    
                 return False
-        
-        print(f"Could not reach target month after {max_iterations} iterations")
-        return False
+            
+            # ページのリロードを待つ
+            print("Waiting for page reload...")
+            page.wait_for_load_state("networkidle", timeout=10000)
+            page.wait_for_timeout(2000)  # 追加の待機
+            
+            # 再度「施設別空き状況」画面が表示されていることを確認
+            if "施設別空き状況" in page.content():
+                print("Successfully updated calendar display")
+                return True
+            else:
+                print("Warning: Could not confirm calendar update")
+                return False
+                
+        except Exception as e:
+            print(f"Error in navigate_to_target_month: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            return False
     
     def select_date_and_navigate(self, page: Page, target_date: datetime) -> bool:
         """
-        対象日付を選択して時間帯別空き状況画面へ遷移
+        カレンダーヘッダーから対象日付のカラムをクリックして時間帯別空き状況画面へ遷移
         
         Returns:
             成功した場合True
         """
         target_day = target_date.day
-        print(f"Selecting date: {target_day}日...")
+        print(f"Selecting date columns for day {target_day}...")
         
         try:
-            # 全てのカレンダーから対象日を探す
-            # 目黒区は複数施設のカレンダーが表示される
-            date_links = page.locator(f"a:has-text('{target_day}')").all()
+            # すべてのカレンダーテーブルを取得
+            calendar_tables = page.locator("table").all()
+            print(f"Found {len(calendar_tables)} calendar tables")
             
-            if not date_links:
-                print(f"Warning: Date {target_day} not found")
+            selected_count = 0
+            
+            # 各カレンダーテーブルのヘッダーから対象日を探してクリック
+            for i, table in enumerate(calendar_tables):
+                try:
+                    # デバッグ: テーブルにクラスがあるか確認
+                    table_class = table.get_attribute("class") or ""
+                    
+                    # ヘッダー行のth要素を取得（より広範囲に検索）
+                    headers = table.locator("th, td.header, td[class*='head']").all()
+                    
+                    if i < 3:  # 最初の3つのテーブルだけデバッグ出力
+                        print(f"Table {i} (class='{table_class}'): {len(headers)} header cells")
+                    
+                    for j, header in enumerate(headers):
+                        header_text = header.text_content() or ""
+                        
+                        # デバッグ: 最初のテーブルのヘッダーテキストを表示
+                        if i == 0 and header_text.strip():
+                            print(f"    Header {j}: '{header_text.strip()}'")
+                        
+                        if header_text:
+                            # 日付を含むヘッダーを探す（複数のパターンに対応）
+                            import re
+                            # パターン1: "10日(火)" のような形式
+                            # パターン2: "10水" のような形式（数字+曜日）
+                            # パターン3: "10" のような数字のみ
+                            # パターン4: "9/10" のような日付形式
+                            patterns = [
+                                r'(\d{1,2})日',     # 10日
+                                r'^(\d{1,2})[月火水木金土日]',  # 10水
+                                r'^(\d{1,2})$',     # 10（数字のみ）
+                                r'/(\d{1,2})$',     # 9/10の10部分
+                            ]
+                            
+                            for pattern in patterns:
+                                match = re.search(pattern, header_text.strip())
+                                if match:
+                                    day = int(match.group(1))
+                                    if day == target_day:
+                                        print(f"Found target date in table {i}, header {j}: '{header_text.strip()}'")
+                                        # ヘッダーがクリック可能か確認
+                                        if header.is_visible():
+                                            # リンクがある場合はリンクをクリック
+                                            link = header.locator("a").first
+                                            if link.count() > 0:
+                                                print(f"  Clicking link in header for day {target_day}")
+                                                link.click()
+                                            else:
+                                                print(f"  Clicking header cell for day {target_day}")
+                                                header.click()
+                                            selected_count += 1
+                                            page.wait_for_timeout(500)  # 短い待機
+                                        break
+                            if selected_count > 0:
+                                break  # 見つかったら次のテーブルへ
+                except Exception as e:
+                    print(f"Error processing table {i}: {e}")
+            
+            if selected_count == 0:
+                print(f"Warning: No columns found for day {target_day}")
                 return False
             
-            # 最初の有効な日付リンクをクリック
-            date_links[0].click()
-            page.wait_for_timeout(2000)
+            print(f"Selected {selected_count} date columns")
             
             # 「次へ進む」ボタンをクリック
-            next_button = page.locator("button:has-text('次へ進む'), input[type='submit'][value='次へ進む']").first
-            if next_button.count() > 0:
-                next_button.click()
-            else:
-                page.click("text=次へ進む")
+            print("Looking for 'Next' button...")
+            next_selectors = [
+                "button:has-text('次へ進む')",
+                "input[type='submit'][value='次へ進む']",
+                "button.next",
+                "text=次へ進む"
+            ]
+            
+            clicked = False
+            for selector in next_selectors:
+                try:
+                    button = page.locator(selector).first
+                    if button.count() > 0 and button.is_visible():
+                        print(f"Found next button with selector: {selector}")
+                        button.click()
+                        clicked = True
+                        break
+                except:
+                    continue
+            
+            if not clicked:
+                print("ERROR: Could not find next button")
+                return False
             
             page.wait_for_timeout(3000)
             
@@ -599,8 +861,34 @@ class MeguroScraper(BaseScraper):
         results = {}
         
         try:
-            # 施設ごとのセクションを取得
+            # まず、ページ構造を確認
+            print("Checking page structure...")
+            
+            # 施設ごとのセクションを取得（複数のセレクタを試す）
             facility_sections = page.locator(".item").all()
+            if len(facility_sections) == 0:
+                print("  No .item sections found, trying alternative selectors...")
+                # 代替: 施設名を含むh3またはh4要素を探す
+                facility_sections = page.locator("div.facility, section.facility, .shisetsu").all()
+                
+            if len(facility_sections) == 0:
+                print("  Still no sections found, trying to find facility names directly...")
+                # さらに代替: 施設名を直接探す
+                facility_sections = []
+                for studio_name in self.studios:
+                    elements = page.locator(f"*:has-text('{studio_name}')").all()
+                    for elem in elements:
+                        parent = elem.locator("..")
+                        if parent.count() > 0:
+                            facility_sections.append(parent.first)
+                            break
+            
+            print(f"Found {len(facility_sections)} facility sections")
+            
+            # セクションが見つからない場合、ページ全体を1つのセクションとして扱う
+            if len(facility_sections) == 0:
+                print("  Using entire page as single section")
+                facility_sections = [page.locator("body").first]
             
             for section in facility_sections:
                 # 施設名を取得
