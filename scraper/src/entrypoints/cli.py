@@ -20,19 +20,27 @@ load_dotenv(playwright_env_path)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.scrapers.ensemble_studio import EnsembleStudioScraper
+from src.scrapers.meguro import MeguroScraper
 
 
 def main():
     """メイン処理"""
     # コマンドライン引数の処理
     parser = argparse.ArgumentParser(
-        description='あんさんぶるスタジオの予約状況をスクレイピング'
+        description='施設の予約状況をスクレイピング'
     )
     parser.add_argument(
         '--date',
         type=str,
         default=datetime.now().strftime("%Y-%m-%d"),
         help='スクレイピング対象日付 (YYYY-MM-DD または YYYY/MM/DD 形式)'
+    )
+    parser.add_argument(
+        '--facility',
+        type=str,
+        default='ensemble',
+        choices=['ensemble', 'meguro'],
+        help='スクレイピング対象施設 (ensemble: あんさんぶるスタジオ, meguro: 目黒区施設)'
     )
     
     args = parser.parse_args()
@@ -66,8 +74,13 @@ def main():
     
     print(f"スクレイピング開始: {normalized_date}")
     
-    # スクレイピング実行
-    scraper = EnsembleStudioScraper()
+    # 施設に応じたスクレイパーを選択
+    if args.facility == 'meguro':
+        print("対象施設: 目黒区施設")
+        scraper = MeguroScraper()
+    else:
+        print("対象施設: あんさんぶるスタジオ")
+        scraper = EnsembleStudioScraper()
     
     try:
         result = scraper.scrape_and_save(normalized_date)

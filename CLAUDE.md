@@ -186,6 +186,11 @@ await act(async () => {
 2. @azure/functionsを使用して関数を登録
 3. 共通コードはapi/src/repositories/に配置
 
+### 新しいスクレイピング追加時の手順
+1. scraper/src/scrapers/に新しいPythonファイルを作成
+2. scraper/src/scrapers/base.pyに定義されたBaseScraperを継承したクラスを実装
+
+
 ## 📊 現在の状態（自動更新対象）
 
 ### MVP v1.0 - ✅ 完了（2025-08-21）
