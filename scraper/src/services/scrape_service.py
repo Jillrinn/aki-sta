@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Type
 from ..scrapers.base import BaseScraper
 from ..scrapers.ensemble_studio import EnsembleStudioScraper
+from ..scrapers.meguro import MeguroScraper
 from ..repositories.cosmos_repository import CosmosWriter
 from .target_date_service import TargetDateService
 
@@ -17,6 +18,9 @@ class ScrapeService:
         'ensemble': EnsembleStudioScraper,
         'ensemble_studio': EnsembleStudioScraper,
         'あんさんぶるスタジオ': EnsembleStudioScraper,
+        'meguro': MeguroScraper,
+        '目黒区': MeguroScraper,
+        '目黒': MeguroScraper,
     }
     
     def __init__(

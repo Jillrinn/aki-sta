@@ -56,7 +56,12 @@ health_check() {
             success "Service is healthy!"
             echo "API endpoint: http://localhost:8000"
             echo "Health check: http://localhost:8000/health"
-            echo "Scrape endpoint: POST http://localhost:8000/scrape?date=YYYY-MM-DD"
+            echo ""
+            echo "Scrape endpoints:"
+            echo "  POST http://localhost:8000/scrape?date=YYYY-MM-DD                    # Ensemble (default)"
+            echo "  POST http://localhost:8000/scrape?date=YYYY-MM-DD&facility=meguro   # Meguro"
+            echo "  POST http://localhost:8000/scrape/ensemble?date=YYYY-MM-DD          # Ensemble specific"
+            echo "  POST http://localhost:8000/scrape/meguro?date=YYYY-MM-DD            # Meguro specific"
             return 0
         fi
         echo "Waiting for service to start... ($i/10)"
@@ -114,11 +119,11 @@ case "$1" in
     
     scrape)
         if [ -z "$2" ]; then
-            error "Date argument required. Usage: ./docker-run.sh scrape YYYY-MM-DD"
+            error "Date argument required. Usage: ./docker-run.sh scrape YYYY-MM-DD [--facility ensemble|meguro]"
         fi
         echo "Running scraper for date: $2"
         check_env
-        docker-compose run --rm scraper python src/entrypoints/cli.py --date "$2"
+        docker-compose run --rm scraper python src/entrypoints/cli.py --date "$2" "${@:3}"
         ;;
     
     shell)
@@ -143,7 +148,10 @@ case "$1" in
         echo "  status   - Check service status"
         echo "  logs     - Show container logs (follow mode)"
         echo "  test     - Run tests in Docker"
-        echo "  scrape   - Run scraper for specific date (e.g., ./docker-run.sh scrape 2025-01-30)"
+        echo "  scrape   - Run scraper for specific date and facility"
+        echo "           Examples:"
+        echo "             ./docker-run.sh scrape 2025-01-30                    # Ensemble Studio (default)"
+        echo "             ./docker-run.sh scrape 2025-01-30 --facility meguro  # Meguro facilities"
         echo "  shell    - Open bash shell in container"
         echo "  clean    - Remove containers and images"
         exit 1

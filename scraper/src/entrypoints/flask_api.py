@@ -18,6 +18,7 @@ from playwright.sync_api import Error as PlaywrightError
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.scrapers.ensemble_studio import EnsembleStudioScraper
+from src.scrapers.meguro import MeguroScraper
 from src.services.scrape_service import ScrapeService
 from src.services.target_date_service import TargetDateService
 
@@ -82,10 +83,17 @@ def health():
     })
 
 
-def async_scraping_task(dates, record_id, record_date, use_rate_limits):
+def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility='ensemble'):
     """
     非同期でスクレイピングを実行するタスク
     別スレッドで実行される
+    
+    Args:
+        dates: 日付リスト
+        record_id: Rate limit record ID
+        record_date: Rate limit record date
+        use_rate_limits: Rate limits使用フラグ
+        facility: 施設名（'ensemble' or 'meguro'）
     """
     rate_limits_repo = None
     has_error = False
@@ -99,6 +107,9 @@ def async_scraping_task(dates, record_id, record_date, use_rate_limits):
             except Exception as e:
                 logger.warning(f"Rate limits repo unavailable in async task: {str(e)}")
                 use_rate_limits = False
+        
+        # サービスを取得
+        _, scraping_service = get_services()
         
         # 各日付に対してスクレイピングを実行
         for date in dates:
@@ -116,12 +127,12 @@ def async_scraping_task(dates, record_id, record_date, use_rate_limits):
                 if normalized_date is None:
                     raise ValueError(f"Invalid date format: {date}")
                 
-                logger.info(f"[Async] Scraping date: {normalized_date}")
-                result = scraper.scrape_and_save(normalized_date)
+                logger.info(f"[Async] Scraping {facility} for date: {normalized_date}")
+                result = scraping_service.scrape_facility(facility, normalized_date)
                 
                 if not result or result.get('status') != 'success':
                     has_error = True
-                    logger.error(f"[Async] Failed to scrape {normalized_date}")
+                    logger.error(f"[Async] Failed to scrape {facility} for {normalized_date}")
                     
             except Exception as e:
                 has_error = True
@@ -196,6 +207,51 @@ def async_ensemble_scraping_task(date, record_id, record_date, use_rate_limits):
                 pass
 
 
+def async_meguro_scraping_task(date, record_id, record_date, use_rate_limits):
+    """
+    目黒区施設専用の非同期スクレイピングタスク
+    """
+    rate_limits_repo = None
+    
+    try:
+        # Rate limitsリポジトリの初期化
+        if use_rate_limits:
+            try:
+                from src.repositories.rate_limits_repository import RateLimitsRepository
+                rate_limits_repo = RateLimitsRepository()
+            except Exception as e:
+                logger.warning(f"Rate limits repo unavailable in async meguro task: {str(e)}")
+                use_rate_limits = False
+        
+        logger.info(f"[Async Meguro] Scraping date: {date}")
+        
+        # サービスを取得してスクレイピング実行
+        _, scraping_service = get_services()
+        result = scraping_service.scrape_facility('meguro', date)
+        
+        # Rate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                final_status = 'completed' if result.get('status') == 'success' else 'failed'
+                rate_limits_repo.update_status(record_id, record_date, final_status)
+                logger.info(f"[Async Meguro] Rate limit status updated to: {final_status}")
+            except Exception as e:
+                logger.error(f"[Async Meguro] Failed to update rate limit status: {str(e)}")
+        
+        logger.info(f"[Async Meguro] Scraping completed for {date}")
+        
+    except Exception as e:
+        logger.error(f"[Async Meguro] Fatal error: {str(e)}")
+        
+        # エラー時のrate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                rate_limits_repo.update_status(record_id, record_date, 'failed')
+                logger.info("[Async Meguro] Rate limit status updated to: failed")
+            except:
+                pass
+
+
 @app.route('/scrape', methods=['POST'])
 def scrape():
     """
@@ -238,11 +294,13 @@ def scrape():
             use_rate_limits = False
         # 1. Try query parameters first
         dates = request.args.getlist('date')
+        facility = request.args.get('facility', 'ensemble')  # デフォルトはensemble
         
         # 2. If no query params, check JSON body
         if not dates:
             data = request.get_json() or {}
             dates = data.get('dates', [])
+            facility = data.get('facility', facility)  # JSONでもfacilityを受け取る
             triggered_by = data.get('triggeredBy', 'manual')
         else:
             triggered_by = request.args.get('triggeredBy', 'manual')
@@ -273,17 +331,17 @@ def scrape():
                 }), 400
         
         logger.info(f"Scraper triggered by: {triggered_by}")
-        logger.info(f"Scraping {len(dates)} dates: {dates}")
+        logger.info(f"Scraping {facility} for {len(dates)} dates: {dates}")
         
         # スクレイピングタスクを別スレッドで実行（fire and forget）
         scraping_thread = threading.Thread(
             target=async_scraping_task,
-            args=(dates, record_id, record_date, use_rate_limits),
+            args=(dates, record_id, record_date, use_rate_limits, facility),
             daemon=True  # メインプロセスが終了しても続行
         )
         scraping_thread.start()
         
-        logger.info(f"Scraping task started asynchronously for {len(dates)} dates")
+        logger.info(f"Scraping task started asynchronously for {facility} with {len(dates)} dates")
         
         # 即座にシンプルなレスポンスを返す
         return jsonify({
@@ -402,6 +460,106 @@ def scrape_ensemble():
                 pass  # ステータス更新失敗は無視
         
         logger.error(f"Error in scrape_ensemble endpoint: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@app.route('/scrape/meguro', methods=['POST'])
+def scrape_meguro():
+    """
+    目黒区施設専用エンドポイント
+    
+    POST: 指定日付でスクレイピング
+    """
+    # Rate limits制御の初期化
+    use_rate_limits = False
+    record_id = None
+    record_date = None
+    rate_limits_repo = None
+    
+    try:
+        # Rate limits制御を試みる
+        try:
+            from src.repositories.rate_limits_repository import RateLimitsRepository
+            rate_limits_repo = RateLimitsRepository()
+            rate_result = rate_limits_repo.create_or_update_record('running')
+            
+            if rate_result.get('is_already_running'):
+                return jsonify({
+                    'success': False,
+                    'message': '空き状況取得は実行中の可能性があります'
+                }), 409
+            
+            record_id = rate_result['record']['id']
+            record_date = rate_result['record']['date']
+            use_rate_limits = True
+            logger.info(f"Rate limit check passed for meguro. Record ID: {record_id}")
+            
+        except Exception as e:
+            # Cosmos DB接続失敗時はrate_limits無効で続行
+            logger.warning(f"Rate limits unavailable for meguro, continuing without rate limit control: {str(e)}")
+            use_rate_limits = False
+        
+        # リクエストから日付を取得
+        date = request.args.get('date')
+        if not date:
+            data = request.get_json() or {}
+            date = data.get('date')
+        
+        if not date:
+            return jsonify({
+                'status': 'error',
+                'message': 'Date is required. Use ?date=YYYY-MM-DD or JSON body {"date": "YYYY-MM-DD"}',
+                'timestamp': datetime.now().isoformat()
+            }), 400
+        
+        # 日付フォーマット検証
+        try:
+            parsed_date = datetime.strptime(date, '%Y-%m-%d')
+            if parsed_date.date() < datetime.now().date():
+                return jsonify({
+                    'status': 'error',
+                    'message': f'過去の日付は指定できません: {date}',
+                    'timestamp': datetime.now().isoformat()
+                }), 400
+        except ValueError:
+            return jsonify({
+                'status': 'error',
+                'message': f'Invalid date format: {date}. Use YYYY-MM-DD',
+                'timestamp': datetime.now().isoformat()
+            }), 400
+        
+        logger.info(f"Scraping meguro with specified date: {date}")
+        
+        # スクレイピングタスクを別スレッドで実行（fire and forget）
+        scraping_thread = threading.Thread(
+            target=async_meguro_scraping_task,
+            args=(date, record_id, record_date, use_rate_limits),
+            daemon=True
+        )
+        scraping_thread.start()
+        
+        logger.info(f"Meguro scraping task started asynchronously for {date}")
+        
+        # 即座にシンプルなレスポンスを返す
+        return jsonify({
+            'success': True,
+            'message': '空き状況取得を開始しました'
+        }), 202
+            
+    except Exception as e:
+        # エラー時のrate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                rate_limits_repo.update_status(record_id, record_date, 'failed')
+                logger.info("Rate limit status updated to: failed for meguro (due to exception)")
+            except:
+                pass  # ステータス更新失敗は無視
+        
+        logger.error(f"Error in scrape_meguro endpoint: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e),
