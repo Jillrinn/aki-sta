@@ -25,7 +25,7 @@ class TestDateFormat:
         )
         
         # エラーなく実行できることを確認（helpが表示される）
-        assert "あんさんぶるスタジオの予約状況をスクレイピング" in result.stdout or result.stderr
+        assert "施設の予約状況をスクレイピング" in result.stdout or result.stderr
     
     def test_date_format_with_slash(self):
         """YYYY/MM/DD形式の日付が受け入れられることを確認"""
@@ -41,7 +41,7 @@ class TestDateFormat:
         )
         
         # エラーなく実行できることを確認
-        assert "あんさんぶるスタジオの予約状況をスクレイピング" in result.stdout or result.stderr
+        assert "施設の予約状況をスクレイピング" in result.stdout or result.stderr
     
     def test_invalid_date_format(self):
         """無効な日付形式がエラーになることを確認"""
