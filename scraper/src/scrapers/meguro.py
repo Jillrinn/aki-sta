@@ -732,17 +732,19 @@ class MeguroScraper(BaseScraper):
             
             selected_count = 0
             
-            # 各カレンダーテーブルのヘッダーから対象日を探してクリック
+            # 各カレンダーテーブルで対象日のカラムを特定し、データセルをクリック
             for i, table in enumerate(calendar_tables):
                 try:
                     # デバッグ: テーブルにクラスがあるか確認
                     table_class = table.get_attribute("class") or ""
                     
-                    # ヘッダー行のth要素を取得（より広範囲に検索）
-                    headers = table.locator("th, td.header, td[class*='head']").all()
+                    # まずヘッダー行から対象日のカラムインデックスを特定
+                    headers = table.locator("thead th").all()
                     
                     if i < 3:  # 最初の3つのテーブルだけデバッグ出力
                         print(f"Table {i} (class='{table_class}'): {len(headers)} header cells")
+                    
+                    target_column_index = -1
                     
                     for j, header in enumerate(headers):
                         header_text = header.text_content() or ""
@@ -752,12 +754,8 @@ class MeguroScraper(BaseScraper):
                             print(f"    Header {j}: '{header_text.strip()}'")
                         
                         if header_text:
-                            # 日付を含むヘッダーを探す（複数のパターンに対応）
+                            # 日付を含むヘッダーを探す
                             import re
-                            # パターン1: "10日(火)" のような形式
-                            # パターン2: "10水" のような形式（数字+曜日）
-                            # パターン3: "10" のような数字のみ
-                            # パターン4: "9/10" のような日付形式
                             patterns = [
                                 r'(\d{1,2})日',     # 10日
                                 r'^(\d{1,2})[月火水木金土日]',  # 10水
@@ -770,22 +768,103 @@ class MeguroScraper(BaseScraper):
                                 if match:
                                     day = int(match.group(1))
                                     if day == target_day:
-                                        print(f"Found target date in table {i}, header {j}: '{header_text.strip()}'")
-                                        # ヘッダーがクリック可能か確認
-                                        if header.is_visible():
-                                            # リンクがある場合はリンクをクリック
-                                            link = header.locator("a").first
-                                            if link.count() > 0:
-                                                print(f"  Clicking link in header for day {target_day}")
-                                                link.click()
-                                            else:
-                                                print(f"  Clicking header cell for day {target_day}")
-                                                header.click()
-                                            selected_count += 1
-                                            page.wait_for_timeout(500)  # 短い待機
+                                        target_column_index = j
+                                        print(f"Found target date in table {i}, column {j}: '{header_text.strip()}'")
                                         break
-                            if selected_count > 0:
-                                break  # 見つかったら次のテーブルへ
+                            
+                            if target_column_index >= 0:
+                                break
+                    
+                    # 対象日のカラムが見つかった場合、そのカラムのデータセルをクリック
+                    if target_column_index >= 0:
+                        # tbody内の各行を取得
+                        rows = table.locator("tbody tr").all()
+                        print(f"  Table {i} has {len(rows)} rows in tbody")
+                        
+                        table_selections = 0
+                        for row_idx, row in enumerate(rows):
+                            # 既に選択済みの場合はスキップ
+                            if table_selections > 0:
+                                break
+                                
+                            # 各行の対象カラムのセルを取得
+                            cells = row.locator("td").all()
+                            
+                            # デバッグ：最初の行の内容を確認
+                            if row_idx == 0 and len(cells) > 0:
+                                first_cell_text = cells[0].text_content().strip()
+                                print(f"    Row 0, first cell: '{first_cell_text[:50] if len(first_cell_text) > 50 else first_cell_text}'")
+                            
+                            if target_column_index < len(cells):
+                                target_cell = cells[target_column_index]
+                                cell_text = target_cell.text_content().strip()
+                                
+                                # まず○マークがあるかチェック（予約可能の可能性が高い）
+                                if "○" in cell_text or "◯" in cell_text:
+                                    print(f"    Row {row_idx}: Available cell ('{cell_text}'), looking for clickable element...")
+                                    try:
+                                        # ラベルを探してクリック
+                                        label = target_cell.locator("label").first
+                                        if label.count() > 0:
+                                            label_text = label.text_content().strip()
+                                            print(f"      Found label with text: '{label_text}'")
+                                            label.click(timeout=2000, force=True)
+                                            print(f"      Successfully clicked label: '{label_text}'")
+                                        else:
+                                            # ラベルがない場合はセル自体をクリック
+                                            print(f"      No label found, clicking cell directly: '{cell_text}'")
+                                            target_cell.click(timeout=2000, force=True)
+                                            print(f"      Successfully clicked cell: '{cell_text}'")
+                                        table_selections += 1
+                                        selected_count += 1
+                                        page.wait_for_timeout(300)
+                                        break  # 次のテーブルへ
+                                    except Exception as e:
+                                        print(f"      Failed to click: {str(e)[:50]}")
+                                
+                                # チェックボックスがある場合はラベルをクリック（○がない場合のみ）
+                                if table_selections == 0:
+                                    try:
+                                        # まずラベルを探す
+                                        label = target_cell.locator("label").first
+                                        if label.count() > 0 and label.is_visible():
+                                            label_text = label.text_content().strip()
+                                            print(f"    Row {row_idx}: Found label with text: '{label_text}', clicking...")
+                                            label.click(timeout=2000, force=True)
+                                            table_selections += 1
+                                            selected_count += 1
+                                            page.wait_for_timeout(300)
+                                            print(f"      Successfully clicked label: '{label_text}'")
+                                            break  # 次のテーブルへ
+                                        
+                                        # ラベルがない場合はチェックボックスを直接クリック
+                                        checkbox = target_cell.locator("input[type='checkbox']").first
+                                        if checkbox.count() > 0 and checkbox.is_visible():
+                                            print(f"    Row {row_idx}: No label found, clicking checkbox directly (cell text: '{cell_text}')...")
+                                            checkbox.click(timeout=2000, force=True)
+                                            table_selections += 1
+                                            selected_count += 1
+                                            page.wait_for_timeout(300)
+                                            print(f"      Successfully clicked checkbox")
+                                            break  # 次のテーブルへ
+                                        
+                                        # チェックボックスもラベルもない場合、セル自体をクリック
+                                        if not ("×" in cell_text or "−" in cell_text or "-" in cell_text or cell_text == ""):
+                                            print(f"    Row {row_idx}: No label/checkbox, clicking cell directly: '{cell_text}'...")
+                                            target_cell.click(timeout=2000, force=True)
+                                            table_selections += 1
+                                            selected_count += 1
+                                            page.wait_for_timeout(300)
+                                            print(f"      Successfully clicked cell: '{cell_text}'")
+                                            break
+                                    except Exception as e:
+                                        # クリック要素がない場合
+                                        if row_idx == 0:  # 最初の行だけログ出力
+                                            print(f"      No clickable element in row 0 (cell text: '{cell_text}'): {str(e)[:50]}")
+                        
+                        if table_selections > 0:
+                            print(f"  Selected {table_selections} cells in table {i}")
+                
                 except Exception as e:
                     print(f"Error processing table {i}: {e}")
             
@@ -795,48 +874,229 @@ class MeguroScraper(BaseScraper):
             
             print(f"Selected {selected_count} date columns")
             
+            # 選択されたセルの確認
+            print("Verifying selected cells before navigation...")
+            
+            # チェックされているチェックボックスの数を確認
+            checked_boxes = page.locator("input[type='checkbox']:checked").all()
+            print(f"  {len(checked_boxes)} checkboxes are checked")
+            if len(checked_boxes) > 0:
+                for i, box in enumerate(checked_boxes[:3]):  # 最初の3つを表示
+                    try:
+                        parent_cell = box.locator("..").first
+                        cell_text = parent_cell.text_content().strip() if parent_cell.count() > 0 else "unknown"
+                        print(f"    Checked box {i}: '{cell_text[:50]}'")
+                    except:
+                        pass
+            
+            # 選択されたセル（クラスなどで識別）も確認
+            selected_cells = page.locator("td.selected, td.active, td[class*='select'], td[class*='check']").all()
+            print(f"  {len(selected_cells)} cells appear selected")
+            
+            # 少なくとも1つ以上選択されていることを確認
+            total_selections = len(checked_boxes) + len(selected_cells)
+            if total_selections == 0:
+                print("WARNING: No cells appear to be selected!")
+                # デバッグ: ラベルをクリックしてみる
+                print("Attempting to select at least one available cell by clicking label...")
+                available_cells = page.locator("td:has-text('○'), td:has-text('◯')").all()[:3]
+                for cell in available_cells:
+                    try:
+                        # ラベルを探してクリック
+                        label = cell.locator("label").first
+                        if label.count() > 0:
+                            label_text = label.text_content().strip()
+                            print(f"  Clicking label: '{label_text}'")
+                            label.click(timeout=2000)
+                        else:
+                            cell_text = cell.text_content().strip()
+                            print(f"  Clicking cell: '{cell_text}'")
+                            cell.click(timeout=2000)
+                        page.wait_for_timeout(500)
+                        break
+                    except:
+                        continue
+            
             # 「次へ進む」ボタンをクリック
             print("Looking for 'Next' button...")
-            next_selectors = [
-                "button:has-text('次へ進む')",
-                "input[type='submit'][value='次へ進む']",
-                "button.next",
-                "text=次へ進む"
-            ]
             
-            clicked = False
-            for selector in next_selectors:
+            # より具体的なセレクタを使用
+            next_button = None
+            button_text = ""
+            
+            # まず正確なテキストマッチを試す
+            next_button = page.locator("button", has_text="次へ進む").first
+            if next_button.count() > 0:
+                button_text = next_button.text_content().strip()
+                print(f"  Found button element with text: '{button_text}'")
+            
+            if next_button.count() == 0:
+                next_button = page.locator("input[type='submit'][value='次へ進む']").first
+                if next_button.count() > 0:
+                    button_text = next_button.get_attribute("value") or ""
+                    print(f"  Found input[submit] element with value: '{button_text}'")
+            
+            if next_button.count() == 0:
+                next_button = page.locator("a", has_text="次へ進む").first
+                if next_button.count() > 0:
+                    button_text = next_button.text_content().strip()
+                    print(f"  Found anchor element with text: '{button_text}'")
+            
+            if next_button and next_button.count() > 0:
+                print(f"Clicking next button: '{button_text}'...")
+                
+                # ボタンの状態を確認
+                is_enabled = next_button.is_enabled()
+                is_visible = next_button.is_visible()
+                print(f"  Button state: enabled={is_enabled}, visible={is_visible}")
+                
+                # onclick属性を確認
+                onclick = next_button.get_attribute("onclick") or ""
+                if onclick:
+                    print(f"  Button onclick: '{onclick[:100]}'")
+                
+                # フォーカスを当ててからクリック
+                next_button.focus()
+                page.wait_for_timeout(200)
+                
+                # クリック前のURL/ページ状態を記録
+                initial_content = page.locator(".breadcrumbs li.current span").text_content() if page.locator(".breadcrumbs li.current span").count() > 0 else ""
+                print(f"  Current breadcrumb before click: {initial_content}")
+                
+                # クリック実行（forceオプションも試す）
+                next_button.click(force=True)
+                print(f"  Clicked button: '{button_text}'")
+                
+                # ページ遷移を待つ（複数の方法で）
+                print("Waiting for page transition...")
+                
+                # 方法1: ネットワークアイドルを待つ
                 try:
-                    button = page.locator(selector).first
-                    if button.count() > 0 and button.is_visible():
-                        print(f"Found next button with selector: {selector}")
-                        button.click()
-                        clicked = True
-                        break
+                    page.wait_for_load_state("networkidle", timeout=10000)
                 except:
-                    continue
-            
-            if not clicked:
+                    print("  Network idle timeout, continuing...")
+                
+                # 方法2: DOM変更を待つ
+                try:
+                    page.wait_for_function(
+                        "document.querySelector('.breadcrumbs li.current span')?.textContent?.includes('時間帯別空き状況')",
+                        timeout=5000
+                    )
+                    print("  Detected breadcrumb change to time slot page")
+                except:
+                    print("  Breadcrumb change not detected, checking other indicators...")
+                
+                # 方法3: 新しい要素の出現を待つ
+                try:
+                    page.wait_for_selector("th:has-text('午前')", timeout=5000)
+                    print("  Time slot headers appeared")
+                except:
+                    print("  Time slot headers not found")
+                
+                # 追加の待機
+                page.wait_for_timeout(3000)
+                
+            else:
                 print("ERROR: Could not find next button")
+                # デバッグ: ページ上のボタンを列挙
+                all_buttons = page.locator("button, input[type='submit'], a.btn").all()[:10]
+                print(f"  Found {len(all_buttons)} buttons on page:")
+                for i, btn in enumerate(all_buttons):
+                    try:
+                        text = btn.text_content() or btn.get_attribute("value") or ""
+                        if text.strip():
+                            print(f"    Button {i}: '{text.strip()}'")
+                    except:
+                        pass
                 return False
             
-            page.wait_for_timeout(3000)
-            
             # 時間帯別空き状況画面に到達したか確認
-            breadcrumb = page.locator(".breadcrumbs").first
-            if breadcrumb.count() > 0:
-                breadcrumb_text = breadcrumb.text_content()
-                if "時間帯別空き状況" in breadcrumb_text:
-                    print("Successfully reached time slot page")
-                    return True
+            print("Verifying navigation to time slot page...")
             
-            # ページ内容でも確認
-            if "時間帯別空き状況" in page.content():
-                print("Successfully reached time slot page (confirmed by page content)")
-                return True
+            # 複数の方法で確認
+            is_on_time_slot_page = False
+            
+            # 1. ブレッドクラムで確認
+            breadcrumb_current = page.locator(".breadcrumbs li.current span").first
+            if breadcrumb_current.count() > 0:
+                current_page = breadcrumb_current.text_content().strip()
+                print(f"Current page (breadcrumb): {current_page}")
                 
-            print("Warning: Could not confirm time slot page")
-            return False
+                if "時間帯別空き状況" in current_page:
+                    print("✓ Breadcrumb confirms time slot page")
+                    is_on_time_slot_page = True
+            
+            # 2. ページタイトルで確認
+            if not is_on_time_slot_page:
+                h2_title = page.locator("h2").first
+                if h2_title.count() > 0:
+                    title_text = h2_title.text_content().strip()
+                    if "時間帯別空き状況" in title_text:
+                        print(f"✓ Page title confirms time slot page: {title_text}")
+                        is_on_time_slot_page = True
+            
+            # 3. 時間帯ヘッダーの存在で確認（午前、午後、夜間）
+            if not is_on_time_slot_page:
+                time_headers = page.locator("th:has-text('午前'), th:has-text('午後'), th:has-text('夜間')").all()
+                if len(time_headers) > 0:
+                    print(f"✓ Found {len(time_headers)} time slot headers")
+                    is_on_time_slot_page = True
+            
+            # 4. ページコンテンツで確認
+            if not is_on_time_slot_page:
+                page_content = page.content()
+                if "時間帯別空き状況" in page_content:
+                    print("✓ Page content contains '時間帯別空き状況'")
+                    is_on_time_slot_page = True
+            
+            if is_on_time_slot_page:
+                print("Successfully reached time slot page!")
+                # スクリーンショットを保存（デバッグ用）
+                try:
+                    page.screenshot(path="/tmp/time_slot_page.png")
+                    print("  Screenshot saved to /tmp/time_slot_page.png")
+                except:
+                    pass
+                return True
+            else:
+                print("ERROR: Failed to reach time slot page")
+                
+                # デバッグ：現在のページの状態を詳細に確認
+                print("\nDEBUG: Current page analysis...")
+                
+                # カレンダーテーブルの存在
+                calendars = page.locator("table.calendar").all()
+                if calendars and len(calendars) > 0:
+                    print(f"  Still showing {len(calendars)} calendar tables")
+                    first_headers = calendars[0].locator("thead th").all()[:5]
+                    if first_headers:
+                        header_texts = [h.text_content().strip() for h in first_headers]
+                        print(f"  First calendar headers: {header_texts}")
+                
+                # フォームの状態
+                forms = page.locator("form").all()
+                print(f"  {len(forms)} forms on page")
+                
+                # エラーメッセージの確認
+                error_msgs = page.locator(".error, .alert, .warning, [class*='err']").all()
+                if error_msgs:
+                    print(f"  Found {len(error_msgs)} potential error messages")
+                    for msg in error_msgs[:2]:
+                        try:
+                            text = msg.text_content().strip()[:100]
+                            if text:
+                                print(f"    Error: {text}")
+                        except:
+                            pass
+                
+                # スクリーンショット保存
+                try:
+                    page.screenshot(path="/tmp/failed_navigation.png")
+                    print("  Debug screenshot saved to /tmp/failed_navigation.png")
+                except:
+                    pass
+                
+                return False
             
         except Exception as e:
             print(f"Error selecting date: {e}")
@@ -906,89 +1166,128 @@ class MeguroScraper(BaseScraper):
                 
                 results[facility_name] = {}
                 
-                # 部屋ごとのテーブルを取得
-                room_headers = section.locator("h4").all()
+                # この施設セクション内のカレンダーテーブルを取得
+                # セクション内のテーブルのみを取得するため、sectionから検索
                 room_tables = section.locator("table.calendar").all()
+                print(f"  Found {len(room_tables)} calendar tables for this facility")
                 
-                for i, (room_header, room_table) in enumerate(zip(room_headers, room_tables)):
-                    room_name = room_header.text_content().strip()
-                    print(f"  Processing room: {room_name}")
+                for table_idx, room_table in enumerate(room_tables):
+                    # 時間帯ヘッダーを取得して、カラムインデックスをマッピング
+                    # まず、より広範囲でヘッダーを探す
+                    all_headers = room_table.locator("thead th").all()
+                    print(f"    Table {table_idx}: {len(all_headers)} total headers found")
                     
-                    # 時間帯ヘッダーを取得
-                    time_headers = room_table.locator("th.header-time").all()
                     time_slots_map = {}
                     
-                    for j, header in enumerate(time_headers):
+                    # 最初の2つは施設名と定員なので、3つ目以降を時間帯として扱う
+                    for j, header in enumerate(all_headers):
                         header_text = header.text_content().strip()
+                        print(f"      Header {j}: '{header_text}'")
+                        
+                        # 最初の2つのヘッダーはスキップ（施設名と定員）
+                        if j < 2:
+                            continue
                         
                         # 時間帯をキーにマッピング
+                        slot_key = None
                         if "午前" in header_text:
                             slot_key = "morning"
-                        elif "午後" in header_text and "1" in header_text:
+                        elif "午後" in header_text and ("1" in header_text or "１" in header_text):
                             slot_key = "afternoon_1"
-                        elif "午後" in header_text and "2" in header_text:
+                        elif "午後" in header_text and ("2" in header_text or "２" in header_text):
                             slot_key = "afternoon_2"
                         elif "午後" in header_text:
                             slot_key = "afternoon"
                         elif "夜間" in header_text:
                             slot_key = "evening"
-                        else:
+                        
+                        if slot_key:
+                            # ヘッダーの位置はそのままjをキーとする（tbodyのセルと対応）
+                            time_slots_map[j] = slot_key
+                            print(f"        Mapped column {j} to {slot_key}")
+                    
+                    # tbody内の各行を処理（各行が1つの部屋）
+                    room_rows = room_table.locator("tbody tr").all()
+                    
+                    for row_idx, row in enumerate(room_rows):
+                        # 行内のすべてのセルを取得
+                        cells = row.locator("td").all()
+                        
+                        if len(cells) < 3:  # 部屋名、定員、時間帯が最低限必要
                             continue
                         
-                        time_slots_map[j] = slot_key
-                    
-                    # 空き状況を取得（tbody内のtd要素）
-                    status_cells = room_table.locator("tbody td").all()
-                    
-                    # 最初の2つのセルは施設名と定員なので、3番目から時間帯情報
-                    time_slot_cells = status_cells[2:] if len(status_cells) > 2 else []
-                    
-                    room_slots = {}
-                    for j, cell in enumerate(time_slot_cells):
-                        if j in time_slots_map:
-                            cell_text = cell.text_content().strip()
-                            slot_key = time_slots_map[j]
-                            
-                            # 空き状況を判定
-                            if "○" in cell_text or "◯" in cell_text:
-                                status = "available"
-                            elif "×" in cell_text or "✕" in cell_text:
-                                status = "booked"
-                            elif "－" in cell_text or "-" in cell_text:
-                                status = "unknown"
-                            else:
-                                status = "unknown"
-                            
-                            room_slots[slot_key] = status
-                            print(f"    {slot_key}: {status}")
-                    
-                    # 午後1と午後2を統合（パターンBの場合）
-                    if "afternoon_1" in room_slots and "afternoon_2" in room_slots:
-                        # 両方空いている場合
-                        if room_slots["afternoon_1"] == "available" and room_slots["afternoon_2"] == "available":
-                            room_slots["afternoon"] = "available"
-                        # 午後1のみ予約済み
-                        elif room_slots["afternoon_1"] == "booked" and room_slots["afternoon_2"] == "available":
-                            room_slots["afternoon"] = "booked_1"
-                        # 午後2のみ予約済み
-                        elif room_slots["afternoon_1"] == "available" and room_slots["afternoon_2"] == "booked":
-                            room_slots["afternoon"] = "booked_2"
-                        # 両方予約済み
-                        elif room_slots["afternoon_1"] == "booked" and room_slots["afternoon_2"] == "booked":
-                            room_slots["afternoon"] = "booked"
-                        else:
-                            room_slots["afternoon"] = "unknown"
+                        # 最初のセルから部屋名を取得
+                        room_name_cell = cells[0]
+                        room_name = room_name_cell.text_content().strip()
                         
-                        # 個別の午後1、午後2を削除
-                        del room_slots["afternoon_1"]
-                        del room_slots["afternoon_2"]
+                        if not room_name:
+                            continue
+                        
+                        print(f"    Table {table_idx}, Row {row_idx}: {room_name}")
+                        
+                        # 時間帯ごとの空き状況を取得
+                        room_slots = {}
+                        
+                        # セルのインデックス2以降が時間帯データ
+                        for cell_idx in range(2, len(cells)):
+                            if cell_idx in time_slots_map:
+                                cell = cells[cell_idx]
+                                cell_text = cell.text_content().strip()
+                                slot_key = time_slots_map[cell_idx]
+                                
+                                # 空き状況を判定
+                                if "○" in cell_text or "◯" in cell_text:
+                                    status = "available"
+                                elif "×" in cell_text or "✕" in cell_text:
+                                    status = "booked"
+                                elif "－" in cell_text or "-" in cell_text or "−" in cell_text:
+                                    status = "unknown"
+                                else:
+                                    # チェックボックスがある場合は空きと判定
+                                    checkbox = cell.locator("input[type='checkbox']").first
+                                    if checkbox.count() > 0:
+                                        status = "available"
+                                    else:
+                                        status = "unknown"
+                                
+                                room_slots[slot_key] = status
+                                print(f"      {slot_key}: {status}")
                     
-                    # 不足している時間帯を補完
-                    for slot in ["morning", "afternoon", "evening"]:
-                        if slot not in room_slots:
-                            room_slots[slot] = "unknown"
-                    
-                    results[facility_name][room_name] = room_slots
+                        # 午後1と午後2を統合（パターンBの場合）
+                        if "afternoon_1" in room_slots and "afternoon_2" in room_slots:
+                            # 両方空いている場合
+                            if room_slots["afternoon_1"] == "available" and room_slots["afternoon_2"] == "available":
+                                room_slots["afternoon"] = "available"
+                            # 午後1のみ予約済み
+                            elif room_slots["afternoon_1"] == "booked" and room_slots["afternoon_2"] == "available":
+                                room_slots["afternoon"] = "booked_1"
+                            # 午後2のみ予約済み
+                            elif room_slots["afternoon_1"] == "available" and room_slots["afternoon_2"] == "booked":
+                                room_slots["afternoon"] = "booked_2"
+                            # 両方予約済み
+                            elif room_slots["afternoon_1"] == "booked" and room_slots["afternoon_2"] == "booked":
+                                room_slots["afternoon"] = "booked"
+                            else:
+                                room_slots["afternoon"] = "unknown"
+                            
+                            # 個別の午後1、午後2を削除
+                            del room_slots["afternoon_1"]
+                            del room_slots["afternoon_2"]
+                        
+                        # 不足している時間帯を補完
+                        for slot in ["morning", "afternoon", "evening"]:
+                            if slot not in room_slots:
+                                room_slots[slot] = "unknown"
+                        
+                        # 部屋名が重複する場合は番号を付ける
+                        final_room_name = room_name
+                        if room_name in results[facility_name]:
+                            counter = 2
+                            while f"{room_name}_{counter}" in results[facility_name]:
+                                counter += 1
+                            final_room_name = f"{room_name}_{counter}"
+                        
+                        results[facility_name][final_room_name] = room_slots
             
             return results
             
