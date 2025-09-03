@@ -4,7 +4,7 @@ const scrapeService = require('../services/scrape-service');
 async function scrapeBatchHandler(request, context) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { source = 'logic-app', includeAllTargetDates = true } = body;
+    const { source = 'manual', includeAllTargetDates = true } = body;
     
     if (!includeAllTargetDates) {
       return {

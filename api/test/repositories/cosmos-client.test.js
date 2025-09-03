@@ -74,7 +74,7 @@ describe('Cosmos DB Client', () => {
     expect(container.id).toBe('availability');
   });
   
-  test('should not reinitialize if already initialized', async () => {
+  test('should reinitialize when connection validation fails', async () => {
     const { CosmosClient } = require('@azure/cosmos');
     
     // モックの設定
@@ -83,7 +83,10 @@ describe('Cosmos DB Client', () => {
         createIfNotExists: jest.fn().mockResolvedValue({
           container: { id: 'test-container' }
         })
-      }
+      },
+      read: jest.fn()
+        .mockRejectedValueOnce(new Error('Connection lost')) // First validation fails
+        .mockResolvedValue({}) // Second validation succeeds
     };
     
     const mockClient = {
@@ -101,9 +104,9 @@ describe('Cosmos DB Client', () => {
     expect(cosmosClient.client).toBe(mockClient);
     expect(CosmosClient).toHaveBeenCalledTimes(1);
     
-    // 2回目の初期化（早期リターンのテスト）
+    // 2回目の初期化（接続検証が失敗するため再初期化される）
     await cosmosClient.initialize();
-    expect(CosmosClient).toHaveBeenCalledTimes(1); // 新しいクライアントが作成されていないことを確認
-    expect(cosmosClient.client).toBe(mockClient); // 同じクライアントインスタンスを保持
+    expect(CosmosClient).toHaveBeenCalledTimes(2); // 接続検証失敗により再初期化
+    expect(cosmosClient.client).toBe(mockClient);
   });
 });

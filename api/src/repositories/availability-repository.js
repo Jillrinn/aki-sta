@@ -1,79 +1,99 @@
 const cosmosClient = require('./cosmos-client');
+const { retryWithBackoff } = require('../utils/retry-helper');
 
 module.exports = {
   getAvailabilityData: async (date) => {
-    try {
-      // Cosmos DBから取得を試みる
-      await cosmosClient.initialize();
-      const container = cosmosClient.getContainer('availability');
-      
-      const querySpec = {
-        query: "SELECT * FROM c WHERE c.date = @date",
-        parameters: [{ name: "@date", value: date }]
-      };
-      
-      const { resources } = await container.items
-        .query(querySpec)
-        .fetchAll();
-      
-      if (resources && resources.length > 0) {
-        // Cosmos DBからデータを整形して返す（3層構造）
-        return resources.map(item => ({
-          centerName: item.centerName,
-          facilityName: item.facilityName,
-          roomName: item.roomName,
-          timeSlots: item.timeSlots,
-          lastUpdated: item.updatedAt
-        }));
-      }
-      
-      // データが存在しない場合は空配列を返す
-      return [];
-    } catch (error) {
-      console.error('Cosmos DB read error:', error);
-      throw new Error(`Failed to read availability data from Cosmos DB: ${error.message}`);
-    }
-  },
-  
-  getAllAvailabilityData: async () => {
-    try {
-      // Cosmos DBから全データ取得
-      await cosmosClient.initialize();
-      const container = cosmosClient.getContainer('availability');
-      
-      const { resources } = await container.items
-        .readAll()
-        .fetchAll();
-      
-      if (resources && resources.length > 0) {
-        // 日付でグループ化
-        const groupedData = {};
-        resources.forEach(item => {
-          if (!groupedData[item.date]) {
-            groupedData[item.date] = [];
-          }
-          groupedData[item.date].push({
+    const operation = async () => {
+      try {
+        // リトライ付きで初期化を試みる
+        await cosmosClient.initializeWithRetry();
+        const container = cosmosClient.getContainer('availability');
+        
+        const querySpec = {
+          query: "SELECT * FROM c WHERE c.date = @date",
+          parameters: [{ name: "@date", value: date }]
+        };
+        
+        const { resources } = await container.items
+          .query(querySpec)
+          .fetchAll();
+        
+        if (resources && resources.length > 0) {
+          // Cosmos DBからデータを整形して返す（3層構造）
+          return resources.map(item => ({
             centerName: item.centerName,
             facilityName: item.facilityName,
             roomName: item.roomName,
             timeSlots: item.timeSlots,
             lastUpdated: item.updatedAt
-          });
-        });
-        return groupedData;
+          }));
+        }
+        
+        // データが存在しない場合は空配列を返す
+        return [];
+      } catch (error) {
+        console.error('Cosmos DB read error:', error);
+        // エラーを再スローしてリトライメカニズムに処理を任せる
+        throw error;
       }
-      
-      // データが存在しない場合は空オブジェクトを返す
-      return {};
+    };
+
+    // リトライ付きで実行
+    try {
+      return await retryWithBackoff(operation);
     } catch (error) {
-      console.error('Cosmos DB read all error:', error);
-      throw new Error(`Failed to read all availability data from Cosmos DB: ${error.message}`);
+      throw new Error(`Failed to read availability data from Cosmos DB after retries: ${error.message}`);
+    }
+  },
+  
+  getAllAvailabilityData: async () => {
+    const operation = async () => {
+      try {
+        // リトライ付きで初期化を試みる
+        await cosmosClient.initializeWithRetry();
+        const container = cosmosClient.getContainer('availability');
+        
+        const { resources } = await container.items
+          .readAll()
+          .fetchAll();
+        
+        if (resources && resources.length > 0) {
+          // 日付でグループ化
+          const groupedData = {};
+          resources.forEach(item => {
+            if (!groupedData[item.date]) {
+              groupedData[item.date] = [];
+            }
+            groupedData[item.date].push({
+              centerName: item.centerName,
+              facilityName: item.facilityName,
+              roomName: item.roomName,
+              timeSlots: item.timeSlots,
+              lastUpdated: item.updatedAt
+            });
+          });
+          return groupedData;
+        }
+        
+        // データが存在しない場合は空オブジェクトを返す
+        return {};
+      } catch (error) {
+        console.error('Cosmos DB read all error:', error);
+        throw error;
+      }
+    };
+
+    // リトライ付きで実行
+    try {
+      return await retryWithBackoff(operation);
+    } catch (error) {
+      throw new Error(`Failed to read all availability data from Cosmos DB after retries: ${error.message}`);
     }
   },
 
   deleteAvailabilityById: async (id) => {
     try {
-      await cosmosClient.initialize();
+      await cosmosClient.initializeWithRetry();
       const container = cosmosClient.getContainer('availability');
       
       // IDから日付部分を抽出（パーティションキー用）

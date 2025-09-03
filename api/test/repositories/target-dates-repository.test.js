@@ -3,6 +3,10 @@ const cosmosClient = require('../../src/repositories/cosmos-client');
 
 // Cosmos Clientをモック化
 jest.mock('../../src/repositories/cosmos-client');
+// retry-helperをモック化
+jest.mock('../../src/utils/retry-helper', () => ({
+  retryWithBackoff: jest.fn((fn) => fn())
+}));
 
 describe('target-dates-repository', () => {
   let mockContainer;
@@ -23,8 +27,8 @@ describe('target-dates-repository', () => {
       item: jest.fn()
     };
     
-    // cosmosClient.initializeのモック
-    cosmosClient.initialize = jest.fn().mockResolvedValue();
+    // cosmosClient.initializeWithRetryのモック
+    cosmosClient.initializeWithRetry = jest.fn().mockResolvedValue();
     cosmosClient.getContainer = jest.fn().mockReturnValue(mockContainer);
   });
 
@@ -42,7 +46,7 @@ describe('target-dates-repository', () => {
 
       const result = await targetDatesRepository.getAllTargetDates();
 
-      expect(cosmosClient.initialize).toHaveBeenCalled();
+      expect(cosmosClient.initializeWithRetry).toHaveBeenCalled();
       expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
       expect(result).toHaveLength(3);
       // ソートされていることを確認
@@ -69,7 +73,7 @@ describe('target-dates-repository', () => {
 
       await expect(targetDatesRepository.getAllTargetDates())
         .rejects
-        .toThrow('Failed to get target dates from Cosmos DB: Cosmos DB connection failed');
+        .toThrow('Failed to get target dates from Cosmos DB after retries: Cosmos DB connection failed');
     });
   });
 
@@ -82,7 +86,7 @@ describe('target-dates-repository', () => {
 
       const result = await targetDatesRepository.deleteTargetDate('2025-11-15');
 
-      expect(cosmosClient.initialize).toHaveBeenCalled();
+      expect(cosmosClient.initializeWithRetry).toHaveBeenCalled();
       expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
       expect(mockContainer.item).toHaveBeenCalledWith('2025-11-15', '2025-11-15');
       expect(mockItem.delete).toHaveBeenCalled();
@@ -114,7 +118,7 @@ describe('target-dates-repository', () => {
 
       await expect(targetDatesRepository.deleteTargetDate('2025-11-15'))
         .rejects
-        .toThrow('Failed to delete target date from Cosmos DB: Cosmos DB error');
+        .toThrow('Failed to delete target date from Cosmos DB after retries: Cosmos DB error');
     });
   });
 
@@ -133,7 +137,7 @@ describe('target-dates-repository', () => {
 
       const result = await targetDatesRepository.insertTargetDate(mockDate, mockLabel);
 
-      expect(cosmosClient.initialize).toHaveBeenCalled();
+      expect(cosmosClient.initializeWithRetry).toHaveBeenCalled();
       expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
       expect(mockItems.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -188,7 +192,7 @@ describe('target-dates-repository', () => {
 
       await expect(targetDatesRepository.insertTargetDate('2025-11-15', '本番ライブ'))
         .rejects
-        .toThrow('Failed to insert target date to Cosmos DB: Cosmos DB error');
+        .toThrow('Failed to insert target date to Cosmos DB after retries: Cosmos DB error');
     });
   });
 });

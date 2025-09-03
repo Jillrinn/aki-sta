@@ -3,6 +3,10 @@ require('dotenv').config({ path: require('path').join(__dirname, '../../../.env'
 
 // CosmosClientをモック化（jest.mockは常にトップレベルで実行する必要がある）
 jest.mock('../../src/repositories/cosmos-client');
+// retry-helperをモック化
+jest.mock('../../src/utils/retry-helper', () => ({
+  retryWithBackoff: jest.fn((fn) => fn())
+}));
 
 const cosmosClient = require('../../src/repositories/cosmos-client');
 const availabilityRepository = require('../../src/repositories/availability-repository');
@@ -35,7 +39,7 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
         }
       };
 
-      cosmosClient.initialize = jest.fn().mockResolvedValue();
+      cosmosClient.initializeWithRetry = jest.fn().mockResolvedValue();
       cosmosClient.getContainer = jest.fn().mockReturnValue(mockContainer);
 
       const result = await availabilityRepository.getAvailabilityData('2025-11-15');
@@ -59,7 +63,7 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
         }
       };
 
-      cosmosClient.initialize = jest.fn().mockResolvedValue();
+      cosmosClient.initializeWithRetry = jest.fn().mockResolvedValue();
       cosmosClient.getContainer = jest.fn().mockReturnValue(mockContainer);
 
       const result = await availabilityRepository.getAvailabilityData('2025-12-31');
@@ -67,10 +71,10 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
     });
 
     test('should throw error when Cosmos DB fails', async () => {
-      cosmosClient.initialize = jest.fn().mockRejectedValue(new Error('Connection failed'));
+      cosmosClient.initializeWithRetry = jest.fn().mockRejectedValue(new Error('Connection failed'));
 
       await expect(availabilityRepository.getAvailabilityData('2025-11-15'))
-        .rejects.toThrow('Failed to read availability data from Cosmos DB');
+        .rejects.toThrow('Failed to read availability data from Cosmos DB after retries');
     });
   });
 
@@ -99,7 +103,7 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
         }
       };
 
-      cosmosClient.initialize = jest.fn().mockResolvedValue();
+      cosmosClient.initializeWithRetry = jest.fn().mockResolvedValue();
       cosmosClient.getContainer = jest.fn().mockReturnValue(mockContainer);
 
       const result = await availabilityRepository.getAllAvailabilityData();
@@ -118,7 +122,7 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
         }
       };
 
-      cosmosClient.initialize = jest.fn().mockResolvedValue();
+      cosmosClient.initializeWithRetry = jest.fn().mockResolvedValue();
       cosmosClient.getContainer = jest.fn().mockReturnValue(mockContainer);
 
       const result = await availabilityRepository.getAllAvailabilityData();
@@ -126,10 +130,10 @@ describe('Availability Repository with Cosmos DB (Pure)', () => {
     });
 
     test('should throw error when Cosmos DB fails', async () => {
-      cosmosClient.initialize = jest.fn().mockRejectedValue(new Error('Connection failed'));
+      cosmosClient.initializeWithRetry = jest.fn().mockRejectedValue(new Error('Connection failed'));
 
       await expect(availabilityRepository.getAllAvailabilityData())
-        .rejects.toThrow('Failed to read all availability data from Cosmos DB');
+        .rejects.toThrow('Failed to read all availability data from Cosmos DB after retries');
     });
   });
 });
