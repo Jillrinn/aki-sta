@@ -11,7 +11,9 @@ describe('MobileCardView', () => {
   };
 
   const mockFacility: Facility = {
+    centerName: 'あんさんぶるスタジオ',
     facilityName: 'あんさんぶるStudio和(本郷)',
+    roomName: '練習室',
     timeSlots: {
       'morning': 'available',
       'afternoon': 'booked',
@@ -34,7 +36,9 @@ describe('MobileCardView', () => {
   it('renders all time slots with labels when expanded', () => {
     // Use a facility without afternoon booked to ensure it's expanded
     const expandedFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'available',
         'afternoon': 'available',
@@ -58,7 +62,9 @@ describe('MobileCardView', () => {
 
   it('renders status badges for each time slot when expanded', () => {
     const expandedFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'available',
         'afternoon': 'lottery',
@@ -109,7 +115,9 @@ describe('MobileCardView', () => {
 
   it('applies green background for available slots when expanded', () => {
     const expandedFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'available',
         'afternoon': 'available',
@@ -132,7 +140,9 @@ describe('MobileCardView', () => {
 
   it('applies gray background for non-available slots when expanded', () => {
     const expandedFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'available',
         'afternoon': 'unknown',
@@ -179,7 +189,9 @@ describe('MobileCardView', () => {
 
   it('handles all available slots correctly', () => {
     const allAvailableFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'available',
         'afternoon': 'available',
@@ -204,7 +216,9 @@ describe('MobileCardView', () => {
 
   it('handles all booked slots correctly', () => {
     const allBookedFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'booked',
         'afternoon': 'booked',
@@ -234,7 +248,9 @@ describe('MobileCardView', () => {
 
   it('handles lottery status correctly', () => {
     const lotteryFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'lottery',
         'afternoon': 'available',
@@ -266,7 +282,9 @@ describe('MobileCardView', () => {
 
   it('collapses when all slots are unknown', () => {
     const allUnknownFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'unknown',
         'afternoon': 'unknown',
@@ -295,7 +313,9 @@ describe('MobileCardView', () => {
 
   it('collapses when afternoon slot is booked', () => {
     const afternoonBookedFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'available',
         'afternoon': 'booked',
@@ -320,7 +340,9 @@ describe('MobileCardView', () => {
 
   it('toggles expansion when header is clicked', () => {
     const noAfternoonFacility: Facility = {
+      centerName: 'テストセンター',
       facilityName: 'テスト施設',
+      roomName: 'テスト室',
       timeSlots: {
         'morning': 'available',
         'afternoon': 'available',
