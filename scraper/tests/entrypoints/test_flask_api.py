@@ -267,6 +267,73 @@ class TestErrorHandling:
         assert data['message'] == '空き状況取得を開始しました'
 
 
+class TestFacilitySelection:
+    """施設選択機能のテスト"""
+    
+    @patch('src.entrypoints.flask_api.threading')
+    @patch('src.entrypoints.flask_api.get_services')
+    def test_facility_both_by_default(self, mock_get_services, mock_threading, client):
+        """デフォルトで両方の施設をスクレイピングするテスト"""
+        # モックの設定
+        mock_scraping_service = Mock()
+        mock_get_services.return_value = (None, mock_scraping_service)
+        mock_thread = Mock()
+        mock_threading.Thread.return_value = mock_thread
+        
+        # リクエスト実行（facilityパラメータなし）
+        response = client.post('/scrape?date=2025-11-15')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 202
+        assert data['success'] is True
+        
+        # async_scraping_taskにfacility='both'が渡されることを確認
+        call_args = mock_threading.Thread.call_args
+        assert call_args[1]['args'][4] == 'both'  # 5番目の引数がfacility
+    
+    @patch('src.entrypoints.flask_api.threading')
+    @patch('src.entrypoints.flask_api.get_services')
+    def test_facility_specific_ensemble(self, mock_get_services, mock_threading, client):
+        """特定施設（ensemble）のみスクレイピングするテスト"""
+        # モックの設定
+        mock_scraping_service = Mock()
+        mock_get_services.return_value = (None, mock_scraping_service)
+        mock_thread = Mock()
+        mock_threading.Thread.return_value = mock_thread
+        
+        # リクエスト実行（facility=ensemble）
+        response = client.post('/scrape?date=2025-11-15&facility=ensemble')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 202
+        assert data['success'] is True
+        
+        # async_scraping_taskにfacility='ensemble'が渡されることを確認
+        call_args = mock_threading.Thread.call_args
+        assert call_args[1]['args'][4] == 'ensemble'
+    
+    @patch('src.entrypoints.flask_api.threading')
+    @patch('src.entrypoints.flask_api.get_services')
+    def test_facility_specific_meguro(self, mock_get_services, mock_threading, client):
+        """特定施設（meguro）のみスクレイピングするテスト"""
+        # モックの設定
+        mock_scraping_service = Mock()
+        mock_get_services.return_value = (None, mock_scraping_service)
+        mock_thread = Mock()
+        mock_threading.Thread.return_value = mock_thread
+        
+        # リクエスト実行（facility=meguro）
+        response = client.post('/scrape?date=2025-11-15&facility=meguro')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 202
+        assert data['success'] is True
+        
+        # async_scraping_taskにfacility='meguro'が渡されることを確認
+        call_args = mock_threading.Thread.call_args
+        assert call_args[1]['args'][4] == 'meguro'
+
+
 class TestRequestFormats:
     """リクエストフォーマットのテスト"""
     

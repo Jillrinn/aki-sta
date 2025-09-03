@@ -83,7 +83,7 @@ def health():
     })
 
 
-def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility='ensemble'):
+def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility='both'):
     """
     非同期でスクレイピングを実行するタスク
     別スレッドで実行される
@@ -93,7 +93,7 @@ def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility
         record_id: Rate limit record ID
         record_date: Rate limit record date
         use_rate_limits: Rate limits使用フラグ
-        facility: 施設名（'ensemble' or 'meguro'）
+        facility: 施設名（'ensemble', 'meguro', or 'both'）
     """
     rate_limits_repo = None
     has_error = False
@@ -111,33 +111,37 @@ def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility
         # サービスを取得
         _, scraping_service = get_services()
         
-        # 各日付に対してスクレイピングを実行
-        for date in dates:
-            try:
-                # 日付フォーマット検証と正規化
-                normalized_date = None
-                for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
-                    try:
-                        parsed_date = datetime.strptime(date, fmt)
-                        normalized_date = parsed_date.strftime('%Y-%m-%d')
-                        break
-                    except ValueError:
-                        continue
-                
-                if normalized_date is None:
-                    raise ValueError(f"Invalid date format: {date}")
-                
-                logger.info(f"[Async] Scraping {facility} for date: {normalized_date}")
-                result = scraping_service.scrape_facility(facility, normalized_date)
-                
-                if not result or result.get('status') != 'success':
-                    has_error = True
-                    logger.error(f"[Async] Failed to scrape {facility} for {normalized_date}")
+        # スクレイピング対象施設の決定
+        facilities_to_scrape = ['ensemble', 'meguro'] if facility == 'both' else [facility]
+        
+        # 各施設と各日付に対してスクレイピングを実行
+        for current_facility in facilities_to_scrape:
+            for date in dates:
+                try:
+                    # 日付フォーマット検証と正規化
+                    normalized_date = None
+                    for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
+                        try:
+                            parsed_date = datetime.strptime(date, fmt)
+                            normalized_date = parsed_date.strftime('%Y-%m-%d')
+                            break
+                        except ValueError:
+                            continue
                     
-            except Exception as e:
-                has_error = True
-                logger.error(f"[Async] Error scraping {date}: {str(e)}")
-                logger.error(f"[Async] Traceback: {traceback.format_exc()}")
+                    if normalized_date is None:
+                        raise ValueError(f"Invalid date format: {date}")
+                    
+                    logger.info(f"[Async] Scraping {current_facility} for date: {normalized_date}")
+                    result = scraping_service.scrape_facility(current_facility, normalized_date)
+                    
+                    if not result or result.get('status') != 'success':
+                        has_error = True
+                        logger.error(f"[Async] Failed to scrape {current_facility} for {normalized_date}")
+                        
+                except Exception as e:
+                    has_error = True
+                    logger.error(f"[Async] Error scraping {date}: {str(e)}")
+                    logger.error(f"[Async] Traceback: {traceback.format_exc()}")
         
         # Rate limitsステータス更新
         if use_rate_limits and record_id and rate_limits_repo:
@@ -294,7 +298,7 @@ def scrape():
             use_rate_limits = False
         # 1. Try query parameters first
         dates = request.args.getlist('date')
-        facility = request.args.get('facility', 'ensemble')  # デフォルトはensemble
+        facility = request.args.get('facility', 'both')  # デフォルトはboth（両方）
         
         # 2. If no query params, check JSON body
         if not dates:
