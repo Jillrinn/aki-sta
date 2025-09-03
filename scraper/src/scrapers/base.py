@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from playwright.sync_api import sync_playwright, Page, Locator
+from ..types.time_slots import TimeSlots, validate_time_slots
 
 
 class BaseScraper(ABC):
@@ -188,7 +189,7 @@ class BaseScraper(ABC):
         pass
     
     @abstractmethod
-    def extract_time_slots(self, day_box: Locator) -> Dict[str, str]:
+    def extract_time_slots(self, day_box: Locator) -> TimeSlots:
         """
         日付セルから時刻情報を抽出（施設固有）
         
@@ -196,7 +197,7 @@ class BaseScraper(ABC):
             day_box: 日付セル要素
         
         Returns:
-            {"9-12": "available|booked|unknown", ...}
+            {"morning": "available|booked|unknown", "afternoon": ..., "evening": ...}
         """
         pass
     

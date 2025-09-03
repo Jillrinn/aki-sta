@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from playwright.sync_api import Page, Locator
 from .base import BaseScraper
+from ..types.time_slots import TimeSlots, validate_time_slots
 
 
 class MeguroScraper(BaseScraper):
@@ -1400,37 +1401,31 @@ class MeguroScraper(BaseScraper):
                     for facility_name, rooms in all_time_slots.items():
                         # 各部屋ごとに個別レコードを作成
                         for room_name, room_slots in rooms.items():
-                            # 時間帯形式を変換
-                            converted_slots = {
-                                "9-12": "unknown",
-                                "13-17": "unknown",
-                                "18-21": "unknown"
-                            }
+                            # room_slotsを型定義に合わせて検証
+                            # afternoon の特殊処理（booked_1, booked_2 を booked に統一）
+                            normalized_slots = {}
+                            for key, value in room_slots.items():
+                                if key == "afternoon" and value in ["booked_1", "booked_2"]:
+                                    normalized_slots[key] = "booked"
+                                else:
+                                    normalized_slots[key] = value
                             
-                            # morning -> 9-12
-                            if room_slots.get("morning") == "available":
-                                converted_slots["9-12"] = "available"
-                            elif room_slots.get("morning") == "booked":
-                                converted_slots["9-12"] = "booked"
-                            
-                            # afternoon -> 13-17
-                            afternoon_status = room_slots.get("afternoon")
-                            if afternoon_status == "available":
-                                converted_slots["13-17"] = "available"
-                            elif afternoon_status in ["booked", "booked_1", "booked_2"]:
-                                converted_slots["13-17"] = "booked"
-                            
-                            # evening -> 18-21
-                            if room_slots.get("evening") == "available":
-                                converted_slots["18-21"] = "available"
-                            elif room_slots.get("evening") == "booked":
-                                converted_slots["18-21"] = "booked"
+                            # 型検証を実行
+                            try:
+                                validated_slots = validate_time_slots(normalized_slots)
+                            except ValueError as e:
+                                print(f"Warning: Invalid time slots for {facility_name} - {room_name}: {e}")
+                                validated_slots = {
+                                    "morning": "unknown",
+                                    "afternoon": "unknown", 
+                                    "evening": "unknown"
+                                }
                             
                             results.append({
                                 "centerName": "目黒区民センター",
                                 "facilityName": facility_name,
                                 "roomName": room_name,
-                                "timeSlots": converted_slots,
+                                "timeSlots": validated_slots,
                                 "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
                             })
                     

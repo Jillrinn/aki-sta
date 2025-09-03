@@ -4,9 +4,10 @@
 """
 import re
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 from playwright.sync_api import Page, Locator, sync_playwright
 from .base import BaseScraper
+from ..types.time_slots import TimeSlots, create_default_time_slots
 
 
 class EnsembleStudioScraper(BaseScraper):
@@ -187,14 +188,15 @@ class EnsembleStudioScraper(BaseScraper):
         print(f"Could not find day {target_day}")
         return None
     
-    def extract_time_slots(self, day_box: Locator) -> Dict[str, str]:
+    def extract_time_slots(self, day_box: Locator) -> TimeSlots:
         """
         日付セルから時刻情報を抽出
         
         Returns:
             {"morning": "available|booked|unknown", ...}
         """
-        time_slots = {}
+        # 一時的にDictとして作成し、最後にTimeSlotsとして返す
+        time_slots = create_default_time_slots()
         
         # 営業していない日の判定
         if day_box.locator(".calendar-time-disable").count() > 0:
@@ -248,10 +250,10 @@ class EnsembleStudioScraper(BaseScraper):
                                 time_slots[slot_key] = "unknown"
                                 print(f"  {slot_key}: unknown")
         
-        # 見つからない時間帯はunknown
+        # 見つからない時間帯はすでにunknown（デフォルト値）
+        # 明示的に確認のためログ出力
         for slot in ["morning", "afternoon", "evening"]:
-            if slot not in time_slots:
-                time_slots[slot] = "unknown"
+            if time_slots.get(slot) == "unknown":
                 print(f"  {slot}: unknown (not found)")
         
         return time_slots
