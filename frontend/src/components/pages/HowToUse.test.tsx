@@ -6,78 +6,49 @@ import HowToUse from './HowToUse';
 describe('HowToUse', () => {
   it('should render the component with title', () => {
     render(<HowToUse />);
-    expect(screen.getByText('使い方はかんたん３ステップ')).toBeInTheDocument();
+    expect(screen.getByText('🎵 空きスタサーチくん')).toBeInTheDocument();
+    expect(screen.getByText('音楽スタジオの空き状況をかんたんチェック！')).toBeInTheDocument();
   });
 
-  it('should display welcome message', () => {
+  it('should display facilities section', () => {
     render(<HowToUse />);
-    expect(screen.getByText('ようこそ！')).toBeInTheDocument();
-    expect(screen.getByText(/面倒なスタジオ探しは/)).toBeInTheDocument();
-    expect(screen.getByText(/あんさんぶるスタジオ/)).toBeInTheDocument();
+    expect(screen.getByText('📍 対応施設（順次拡大中！）')).toBeInTheDocument();
+    expect(screen.getByText('・あんさんぶるスタジオ')).toBeInTheDocument();
+    expect(screen.getByText('・目黒区民センター')).toBeInTheDocument();
   });
 
-  it('should display all steps when initially opened', () => {
+  it('should display all steps', () => {
     render(<HowToUse />);
     
-    expect(screen.getByText('【登録】')).toBeInTheDocument();
-    expect(screen.getByText('練習したい日を教えよう')).toBeInTheDocument();
-    expect(screen.getByText(/「練習日程一覧」ページで練習日を登録/)).toBeInTheDocument();
+    expect(screen.getByText('【使い方】')).toBeInTheDocument();
     
-    expect(screen.getByText('【自動チェック】')).toBeInTheDocument();
-    expect(screen.getByText('あとは待つだけ！')).toBeInTheDocument();
-    expect(screen.getByText(/毎日2回（朝8時・夕方17時）/)).toBeInTheDocument();
+    expect(screen.getByText('練習日を登録')).toBeInTheDocument();
+    expect(screen.getByText('希望の日時を選ぶだけ（複数登録OK）')).toBeInTheDocument();
     
-    expect(screen.getByText('【即時チェック】')).toBeInTheDocument();
-    expect(screen.getByText('今すぐ知りたい！')).toBeInTheDocument();
-    expect(screen.getByText(/下の「今すぐ情報を集める」ボタン/)).toBeInTheDocument();
+    expect(screen.getByText('自動でチェック')).toBeInTheDocument();
+    expect(screen.getByText('毎日2回（朝8時・夕方5時）最新の空き状況を更新')).toBeInTheDocument();
+    
+    expect(screen.getByText('結果を確認')).toBeInTheDocument();
+    expect(screen.getByText('登録した日の空き状況がひと目でわかる！')).toBeInTheDocument();
   });
 
-  it('should toggle content visibility when header is clicked', async () => {
+  it('should display instant check section', () => {
     render(<HowToUse />);
-    
-    const toggleButton = screen.getByRole('button', { name: /使い方はかんたん/ });
-    const content = document.getElementById('how-to-use-content');
-    
-    expect(content).toHaveClass('opacity-100');
-    expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
-    
-    fireEvent.click(toggleButton);
-    
-    await waitFor(() => {
-      expect(content).toHaveClass('opacity-0');
-      expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
-    });
-    
-    fireEvent.click(toggleButton);
-    
-    await waitFor(() => {
-      expect(content).toHaveClass('opacity-100');
-      expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
-    });
+    expect(screen.getByText('💡 今すぐ確認したい時は？')).toBeInTheDocument();
+    expect(screen.getByText('「今すぐチェック」ボタンで最新情報をリアルタイム取得！')).toBeInTheDocument();
+  });
+
+  it('should display CTA section', () => {
+    render(<HowToUse />);
+    expect(screen.getByText('🚀 さっそく始める')).toBeInTheDocument();
   });
 
 
   it('should display all step icons', () => {
     render(<HowToUse />);
     
-    expect(screen.getByText('📝')).toBeInTheDocument();
-    expect(screen.getByText('⏰')).toBeInTheDocument();
-    expect(screen.getByText('🔄')).toBeInTheDocument();
-  });
-
-  it('should display step numbers', () => {
-    render(<HowToUse />);
-    
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
-  });
-
-  it('should have proper accessibility attributes', () => {
-    render(<HowToUse />);
-    
-    const toggleButton = screen.getByRole('button', { name: /使い方はかんたん/ });
-    expect(toggleButton).toHaveAttribute('aria-expanded');
-    expect(toggleButton).toHaveAttribute('aria-controls', 'how-to-use-content');
+    expect(screen.getByText('1️⃣')).toBeInTheDocument();
+    expect(screen.getByText('2️⃣')).toBeInTheDocument();
+    expect(screen.getByText('3️⃣')).toBeInTheDocument();
   });
 });

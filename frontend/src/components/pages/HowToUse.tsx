@@ -1,98 +1,78 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 interface Step {
   icon: string;
   title: string;
-  subtitle: string;
   description: string;
   color: string;
 }
 
 const HowToUse: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(true);
 
   const steps: Step[] = [
     {
-      icon: '📝',
-      title: '【登録】',
-      subtitle: '練習したい日を教えよう',
-      description: '「練習日程一覧」ページで練習日を登録。複数登録OK！',
+      icon: '1️⃣',
+      title: '練習日を登録',
+      description: '希望の日時を選ぶだけ（複数登録OK）',
       color: 'bg-brand-blue'
     },
     {
-      icon: '⏰',
-      title: '【自動チェック】',
-      subtitle: 'あとは待つだけ！',
-      description: '毎日2回（朝8時・夕方17時）自動確認。空きが出たらお知らせ！',
+      icon: '2️⃣',
+      title: '自動でチェック',
+      description: '毎日2回（朝8時・夕方5時）最新の空き状況を更新',
       color: 'bg-brand-green'
     },
     {
-      icon: '🔄',
-      title: '【即時チェック】',
-      subtitle: '今すぐ知りたい！',
-      description: '下の「今すぐ情報を集める」ボタンで最新状況を確認！',
-      color: 'bg-brand-orange'
+      icon: '3️⃣',
+      title: '結果を確認',
+      description: '登録した日の空き状況がひと目でわかる！',
+      color: 'bg-brand-purple'
     }
   ];
 
   return (
-    <div className="mb-4 sm:mb-6 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-primary-400 to-primary-600 text-white font-bold text-base sm:text-lg flex items-center justify-between hover:from-primary-500 hover:to-primary-700 transition-all duration-200"
-        aria-expanded={isOpen}
-        aria-controls="how-to-use-content"
-      >
-        <div className="flex items-center">
-          <span className="mr-2 sm:mr-3 text-xl sm:text-2xl">💡</span>
-          <span className="text-sm sm:text-base">使い方はかんたん３ステップ</span>
-        </div>
-        <svg
-          className={`w-6 h-6 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      <div
-        id="how-to-use-content"
-        className={`transition-all duration-300 ${
-          isOpen ? 'max-h-[1200px] sm:max-h-[800px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
-        }`}
-      >
-        <div className="p-4 sm:p-6">
-          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-            <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 sm:mb-3">ようこそ！</h3>
-            <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-2">
-              面倒なスタジオ探しは、「空きスタサーチくん」におまかせ！
-              毎日空き状況をチェックします。
-            </p>
-            <p className="text-xs sm:text-sm text-gray-600 italic">
-              今は「あんさんぶるスタジオ」と「目黒区民センター」のみ対応
+    <div className="w-full max-w-full bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+      <div className="p-3 sm:p-6">
+          {/* ヘッダー部分 */}
+          <div className="text-center mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
+              🎵 空きスタサーチくん
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600">
+              音楽スタジオの空き状況をかんたんチェック！
             </p>
           </div>
+
+          {/* 対応施設セクション */}
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+            <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2">
+              📍 対応施設（順次拡大中！）
+            </h3>
+            <div className="space-y-1">
+              <p className="text-sm sm:text-base text-gray-700">・あんさんぶるスタジオ</p>
+              <p className="text-sm sm:text-base text-gray-700">・目黒区民センター</p>
+            </div>
+          </div>
+
+          {/* 使い方セクション */}
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-3">
+              【使い方】
+            </h3>
           <div className="grid grid-cols-1 gap-3 sm:gap-4">
             {steps.map((step, index) => (
               <div
                 key={index}
-                className="flex items-start p-3 sm:p-4 bg-gray-50 rounded-lg border-l-4 border-gray-300 hover:border-primary-400 hover:bg-gray-100 transition-all duration-200"
-                style={{ borderLeftColor: step.color.replace('bg-', '#').replace('brand-blue', '#42a5f5').replace('brand-green', '#63bb65').replace('brand-orange', '#ffa929') }}
+                className="flex items-start p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all duration-200 mb-2"
               >
-                <div className={`${step.color} text-white rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0 mr-2 sm:mr-3 shadow-md`}>
-                  <span className="text-sm sm:text-lg">{index + 1}</span>
-                </div>
+                <span className="text-xl sm:text-2xl mr-2 sm:mr-3 flex-shrink-0">
+                  {step.icon}
+                </span>
                 <div className="flex-1">
-                  <div className="mb-2">
-                    <div className="flex items-center mb-1">
-                      <span className="text-lg sm:text-2xl mr-2">{step.icon}</span>
-                      <h3 className="font-bold text-gray-800 text-sm sm:text-base">{step.title}</h3>
-                    </div>
-                    <h4 className="text-xs sm:text-sm text-gray-600 ml-6 sm:ml-8">{step.subtitle}</h4>
-                  </div>
-                  <p className="text-gray-700 text-xs sm:text-sm leading-relaxed ml-0">
+                  <h4 className="font-bold text-gray-800 text-sm sm:text-base mb-1">
+                    {step.title}
+                  </h4>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -100,6 +80,22 @@ const HowToUse: React.FC = () => {
             ))}
           </div>
 
+          {/* 今すぐチェックセクション */}
+          <div className="p-3 sm:p-4 bg-orange-50 rounded-lg border border-orange-200 mb-4 sm:mb-6">
+            <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2">
+              💡 今すぐ確認したい時は？
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-700">
+              「今すぐチェック」ボタンで最新情報をリアルタイム取得！
+            </p>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <p className="text-base sm:text-lg font-bold text-brand-blue">
+              🚀 さっそく始める
+            </p>
+          </div>
         </div>
       </div>
     </div>
