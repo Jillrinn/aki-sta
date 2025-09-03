@@ -17,14 +17,11 @@ import {
 } from './components';
 import ActionButtons from '../../common/buttons/ActionButtons';
 import RefreshButton from '../../common/buttons/RefreshButton';
-import PullToRefresh from '../../interactions/PullToRefresh';
-import LoadingOverlay from '../../common/overlays/LoadingOverlay';
 
 const AvailabilityTable: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
   const { data: targetDates } = useTargetDates();
   const [isMobile, setIsMobile] = useState(false);
-  const [showRefreshOverlay, setShowRefreshOverlay] = useState(false);
 
   // 日付とラベルのマッピングを作成
   const labelMap = useMemo(() => {
@@ -207,11 +204,7 @@ const AvailabilityTable: React.FC = () => {
       
       <div className="flex justify-end gap-2 mt-6">
         <RefreshButton
-          onClick={async () => {
-            setShowRefreshOverlay(true);
-            await refetch();
-            setShowRefreshOverlay(false);
-          }}
+          onClick={refetch}
           isRefreshing={isRefreshing}
           disabled={loading}
         />
@@ -221,25 +214,9 @@ const AvailabilityTable: React.FC = () => {
   );
 
   return (
-    <>
-      <LoadingOverlay isVisible={showRefreshOverlay} />
-      <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
-        {isMobile ? (
-          <PullToRefresh
-            onRefresh={async () => {
-              setShowRefreshOverlay(true);
-              await refetch();
-              setShowRefreshOverlay(false);
-            }}
-            disabled={loading || isRefreshing}
-          >
-            {mainContent}
-          </PullToRefresh>
-        ) : (
-          mainContent
-        )}
-      </div>
-    </>
+    <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
+      {mainContent}
+    </div>
   );
 };
 
