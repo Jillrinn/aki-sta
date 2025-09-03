@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { targetDatesApi } from '../services/api';
-import { CreateTargetDateRequest } from '../types/targetDates';
+import { targetDatesApi } from '../../../services/api';
+import { CreateTargetDateRequest } from '../../../types/targetDates';
 
 interface TargetDateModalProps {
   isOpen: boolean;

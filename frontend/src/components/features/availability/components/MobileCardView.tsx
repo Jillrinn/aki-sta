@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Facility } from '../../types/availability';
-import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../constants/availability';
+import { Facility } from '../../../../types/availability';
+import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../../constants/availability';
 import StatusBadge from './StatusBadge';
 
 interface MobileCardViewProps {

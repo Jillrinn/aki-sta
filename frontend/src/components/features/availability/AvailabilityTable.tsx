@@ -1,22 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Facility } from '../types/availability';
-import { useAvailabilityData } from '../hooks/useAvailabilityData';
-import { useTargetDates } from '../hooks/useTargetDates';
-import { formatUpdateTime } from '../utils/dateFormatter';
-import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../constants/availability';
+import { Facility } from '../../../types/availability';
+import { useAvailabilityData } from '../../../hooks/useAvailabilityData';
+import { useTargetDates } from '../../../hooks/useTargetDates';
+import { formatUpdateTime } from '../../../utils/dateFormatter';
+import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../constants/availability';
 import {
   LoadingState,
   ErrorState,
-  EmptyState,
+  EmptyState
+} from './states';
+import {
   LegendSection,
   AvailabilityTableRow,
   MobileCardView
-} from './availability';
-import ActionButtons from './ActionButtons';
-import RefreshButton from './RefreshButton';
-import PullToRefresh from './PullToRefresh';
-import LoadingOverlay from './LoadingOverlay';
+} from './components';
+import ActionButtons from '../../common/buttons/ActionButtons';
+import RefreshButton from '../../common/buttons/RefreshButton';
+import PullToRefresh from '../../interactions/PullToRefresh';
+import LoadingOverlay from '../../common/overlays/LoadingOverlay';
 
 const AvailabilityTable: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();

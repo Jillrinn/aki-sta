@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useTargetDates } from '../hooks/useTargetDates';
-import { TargetDate } from '../types/targetDates';
+import { useTargetDates } from '../../../hooks/useTargetDates';
+import { TargetDate } from '../../../types/targetDates';
 import TargetDateModal from './TargetDateModal';
 
 const DeleteConfirmModal: React.FC<{

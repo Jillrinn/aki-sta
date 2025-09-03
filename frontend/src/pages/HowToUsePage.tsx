@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import HowToUse from '../components/HowToUse';
+import HowToUse from '../components/pages/HowToUse';
 
 const HowToUsePage: React.FC = () => {
   return (

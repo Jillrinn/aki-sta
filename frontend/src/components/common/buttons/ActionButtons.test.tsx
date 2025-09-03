@@ -1,15 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ActionButtons from './ActionButtons';
-import { scraperApi } from '../services/api';
+import { scraperApi } from '../../../services/api';
 
-jest.mock('../services/api', () => ({
+jest.mock('../../../services/api', () => ({
   scraperApi: {
     triggerBatchScraping: jest.fn(),
   },
 }));
 
-jest.mock('./ConfirmationModal', () => {
+jest.mock('../modals/ConfirmationModal', () => {
   return function MockConfirmationModal({ isOpen, onConfirm, onCancel }: any) {
     if (!isOpen) return null;
     return (

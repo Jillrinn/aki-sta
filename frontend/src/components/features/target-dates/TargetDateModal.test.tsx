@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import TargetDateModal from './TargetDateModal';
-import { targetDatesApi } from '../services/api';
+import { targetDatesApi } from '../../../services/api';
 
 // APIをモック化
-jest.mock('../services/api', () => ({
+jest.mock('../../../services/api', () => ({
   targetDatesApi: {
     createTargetDate: jest.fn()
   }

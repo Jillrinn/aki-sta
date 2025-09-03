@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { availabilityApi } from '../services/api';
 import { AllAvailabilityResponse } from '../types/availability';
-import { ErrorDetails } from '../components/availability';
+import { ErrorDetails } from '../components/features/availability/states';
 
 const validateResponse = (response: any): boolean => {
   if (!response || typeof response !== 'object') return false;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { scraperApi } from '../services/api';
-import ScrapeResultModal from './ScrapeResultModal';
-import ConfirmationModal from './ConfirmationModal';
+import { scraperApi } from '../../../services/api';
+import ScrapeResultModal from '../modals/ScrapeResultModal';
+import ConfirmationModal from '../modals/ConfirmationModal';
 
 const ActionButtons: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);

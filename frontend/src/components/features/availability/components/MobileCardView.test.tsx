@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MobileCardView from './MobileCardView';
-import { Facility } from '../../types/availability';
+import { Facility } from '../../../../types/availability';
 
 describe('MobileCardView', () => {
   const mockFormatUpdateTime = (dateString: string) => {

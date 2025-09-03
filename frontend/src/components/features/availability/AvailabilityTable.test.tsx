@@ -2,12 +2,12 @@ import React from 'react';
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AvailabilityTable from './AvailabilityTable';
-import { availabilityApi } from '../services/api';
+import { availabilityApi } from '../../../services/api';
 
-jest.mock('../services/api');
+jest.mock('../../../services/api');
 
 // useTargetDatesフックをモック
-jest.mock('../hooks/useTargetDates', () => ({
+jest.mock('../../../hooks/useTargetDates', () => ({
   useTargetDates: () => ({
     data: [],
     loading: false,

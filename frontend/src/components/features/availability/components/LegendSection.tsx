@@ -1,6 +1,6 @@
 import React from 'react';
 import StatusBadge from './StatusBadge';
-import { STATUS_LABELS } from '../../constants/availability';
+import { STATUS_LABELS } from '../../../../constants/availability';
 
 const LegendSection: React.FC = () => (
   <div className="flex justify-center gap-4 sm:gap-8 mb-5 flex-wrap mt-8">

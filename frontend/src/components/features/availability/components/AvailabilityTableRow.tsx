@@ -1,7 +1,7 @@
 import React from 'react';
-import { Facility } from '../../types/availability';
+import { Facility } from '../../../../types/availability';
 import StatusBadge from './StatusBadge';
-import { TIME_SLOTS } from '../../constants/availability';
+import { TIME_SLOTS } from '../../../../constants/availability';
 
 interface AvailabilityTableRowProps {
   facility: Facility;
