@@ -1168,26 +1168,44 @@ class MeguroScraper(BaseScraper):
         results = {}
         
         try:
-            # 施設名を含むh3要素を全て取得
-            facility_headers = page.locator("h3:has(a)").all()
-            print(f"Found {len(facility_headers)} facility headers (h3 with links)")
+            # まず、ページ構造を確認
+            print("Checking page structure...")
             
-            if len(facility_headers) == 0:
-                print("  No h3 headers found, trying alternative approach...")
-                # 代替案：直接施設名を探す
+            # 施設ごとのセクションを取得（複数のセレクタを試す）
+            facility_sections = page.locator(".item").all()
+            if len(facility_sections) == 0:
+                print("  No .item sections found, trying alternative selectors...")
+                # 代替: 施設名を含むh3またはh4要素を探す
+                facility_sections = page.locator("div.facility, section.facility, .shisetsu").all()
+                
+            if len(facility_sections) == 0:
+                print("  Still no sections found, trying to find facility names directly...")
+                # さらに代替: 施設名を直接探す
+                facility_sections = []
                 for studio_name in self.studios:
-                    elements = page.locator(f"h3:has-text('{studio_name}')").all()
-                    facility_headers.extend(elements)
+                    elements = page.locator(f"*:has-text('{studio_name}')").all()
+                    for elem in elements:
+                        parent = elem.locator("..")
+                        if parent.count() > 0:
+                            facility_sections.append(parent.first)
+                            break
             
-            for header_idx, header in enumerate(facility_headers):
+            print(f"Found {len(facility_sections)} facility sections")
+            
+            # セクションが見つからない場合、ページ全体を1つのセクションとして扱う
+            if len(facility_sections) == 0:
+                print("  Using entire page as single section")
+                facility_sections = [page.locator("body").first]
+            
+            for section in facility_sections:
                 try:
                     # 施設名を取得
-                    facility_link = header.locator("a").first
-                    if facility_link.count() == 0:
+                    facility_name_elem = section.locator("h3 a").first
+                    if facility_name_elem.count() == 0:
                         continue
                     
-                    facility_name = facility_link.text_content().strip()
-                    print(f"\nProcessing facility {header_idx + 1}: {facility_name}")
+                    facility_name = facility_name_elem.text_content().strip()
+                    print(f"\nProcessing facility: {facility_name}")
                     
                     # この施設が対象リストに含まれているか確認
                     if not any(studio in facility_name for studio in self.studios):
@@ -1196,25 +1214,14 @@ class MeguroScraper(BaseScraper):
                     
                     results[facility_name] = {}
                     
-                    # このh3の後にあるテーブルを取得
-                    # 次のh3までの間にあるテーブルを探す
-                    all_following = page.locator(f"h3:nth({header_idx}) ~ *").all()
-                    tables_for_facility = []
+                    # この施設セクション内のカレンダーテーブルを取得
+                    # セクション内のテーブルのみを取得するため、sectionから検索
+                    room_tables = section.locator("table.calendar").all()
+                    print(f"  Found {len(room_tables)} calendar tables for this facility")
                     
-                    for element in all_following:
-                        # 次のh3に到達したら終了
-                        if element.evaluate("el => el.tagName") == "H3":
-                            break
-                        # テーブルなら追加
-                        if element.evaluate("el => el.tagName") == "TABLE":
-                            tables_for_facility.append(element)
-                    
-                    print(f"  Found {len(tables_for_facility)} tables for this facility")
-                    
-                    # 各テーブルを処理
-                    for table_idx, table in enumerate(tables_for_facility):
+                    for table_idx, room_table in enumerate(room_tables):
                         # 時間帯ヘッダーを取得して、カラムインデックスをマッピング
-                        all_headers = table.locator("thead th").all()
+                        all_headers = room_table.locator("thead th").all()
                         print(f"    Table {table_idx}: {len(all_headers)} total headers found")
                         
                         time_slots_map = {}
@@ -1245,9 +1252,9 @@ class MeguroScraper(BaseScraper):
                                 # ヘッダーの位置はそのままjをキーとする（tbodyのセルと対応）
                                 time_slots_map[j] = slot_key
                                 print(f"        Mapped column {j} to {slot_key}")
-                    
+                        
                         # tbody内の各行を処理（各行が1つの部屋）
-                        room_rows = table.locator("tbody tr").all()
+                        room_rows = room_table.locator("tbody tr").all()
                         
                         for row_idx, row in enumerate(room_rows):
                             # 行内のすべてのセルを取得
