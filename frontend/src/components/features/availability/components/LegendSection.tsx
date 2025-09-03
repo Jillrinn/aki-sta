@@ -11,6 +11,9 @@ const LegendSection: React.FC = () => (
       <StatusBadge status="booked" /> {STATUS_LABELS.booked}
     </span>
     <span className="flex items-center gap-2 text-sm sm:text-sm text-gray-600">
+      <StatusBadge status="booked_1" /> 一部予約済み
+    </span>
+    <span className="flex items-center gap-2 text-sm sm:text-sm text-gray-600">
       <StatusBadge status="unknown" /> {STATUS_LABELS.unknown}
     </span>
   </div>

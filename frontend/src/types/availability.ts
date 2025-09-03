@@ -1,5 +1,5 @@
 export interface TimeSlotStatus {
-  [timeSlot: string]: 'available' | 'booked' | 'lottery' | 'unknown';
+  [timeSlot: string]: 'available' | 'booked' | 'booked_1' | 'booked_2' | 'lottery' | 'unknown';
 }
 
 export interface Facility {
