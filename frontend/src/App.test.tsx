@@ -32,16 +32,23 @@ describe('App', () => {
     });
 
     // AppコンポーネントがAvailabilityTableをレンダリングすることを確認
-    expect(screen.getByText('空きスタサーチくん')).toBeInTheDocument();
+    // 複数の要素がある場合はgetAllByTextを使用
+    const elements = screen.getAllByText('空きスタサーチくん');
+    expect(elements.length).toBeGreaterThan(0);
   });
 
-  it('applies Tailwind styling classes', () => {
+  it('applies Tailwind styling classes', async () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockReturnValue(
       new Promise(() => {})
     );
 
-    const { container } = render(<App />);
-    const appDiv = container.querySelector('.min-h-screen');
+    let container: HTMLElement;
+    await act(async () => {
+      const result = render(<App />);
+      container = result.container;
+    });
+    
+    const appDiv = container!.querySelector('.min-h-screen');
     expect(appDiv).toBeInTheDocument();
     expect(appDiv).toHaveClass('bg-gradient-to-br');
   });

@@ -17,7 +17,6 @@ import ActionButtons from './ActionButtons';
 import RefreshButton from './RefreshButton';
 import PullToRefresh from './PullToRefresh';
 import LoadingOverlay from './LoadingOverlay';
-import HowToUse from './HowToUse';
 
 const AvailabilityTable: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
@@ -78,14 +77,19 @@ const AvailabilityTable: React.FC = () => {
       </div>
       <p className="text-center text-gray-600 mb-4">施設空き状況一覧</p>
       
-      <HowToUse />
       
-      <div className="flex justify-center mb-4">
+      <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
+        <Link
+          to="/how-to-use"
+          className="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600 transition-colors shadow-lg font-bold text-sm sm:text-base text-center"
+        >
+          💡 使い方を見る
+        </Link>
         <Link
           to="/target-dates"
-          className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base"
+          className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base text-center"
         >
-          練習日程一覧を見る →
+          📅 練習日程一覧を見る
         </Link>
       </div>
 

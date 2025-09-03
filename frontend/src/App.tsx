@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Modal from 'react-modal';
 import AvailabilityTable from './components/AvailabilityTable';
 import TargetDatesList from './components/TargetDatesList';
+import HowToUsePage from './pages/HowToUsePage';
 
 function App() {
   useEffect(() => {
@@ -15,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<AvailabilityTable />} />
           <Route path="/target-dates" element={<TargetDatesList />} />
+          <Route path="/how-to-use" element={<HowToUsePage />} />
         </Routes>
       </div>
     </Router>
