@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from './App';
 import { availabilityApi } from './services/api';
 
@@ -27,9 +27,7 @@ describe('App', () => {
 
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
-    await act(async () => {
-      render(<App />);
-    });
+    render(<App />);
 
     // AppコンポーネントがAvailabilityTableをレンダリングすることを確認
     // 複数の要素がある場合はgetAllByTextを使用
@@ -42,14 +40,11 @@ describe('App', () => {
       new Promise(() => {})
     );
 
-    let container: HTMLElement;
-    await act(async () => {
-      const result = render(<App />);
-      container = result.container;
-    });
+    const { container } = render(<App />);
     
-    const appDiv = container!.querySelector('.min-h-screen');
+    const appDiv = container.firstElementChild;
     expect(appDiv).toBeInTheDocument();
+    expect(appDiv).toHaveClass('min-h-screen');
     expect(appDiv).toHaveClass('bg-gradient-to-br');
   });
 });

@@ -8,12 +8,12 @@ describe('LoadingOverlay', () => {
     
     await waitFor(() => {
       expect(screen.getByTestId('loading-overlay')).toBeInTheDocument();
-      expect(screen.getByText('更新中...')).toBeInTheDocument();
     });
+    expect(screen.getByText('更新中...')).toBeInTheDocument();
   });
 
   it('does not render when isVisible is false', () => {
-    const { container } = render(<LoadingOverlay isVisible={false} />);
+    render(<LoadingOverlay isVisible={false} />);
     
     // react-modalはポータルを使用するため、body直下を確認
     const modalRoot = document.querySelector('.ReactModal__Content');
@@ -34,7 +34,8 @@ describe('LoadingOverlay', () => {
     await waitFor(() => {
       const spinner = document.querySelector('.animate-spin');
       expect(spinner).toBeInTheDocument();
-      expect(spinner).toHaveClass('border-primary-400', 'border-t-transparent');
     });
+    const spinner = document.querySelector('.animate-spin');
+    expect(spinner).toHaveClass('border-primary-400', 'border-t-transparent');
   });
 });

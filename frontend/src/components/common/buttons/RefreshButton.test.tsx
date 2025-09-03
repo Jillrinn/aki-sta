@@ -88,16 +88,18 @@ describe('RefreshButton', () => {
   });
 
   it('applies animation classes when refreshing', () => {
-    const { container, rerender } = render(
+    const { rerender } = render(
       <RefreshButton 
         onClick={mockOnClick} 
         isRefreshing={false}
       />
     );
     
-    // 更新中でない時はアニメーションクラスがない
-    const svg = container.querySelector('svg');
-    expect(svg).not.toHaveClass('animate-spin');
+    // 更新中でない時はアニメーションクラスがない - アイコンをaria-hiddenで検索
+    const button = screen.getByRole('button');
+    const svgIcon = button.querySelector('[aria-hidden="true"]');
+    expect(svgIcon).toBeInTheDocument();
+    expect(svgIcon).not.toHaveClass('animate-spin');
     
     // 更新中の時はアニメーションクラスがある
     rerender(
@@ -107,7 +109,9 @@ describe('RefreshButton', () => {
       />
     );
     
-    const svgRefreshing = container.querySelector('svg');
+    const refreshButton = screen.getByRole('button');
+    const svgRefreshing = refreshButton.querySelector('[aria-hidden="true"]');
+    expect(svgRefreshing).toBeInTheDocument();
     expect(svgRefreshing).toHaveClass('animate-spin');
   });
 });
