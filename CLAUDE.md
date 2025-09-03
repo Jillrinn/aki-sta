@@ -78,6 +78,53 @@ cd scraper && ./docker-exec.sh test  # Docker環境必須
 cd e2e && npm test
 ```
 
+### Scraperテストの実行方法
+
+**重要**: Scraperのテストや実行時は必ずDockerスクリプトを使用してください。
+
+#### docker-exec.sh（一時コンテナでの実行）
+```bash
+cd scraper
+
+# テスト実行
+./docker-exec.sh test                        # 全テスト実行
+./docker-exec.sh test tests/test_date_format.py  # 特定のテストファイル
+
+# スクレイパー実行
+./docker-exec.sh run --date 2025-09-20                    # Ensemble Studio
+./docker-exec.sh run --date 2025-09-20 --facility meguro  # 目黒区施設
+
+# その他のコマンド
+./docker-exec.sh build   # Dockerイメージのビルド
+./docker-exec.sh shell   # コンテナ内でシェル起動
+./docker-exec.sh exec [command]  # 任意のコマンド実行
+```
+
+#### docker-run.sh（Docker Compose環境での実行）
+```bash
+cd scraper
+
+# サービスの起動・停止
+./docker-run.sh start    # サービス起動（APIサーバー含む）
+./docker-run.sh stop     # サービス停止
+./docker-run.sh restart  # サービス再起動
+./docker-run.sh status   # 状態確認
+
+# テストとスクレイパー実行
+./docker-run.sh test     # テスト実行
+./docker-run.sh scrape 2025-01-30                    # Ensemble Studio
+./docker-run.sh scrape 2025-01-30 --facility meguro  # 目黒区施設
+
+# ログ確認とデバッグ
+./docker-run.sh logs     # ログ表示（追従モード）
+./docker-run.sh shell    # コンテナ内でシェル起動
+./docker-run.sh clean    # 全リソースクリーンアップ
+```
+
+#### 使い分け
+- **docker-exec.sh**: 単発のテストやスクレイピング実行向け（一時コンテナ）
+- **docker-run.sh**: 開発中のAPIサーバー起動やログ確認向け（永続的なサービス）
+
 ### プロセス確認
 ```bash
 # ポート使用状況
@@ -298,6 +345,22 @@ ls api/src/functions/availability.js
 - → 環境変数`FUNCTIONS_WORKER_RUNTIME=node`を設定済み（main-ci.yml）
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
 
+## 🔧 Claudeに許可されているツール
+
+以下のツールは事前承認なしで使用可能です：
+
+### Scraperテスト関連（Dockerスクリプト）
+- `Bash(./docker-exec.sh:*)` - scraperディレクトリ内で実行
+- `Bash(./docker-run.sh:*)` - scraperディレクトリ内で実行
+
+これらのコマンドは安全に実行できます：
+```bash
+cd scraper && ./docker-exec.sh test
+cd scraper && ./docker-exec.sh run --date 2025-09-20
+cd scraper && ./docker-run.sh start
+cd scraper && ./docker-run.sh test
+```
+
 ---
-*最終更新: 2025-08-29 - functionsディレクトリ削除、apiディレクトリ統合完了*
+*最終更新: 2025-09-02 - Scraperテスト方法とDockerスクリプトの使用法を追加*
 - testを実行して成功することを確認して初めてcommitするようにしてください
