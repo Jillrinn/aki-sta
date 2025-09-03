@@ -15,6 +15,7 @@ import {
   AvailabilityTableRow,
   MobileCardView
 } from './components';
+import CollapsibleCategorySection from './CollapsibleCategorySection';
 import ActionButtons from '../../common/buttons/ActionButtons';
 import RefreshButton from '../../common/buttons/RefreshButton';
 
@@ -125,16 +126,12 @@ const AvailabilityTable: React.FC = () => {
                   }, {});
                   
                   return Object.entries(groupedByCenter).map(([centerName, centerFacilities]) => (
-                    <div key={centerName}>
-                      <h3 className="font-bold text-gray-700 mb-2">【{centerName}】</h3>
-                      {centerFacilities.map((facility: Facility, facilityIndex: number) => (
-                        <MobileCardView
-                          key={`${centerName}-${facilityIndex}`}
-                          facility={facility}
-                          formatUpdateTime={formatUpdateTime}
-                        />
-                      ))}
-                    </div>
+                    <CollapsibleCategorySection
+                      key={centerName}
+                      centerName={centerName}
+                      facilities={centerFacilities}
+                      isMobile={true}
+                    />
                   ));
                 })()}
               </div>
@@ -176,20 +173,12 @@ const AvailabilityTable: React.FC = () => {
                     }, {});
                     
                     return Object.entries(groupedByCenter).map(([centerName, centerFacilities]) => (
-                      <React.Fragment key={centerName}>
-                        <tr className="bg-gray-100">
-                          <td colSpan={5} className="p-3 font-bold text-gray-700">
-                            【{centerName}】
-                          </td>
-                        </tr>
-                        {centerFacilities.map((facility: Facility, facilityIndex: number) => (
-                          <AvailabilityTableRow 
-                            key={`${centerName}-${facilityIndex}`} 
-                            facility={facility} 
-                            formatUpdateTime={formatUpdateTime}
-                          />
-                        ))}
-                      </React.Fragment>
+                      <CollapsibleCategorySection
+                        key={centerName}
+                        centerName={centerName}
+                        facilities={centerFacilities}
+                        isMobile={false}
+                      />
                     ));
                   })()}
                 </tbody>
