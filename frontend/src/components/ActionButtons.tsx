@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { scraperApi } from '../services/api';
 import ScrapeResultModal from './ScrapeResultModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const ActionButtons: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isResultModalOpen, setIsResultModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
-  const handleManualFetchClick = async () => {
-    setIsModalOpen(true);
+  const handleManualFetchClick = () => {
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirm = async () => {
+    setIsConfirmModalOpen(false);
+    setIsResultModalOpen(true);
     setIsLoading(true);
     setIsError(false);
     setMessage('');
@@ -24,7 +31,7 @@ const ActionButtons: React.FC = () => {
       // 成功時は3秒後に自動で閉じる
       if (response.success) {
         setTimeout(() => {
-          setIsModalOpen(false);
+          setIsResultModalOpen(false);
         }, 3000);
       }
     } catch (error) {
@@ -32,6 +39,10 @@ const ActionButtons: React.FC = () => {
       setMessage('通信エラーが発生しました');
       setIsError(true);
     }
+  };
+
+  const handleCancel = () => {
+    setIsConfirmModalOpen(false);
   };
 
   return (
@@ -45,9 +56,15 @@ const ActionButtons: React.FC = () => {
         今すぐ情報を集める
       </button>
 
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+
       <ScrapeResultModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isResultModalOpen}
+        onClose={() => setIsResultModalOpen(false)}
         message={message}
         isLoading={isLoading}
         isError={isError}

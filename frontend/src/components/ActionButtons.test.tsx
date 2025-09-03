@@ -9,6 +9,18 @@ jest.mock('../services/api', () => ({
   },
 }));
 
+jest.mock('./ConfirmationModal', () => {
+  return function MockConfirmationModal({ isOpen, onConfirm, onCancel }: any) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="confirmation-modal">
+        <button onClick={onConfirm}>実行する</button>
+        <button onClick={onCancel}>キャンセル</button>
+      </div>
+    );
+  };
+});
+
 describe('ActionButtons', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -21,7 +33,30 @@ describe('ActionButtons', () => {
     expect(screen.queryByLabelText('新規登録')).not.toBeInTheDocument();
   });
 
-  test('triggers batch scraping and shows success modal when button is clicked', async () => {
+  test('shows confirmation modal when button is clicked', () => {
+    render(<ActionButtons />);
+    
+    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    fireEvent.click(fetchButton);
+    
+    expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+  });
+
+  test('closes confirmation modal when cancel is clicked', () => {
+    render(<ActionButtons />);
+    
+    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    fireEvent.click(fetchButton);
+    
+    expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    
+    const cancelButton = screen.getByText('キャンセル');
+    fireEvent.click(cancelButton);
+    
+    expect(screen.queryByTestId('confirmation-modal')).not.toBeInTheDocument();
+  });
+
+  test('triggers batch scraping when confirmed', async () => {
     (scraperApi.triggerBatchScraping as jest.Mock).mockResolvedValue({
       success: true,
       message: '空き状況取得を開始しました',
@@ -33,6 +68,10 @@ describe('ActionButtons', () => {
     // ボタンをクリック
     const fetchButton = screen.getByLabelText('今すぐ情報を集める');
     fireEvent.click(fetchButton);
+    
+    // 確認モーダルで実行をクリック
+    const confirmButton = screen.getByText('実行する');
+    fireEvent.click(confirmButton);
     
     // ローディング中の表示
     expect(screen.getByText('処理中...')).toBeInTheDocument();
@@ -64,6 +103,9 @@ describe('ActionButtons', () => {
     const fetchButton = screen.getByLabelText('今すぐ情報を集める');
     fireEvent.click(fetchButton);
     
+    const confirmButton = screen.getByText('実行する');
+    fireEvent.click(confirmButton);
+    
     await waitFor(() => {
       expect(screen.getByText('練習日程が登録されていません')).toBeInTheDocument();
     });
@@ -79,6 +121,9 @@ describe('ActionButtons', () => {
     
     const fetchButton = screen.getByLabelText('今すぐ情報を集める');
     fireEvent.click(fetchButton);
+    
+    const confirmButton = screen.getByText('実行する');
+    fireEvent.click(confirmButton);
     
     await waitFor(() => {
       expect(screen.getByText('通信エラーが発生しました')).toBeInTheDocument();
