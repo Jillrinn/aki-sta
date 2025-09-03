@@ -359,7 +359,7 @@ describe('MobileCardView', () => {
     );
     
     // Initially expanded (has available slots and afternoon is not booked)
-    expect(screen.getByText('9-12時')).toBeInTheDocument();
+    expect(screen.getByText('午前')).toBeInTheDocument();
     expect(screen.getByText('−')).toBeInTheDocument();
     
     // Click to collapse
@@ -374,7 +374,7 @@ describe('MobileCardView', () => {
     fireEvent.click(header!);
     
     // Should be expanded
-    expect(screen.getByText('9-12時')).toBeInTheDocument();
+    expect(screen.getByText('午前')).toBeInTheDocument();
     expect(screen.getByText('−')).toBeInTheDocument();
   });
 });

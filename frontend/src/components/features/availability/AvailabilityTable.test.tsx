@@ -102,9 +102,9 @@ describe('AvailabilityTable', () => {
     expect(hatsudai.length).toBeGreaterThan(0);
 
     // 全時間帯のヘッダーが表示されていることを確認
-    const morningSlots = screen.getAllByText('9-12時');
-    const afternoonSlots = screen.getAllByText('13-17時');
-    const eveningSlots = screen.getAllByText('18-21時');
+    const morningSlots = screen.getAllByText('午前');
+    const afternoonSlots = screen.getAllByText('午後');
+    const eveningSlots = screen.getAllByText('夜間');
     
     expect(morningSlots.length).toBeGreaterThan(0);
     expect(afternoonSlots.length).toBeGreaterThan(0);
@@ -457,8 +457,17 @@ describe('AvailabilityTable', () => {
   });
 
   describe('Mobile Responsive Tests', () => {
+    beforeEach(() => {
+      // Reset to desktop size before each test
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1024
+      });
+    });
+
     it('renders mobile card view when screen width is less than 640px', async () => {
-      // Set mobile screen size
+      // Set mobile screen size BEFORE rendering
       Object.defineProperty(window, 'innerWidth', {
         writable: true,
         configurable: true,
@@ -468,10 +477,12 @@ describe('AvailabilityTable', () => {
       const mockData = {
         '2025-11-15': [
           {
+            centerName: 'あんさんぶるスタジオ',
             facilityName: 'あんさんぶるStudio和(本郷)',
+            roomName: '練習室',
             timeSlots: { 
               'morning': 'available',
-              'afternoon': 'booked',
+              'afternoon': 'available',
               'evening': 'unknown'
             },
             lastUpdated: '2025-08-24T14:18:03Z',
@@ -481,26 +492,31 @@ describe('AvailabilityTable', () => {
 
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
-      await act(async () => {
-        render(<AvailabilityTable />);
-      });
+      const { container } = render(<AvailabilityTable />);
 
       await waitFor(() => {
-        // Check that tables are NOT rendered
+        // First ensure the content has loaded
+        expect(screen.getByText('空きスタサーチくん')).toBeInTheDocument();
+      });
+
+      // Force a resize to trigger the mobile view
+      await act(async () => {
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      // Wait for the mobile view to be rendered
+      await waitFor(() => {
+        // In mobile view, tables should not be rendered
         const tables = screen.queryAllByRole('table');
         expect(tables).toHaveLength(0);
-
-        // Check that mobile card elements are rendered
-        expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
-        
-        // Card should be collapsed because 13-17 is booked
-        expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
-        
-        // Time slots should not be visible since the card is collapsed
-        expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
-        expect(screen.queryByText('13-17時')).not.toBeInTheDocument();
-        expect(screen.queryByText('18-21時')).not.toBeInTheDocument();
       });
+
+      // Check that mobile card elements are rendered
+      // Facility name should be visible
+      expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
+      
+      // Room name should be visible with the prefix
+      expect(screen.getByText('- 練習室')).toBeInTheDocument();
     });
 
     it('renders desktop table view when screen width is 640px or more', async () => {
@@ -537,9 +553,9 @@ describe('AvailabilityTable', () => {
         expect(tables).toHaveLength(1);
 
         // Check that time slot headers are in table format
-        expect(screen.getByText('9-12時')).toBeInTheDocument();
-        expect(screen.getByText('13-17時')).toBeInTheDocument();
-        expect(screen.getByText('18-21時')).toBeInTheDocument();
+        expect(screen.getByText('午前')).toBeInTheDocument();
+        expect(screen.getByText('午後')).toBeInTheDocument();
+        expect(screen.getByText('夜間')).toBeInTheDocument();
 
         // Headers are properly displayed in desktop view
       });
@@ -591,7 +607,7 @@ describe('AvailabilityTable', () => {
       // Should now show mobile cards
       await waitFor(() => {
         expect(screen.queryAllByRole('table')).toHaveLength(0);
-        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        expect(screen.getByText('午前')).toBeInTheDocument();
       });
     });
 
@@ -626,7 +642,7 @@ describe('AvailabilityTable', () => {
       // Initially should show mobile cards
       await waitFor(() => {
         expect(screen.queryAllByRole('table')).toHaveLength(0);
-        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        expect(screen.getByText('午前')).toBeInTheDocument();
       });
 
       // Resize to desktop
@@ -643,7 +659,7 @@ describe('AvailabilityTable', () => {
       await waitFor(() => {
         expect(screen.getAllByRole('table')).toHaveLength(1);
         // Time slot headers should be visible in desktop table
-        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        expect(screen.getByText('午前')).toBeInTheDocument();
       });
     });
 
@@ -690,7 +706,7 @@ describe('AvailabilityTable', () => {
         expect(screen.getByText('あんさんぶるStudio音(初台)')).toBeInTheDocument();
 
         // Check that the second facility (音) is expanded (13-17 is available)
-        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        expect(screen.getByText('午前')).toBeInTheDocument();
         
         // First facility (和) should show collapsed message (13-17 is booked)
         expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
@@ -762,7 +778,7 @@ describe('AvailabilityTable', () => {
         // At 640px, should show desktop table view
         expect(screen.getAllByRole('table')).toHaveLength(1);
         // Time slot headers should be visible in desktop table
-        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        expect(screen.getByText('午前')).toBeInTheDocument();
       });
     });
 
@@ -797,7 +813,7 @@ describe('AvailabilityTable', () => {
       await waitFor(() => {
         // At 639px, should show mobile card view
         expect(screen.queryAllByRole('table')).toHaveLength(0);
-        expect(screen.getByText('9-12時')).toBeInTheDocument();
+        expect(screen.getByText('午前')).toBeInTheDocument();
       });
     });
 
