@@ -877,47 +877,60 @@ class MeguroScraper(BaseScraper):
                                 
                                 # その他のセル（○、×、休館、空白など）は全てクリック対象
                                 print(f"    Row {row_idx} ({room_name}): Processing cell ('{cell_text}')...")
+                                
+                                # クリック可能な要素を探す
+                                clicked = False
+                                
                                 try:
-                                    # ラベルを優先的にクリック
-                                    label = target_cell.locator("label").first
-                                    if label.count() > 0 and label.is_visible():
-                                        label_text = label.text_content().strip()
-                                        print(f"      Found label with text: '{label_text}', clicking...")
-                                        label.click(timeout=2000, force=True)
+                                    # 1. まずチェックボックスの存在を確認
+                                    checkbox = target_cell.locator("input[type='checkbox']").first
+                                    if checkbox.count() > 0:
+                                        # チェックボックスが存在する場合
+                                        is_checked_before = checkbox.is_checked()
+                                        print(f"      Found checkbox (checked={is_checked_before})")
+                                        
+                                        # ラベルがあればラベルをクリック、なければチェックボックスを直接クリック
+                                        label = target_cell.locator("label").first
+                                        if label.count() > 0 and label.is_visible():
+                                            label_text = label.text_content().strip()
+                                            print(f"      Clicking label: '{label_text}'...")
+                                            label.click(timeout=2000)
+                                        else:
+                                            print(f"      Clicking checkbox directly...")
+                                            checkbox.click(timeout=2000)
+                                        
+                                        # クリック後の状態を確認
+                                        page.wait_for_timeout(500)
+                                        is_checked_after = checkbox.is_checked()
+                                        
+                                        if is_checked_after != is_checked_before:
+                                            clicked = True
+                                            print(f"      ✓ Checkbox state changed: {is_checked_before} -> {is_checked_after}")
+                                        else:
+                                            print(f"      WARNING: Checkbox state unchanged after click")
+                                    else:
+                                        # チェックボックスがない場合
+                                        print(f"      No checkbox found in cell")
+                                        
+                                        # ラベルだけ存在する可能性をチェック
+                                        label = target_cell.locator("label").first
+                                        if label.count() > 0:
+                                            label_text = label.text_content().strip()
+                                            print(f"      Found label without checkbox: '{label_text}' - cell may not be selectable")
+                                        else:
+                                            print(f"      No interactive elements found - cell may not be selectable")
+                                    
+                                    # クリックが成功した場合のみ情報を保存
+                                    if clicked:
                                         table_selections += 1
                                         selected_count += 1
-                                        # クリックした部屋情報を保存（休館フラグも含む）
                                         self.clicked_rooms[(facility_name, room_name)] = {
                                             'table_idx': i,
                                             'is_closed': is_closed
                                         }
-                                        print(f"      Successfully clicked label: '{label_text}' - saved room info: {facility_name}/{room_name} (closed={is_closed})")
+                                        print(f"      Successfully selected: {facility_name}/{room_name} (closed={is_closed})")
                                     else:
-                                        # ラベルがない場合はチェックボックスを探す
-                                        checkbox = target_cell.locator("input[type='checkbox']").first
-                                        if checkbox.count() > 0 and checkbox.is_visible():
-                                            print(f"      No label found, clicking checkbox directly...")
-                                            checkbox.click(timeout=2000, force=True)
-                                            table_selections += 1
-                                            selected_count += 1
-                                            # クリックした部屋情報を保存（休館フラグも含む）
-                                            self.clicked_rooms[(facility_name, room_name)] = {
-                                                'table_idx': i,
-                                                'is_closed': is_closed
-                                            }
-                                            print(f"      Successfully clicked checkbox - saved room info: {facility_name}/{room_name} (closed={is_closed})")
-                                        else:
-                                            # チェックボックスもない場合はセル自体をクリック
-                                            print(f"      No label/checkbox, clicking cell directly: '{cell_text}'...")
-                                            target_cell.click(timeout=2000, force=True)
-                                            table_selections += 1
-                                            selected_count += 1
-                                            # クリックした部屋情報を保存（休館フラグも含む）
-                                            self.clicked_rooms[(facility_name, room_name)] = {
-                                                'table_idx': i,
-                                                'is_closed': is_closed
-                                            }
-                                            print(f"      Successfully clicked cell: '{cell_text}' - saved room info: {facility_name}/{room_name} (closed={is_closed})")
+                                        print(f"      Could not select: {facility_name}/{room_name} - cell may be display-only")
                                     
                                     page.wait_for_timeout(300)
                                 except Exception as e:
