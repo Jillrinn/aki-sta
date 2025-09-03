@@ -42,7 +42,7 @@ class RateLimitsRepository {
       const updatedRecord = {
         ...existingRecord,
         count: (existingRecord.count || 0) + 1,
-        status: status,
+        status,
         lastRequestedAt: new Date().toISOString()
       };
 
@@ -60,7 +60,7 @@ class RateLimitsRepository {
         id: `rate-limit-${today}`,
         date: today,
         count: 1,
-        status: status,
+        status,
         lastRequestedAt: new Date().toISOString(),
         createdAt: new Date().toISOString()
       };
@@ -86,7 +86,7 @@ class RateLimitsRepository {
 
       const updatedRecord = {
         ...existingRecord,
-        status: status,
+        status,
         updatedAt: new Date().toISOString()
       };
 

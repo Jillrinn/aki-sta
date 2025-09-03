@@ -10,8 +10,8 @@ module.exports = {
         const container = cosmosClient.getContainer('availability');
         
         const querySpec = {
-          query: "SELECT * FROM c WHERE c.date = @date",
-          parameters: [{ name: "@date", value: date }]
+          query: 'SELECT * FROM c WHERE c.date = @date',
+          parameters: [{ name: '@date', value: date }]
         };
         
         const { resources } = await container.items

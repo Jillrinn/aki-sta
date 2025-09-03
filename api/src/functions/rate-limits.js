@@ -9,7 +9,7 @@ async function getAllRateLimitsHandler(request, context) {
     return {
       status: 200,
       jsonBody: {
-        records: records
+        records
       }
     };
   } catch (error) {
@@ -18,7 +18,7 @@ async function getAllRateLimitsHandler(request, context) {
     return {
       status: 503,
       jsonBody: {
-        error: "Service temporarily unavailable",
+        error: 'Service temporarily unavailable',
         details: error.message
       }
     };
@@ -33,8 +33,8 @@ async function getRateLimitHandler(request, context) {
     return {
       status: 400,
       jsonBody: {
-        error: "Bad Request",
-        message: "Date is required"
+        error: 'Bad Request',
+        message: 'Date is required'
       }
     };
   }
@@ -54,7 +54,7 @@ async function getRateLimitHandler(request, context) {
       return {
         status: 404,
         jsonBody: {
-          error: "Not Found",
+          error: 'Not Found',
           message: error.message
         }
       };
@@ -64,7 +64,7 @@ async function getRateLimitHandler(request, context) {
     return {
       status: 503,
       jsonBody: {
-        error: "Service temporarily unavailable",
+        error: 'Service temporarily unavailable',
         details: error.message
       }
     };
@@ -79,8 +79,8 @@ async function deleteRateLimitHandler(request, context) {
     return {
       status: 400,
       jsonBody: {
-        error: "Bad Request",
-        message: "ID is required"
+        error: 'Bad Request',
+        message: 'ID is required'
       }
     };
   }
@@ -100,7 +100,7 @@ async function deleteRateLimitHandler(request, context) {
       return {
         status: 404,
         jsonBody: {
-          error: "Not Found",
+          error: 'Not Found',
           message: error.message
         }
       };
@@ -111,7 +111,7 @@ async function deleteRateLimitHandler(request, context) {
       return {
         status: 400,
         jsonBody: {
-          error: "Bad Request",
+          error: 'Bad Request',
           message: error.message
         }
       };
@@ -121,7 +121,7 @@ async function deleteRateLimitHandler(request, context) {
     return {
       status: 503,
       jsonBody: {
-        error: "Service temporarily unavailable",
+        error: 'Service temporarily unavailable',
         details: error.message
       }
     };

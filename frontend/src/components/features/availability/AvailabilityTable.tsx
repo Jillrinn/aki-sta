@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Facility } from '../../../types/availability';
 import { useAvailabilityData } from '../../../hooks/useAvailabilityData';
 import { useTargetDates } from '../../../hooks/useTargetDates';
-import { formatUpdateTime } from '../../../utils/dateFormatter';
 import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../constants/availability';
 import {
   LoadingState,
@@ -11,9 +10,7 @@ import {
   EmptyState
 } from './states';
 import {
-  LegendSection,
-  AvailabilityTableRow,
-  MobileCardView
+  LegendSection
 } from './components';
 import CollapsibleCategorySection from './CollapsibleCategorySection';
 import ActionButtons from '../../common/buttons/ActionButtons';

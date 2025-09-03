@@ -44,7 +44,7 @@ async function healthHandler(request, context) {
     
     const { resources } = await container.items
       .query({
-        query: "SELECT VALUE COUNT(1) FROM c",
+        query: 'SELECT VALUE COUNT(1) FROM c',
         parameters: []
       })
       .fetchAll();

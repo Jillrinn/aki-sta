@@ -19,7 +19,7 @@ async function warmUpHandler(myTimer, context) {
     // 最小限のデータを取得（1件のみ）
     const { resources } = await container.items
       .query({
-        query: "SELECT TOP 1 c.id FROM c",
+        query: 'SELECT TOP 1 c.id FROM c',
         parameters: []
       })
       .fetchAll();
@@ -28,7 +28,7 @@ async function warmUpHandler(myTimer, context) {
     
     return {
       status: 'success',
-      timestamp: timestamp,
+      timestamp,
       message: 'Connection warmed up successfully'
     };
   } catch (error) {
@@ -37,7 +37,7 @@ async function warmUpHandler(myTimer, context) {
     // エラーが発生しても関数の実行は継続
     return {
       status: 'error',
-      timestamp: timestamp,
+      timestamp,
       message: error.message
     };
   }

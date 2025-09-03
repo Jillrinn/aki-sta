@@ -9,7 +9,7 @@ async function getTargetDatesHandler(request, context) {
     return {
       status: 200,
       jsonBody: {
-        dates: dates
+        dates
       }
     };
   } catch (error) {
@@ -18,7 +18,7 @@ async function getTargetDatesHandler(request, context) {
     return {
       status: 503,
       jsonBody: {
-        error: "Service temporarily unavailable",
+        error: 'Service temporarily unavailable',
         details: error.message
       }
     };
@@ -36,8 +36,8 @@ async function createTargetDateHandler(request, context) {
       return {
         status: 400,
         jsonBody: {
-          error: "Bad Request",
-          message: "Date and label are required"
+          error: 'Bad Request',
+          message: 'Date and label are required'
         }
       };
     }
@@ -48,8 +48,8 @@ async function createTargetDateHandler(request, context) {
       return {
         status: 400,
         jsonBody: {
-          error: "Bad Request",
-          message: "Date must be in YYYY-MM-DD format"
+          error: 'Bad Request',
+          message: 'Date must be in YYYY-MM-DD format'
         }
       };
     }
@@ -69,7 +69,7 @@ async function createTargetDateHandler(request, context) {
       return {
         status: 409,
         jsonBody: {
-          error: "Conflict",
+          error: 'Conflict',
           message: error.message
         }
       };
@@ -80,7 +80,7 @@ async function createTargetDateHandler(request, context) {
       return {
         status: 400,
         jsonBody: {
-          error: "Bad Request",
+          error: 'Bad Request',
           message: error.message
         }
       };
@@ -90,7 +90,7 @@ async function createTargetDateHandler(request, context) {
     return {
       status: 503,
       jsonBody: {
-        error: "Service temporarily unavailable",
+        error: 'Service temporarily unavailable',
         details: error.message
       }
     };
@@ -105,8 +105,8 @@ async function deleteTargetDateHandler(request, context) {
     return {
       status: 400,
       jsonBody: {
-        error: "Bad Request",
-        message: "ID is required"
+        error: 'Bad Request',
+        message: 'ID is required'
       }
     };
   }
@@ -126,7 +126,7 @@ async function deleteTargetDateHandler(request, context) {
       return {
         status: 404,
         jsonBody: {
-          error: "Not Found",
+          error: 'Not Found',
           message: error.message
         }
       };
@@ -136,7 +136,7 @@ async function deleteTargetDateHandler(request, context) {
     return {
       status: 503,
       jsonBody: {
-        error: "Service temporarily unavailable",
+        error: 'Service temporarily unavailable',
         details: error.message
       }
     };

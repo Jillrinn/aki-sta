@@ -42,7 +42,7 @@ class ScrapeService {
         res.on('end', () => {
           resolve({
             statusCode: res.statusCode,
-            data: data
+            data
           });
         });
       });

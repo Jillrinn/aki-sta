@@ -4,7 +4,6 @@ import {
   getCategoryStatus
 } from '../../../utils/availabilityUtils';
 import { formatUpdateTime } from '../../../utils/dateFormatter';
-import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../constants/availability';
 import { AvailabilityTableRow, MobileCardView } from './components';
 
 interface CollapsibleCategorySectionProps {

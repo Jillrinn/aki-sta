@@ -12,6 +12,12 @@ from ..types.time_slots import TimeSlots, validate_time_slots
 class MeguroScraper(BaseScraper):
     """目黒区施設予約システム用スクレイパー"""
     
+    def __init__(self):
+        super().__init__()
+        # クリックした部屋の情報を保存する辞書
+        # key: (facility_name, room_name), value: table_index
+        self.clicked_rooms = {}
+    
     def get_base_url(self) -> str:
         """施設のベースURLを返す"""
         return "https://resv.city.meguro.tokyo.jp/Web/Home/WgR_ModeSelect"
@@ -736,6 +742,9 @@ class MeguroScraper(BaseScraper):
         print(f"Selecting date columns for day {target_day}...")
         
         try:
+            # クリックした部屋情報をリセット
+            self.clicked_rooms = {}
+            
             # すべてのカレンダーテーブルを取得
             calendar_tables = page.locator("table").all()
             print(f"Found {len(calendar_tables)} calendar tables")
@@ -787,6 +796,33 @@ class MeguroScraper(BaseScraper):
                     
                     # 対象日のカラムが見つかった場合、そのカラムのデータセルをクリック
                     if target_column_index >= 0:
+                        # まず、このテーブルが属する施設名を特定
+                        facility_name = None
+                        try:
+                            # テーブルの前にある施設名を探す（親要素を辿る）
+                            parent_item = table.locator("..").first
+                            max_depth = 5
+                            current_depth = 0
+                            
+                            while parent_item.count() > 0 and current_depth < max_depth:
+                                # h3タグの施設名を探す
+                                h3_elem = parent_item.locator("h3 a").first
+                                if h3_elem.count() > 0:
+                                    facility_name = h3_elem.text_content().strip()
+                                    print(f"  Found facility name for table {i}: {facility_name}")
+                                    break
+                                # 親要素を更に遡る
+                                parent_item = parent_item.locator("..").first
+                                current_depth += 1
+                            
+                            if not facility_name:
+                                # 施設名が見つからない場合、デフォルト値を使用
+                                facility_name = f"Facility_{i}"
+                                print(f"  Warning: Could not find facility name for table {i}, using: {facility_name}")
+                        except:
+                            facility_name = f"Facility_{i}"
+                            print(f"  Error finding facility name for table {i}, using: {facility_name}")
+                        
                         # tbody内の各行を取得
                         rows = table.locator("tbody tr").all()
                         print(f"  Table {i} has {len(rows)} rows in tbody")
@@ -802,6 +838,16 @@ class MeguroScraper(BaseScraper):
                                 print(f"    Row 0, first cell: '{first_cell_text[:50] if len(first_cell_text) > 50 else first_cell_text}'")
                             
                             if target_column_index < len(cells):
+                                # 部屋名を取得（最初のセル）
+                                room_name = None
+                                if len(cells) > 0:
+                                    room_name_cell = cells[0]
+                                    room_name = room_name_cell.text_content().strip()
+                                    if not room_name:
+                                        room_name = f"Room_{row_idx}"
+                                else:
+                                    room_name = f"Room_{row_idx}"
+                                
                                 target_cell = cells[target_column_index]
                                 cell_text = target_cell.text_content().strip()
                                 
@@ -811,7 +857,7 @@ class MeguroScraper(BaseScraper):
                                     continue
                                 
                                 # その他のセル（○、×、空白など）は全てクリック対象
-                                print(f"    Row {row_idx}: Processing cell ('{cell_text}')...")
+                                print(f"    Row {row_idx} ({room_name}): Processing cell ('{cell_text}')...")
                                 try:
                                     # ラベルを優先的にクリック
                                     label = target_cell.locator("label").first
@@ -821,7 +867,9 @@ class MeguroScraper(BaseScraper):
                                         label.click(timeout=2000, force=True)
                                         table_selections += 1
                                         selected_count += 1
-                                        print(f"      Successfully clicked label: '{label_text}'")
+                                        # クリックした部屋情報を保存
+                                        self.clicked_rooms[(facility_name, room_name)] = i
+                                        print(f"      Successfully clicked label: '{label_text}' - saved room info: {facility_name}/{room_name}")
                                     else:
                                         # ラベルがない場合はチェックボックスを探す
                                         checkbox = target_cell.locator("input[type='checkbox']").first
@@ -830,14 +878,18 @@ class MeguroScraper(BaseScraper):
                                             checkbox.click(timeout=2000, force=True)
                                             table_selections += 1
                                             selected_count += 1
-                                            print(f"      Successfully clicked checkbox")
+                                            # クリックした部屋情報を保存
+                                            self.clicked_rooms[(facility_name, room_name)] = i
+                                            print(f"      Successfully clicked checkbox - saved room info: {facility_name}/{room_name}")
                                         else:
                                             # チェックボックスもない場合はセル自体をクリック
                                             print(f"      No label/checkbox, clicking cell directly: '{cell_text}'...")
                                             target_cell.click(timeout=2000, force=True)
                                             table_selections += 1
                                             selected_count += 1
-                                            print(f"      Successfully clicked cell: '{cell_text}'")
+                                            # クリックした部屋情報を保存
+                                            self.clicked_rooms[(facility_name, room_name)] = i
+                                            print(f"      Successfully clicked cell: '{cell_text}' - saved room info: {facility_name}/{room_name}")
                                     
                                     page.wait_for_timeout(300)
                                 except Exception as e:
@@ -1165,9 +1217,18 @@ class MeguroScraper(BaseScraper):
             }
         """
         print("Extracting time slots for all facilities...")
+        print(f"  Using clicked room information: {len(self.clicked_rooms)} rooms")
+        for (facility, room), table_idx in self.clicked_rooms.items():
+            print(f"    - {facility}/{room} (table {table_idx})")
+        
         results = {}
         
         try:
+            # クリックした部屋がない場合はエラー
+            if not self.clicked_rooms:
+                print("ERROR: No clicked rooms found. Cannot extract time slots.")
+                return {}
+            
             # まず、ページ構造を確認
             print("Checking page structure...")
             
@@ -1197,6 +1258,14 @@ class MeguroScraper(BaseScraper):
                 print("  Using entire page as single section")
                 facility_sections = [page.locator("body").first]
             
+            # クリックした部屋の情報を基に処理
+            # まず、施設ごとにグループ化
+            facilities_to_process = {}
+            for (facility_name, room_name), table_idx in self.clicked_rooms.items():
+                if facility_name not in facilities_to_process:
+                    facilities_to_process[facility_name] = []
+                facilities_to_process[facility_name].append((room_name, table_idx))
+            
             for section in facility_sections:
                 try:
                     # 施設名を取得
@@ -1207,9 +1276,15 @@ class MeguroScraper(BaseScraper):
                     facility_name = facility_name_elem.text_content().strip()
                     print(f"\nProcessing facility: {facility_name}")
                     
-                    # この施設が対象リストに含まれているか確認
-                    if not any(studio in facility_name for studio in self.studios):
-                        print(f"  Skipping (not in target list)")
+                    # クリックした部屋の中にこの施設があるか確認
+                    matching_facility = None
+                    for clicked_facility in facilities_to_process.keys():
+                        if clicked_facility in facility_name or facility_name in clicked_facility:
+                            matching_facility = clicked_facility
+                            break
+                    
+                    if not matching_facility:
+                        print(f"  Skipping (not in clicked rooms)")
                         continue
                     
                     results[facility_name] = {}
@@ -1218,6 +1293,7 @@ class MeguroScraper(BaseScraper):
                     # セクション内のテーブルのみを取得するため、sectionから検索
                     room_tables = section.locator("table.calendar").all()
                     print(f"  Found {len(room_tables)} calendar tables for this facility")
+                    print(f"  Expected rooms: {facilities_to_process[matching_facility]}")
                     
                     for table_idx, room_table in enumerate(room_tables):
                         # 時間帯ヘッダーを取得して、カラムインデックスをマッピング
@@ -1270,7 +1346,17 @@ class MeguroScraper(BaseScraper):
                             if not room_name:
                                 continue
                             
-                            print(f"      Table {table_idx}, Row {row_idx}: {room_name}")
+                            # この部屋がクリックされた部屋かチェック
+                            is_clicked_room = False
+                            for clicked_room_name, clicked_table_idx in facilities_to_process[matching_facility]:
+                                if room_name == clicked_room_name or clicked_room_name in room_name:
+                                    is_clicked_room = True
+                                    print(f"      Table {table_idx}, Row {row_idx}: {room_name} [MATCHED with clicked room]")
+                                    break
+                            
+                            if not is_clicked_room:
+                                print(f"      Table {table_idx}, Row {row_idx}: {room_name} [skipping - not clicked]")
+                                continue
                             
                             # 時間帯ごとの空き状況を取得
                             room_slots = {}

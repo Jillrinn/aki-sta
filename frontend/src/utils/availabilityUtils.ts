@@ -1,4 +1,4 @@
-import { Facility, TimeSlotStatus } from '../types/availability';
+import { Facility } from '../types/availability';
 
 /**
  * 施設の空き状況を判定するユーティリティ関数

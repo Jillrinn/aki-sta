@@ -80,8 +80,8 @@ module.exports = {
         
         const targetDate = {
           id: date,
-          date: date,
-          label: label,
+          date,
+          label,
           updatedAt: new Date().toISOString()
         };
         

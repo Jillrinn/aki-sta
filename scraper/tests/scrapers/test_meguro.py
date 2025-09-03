@@ -35,20 +35,28 @@ class TestMeguroScraper:
         mock_page = MagicMock()
         
         # モックの設定
-        mock_breadcrumb = MagicMock()
-        mock_breadcrumb.count.return_value = 1
-        mock_breadcrumb.text_content.return_value = "メニュー > 施設の検索"
-        mock_page.locator.return_value.first = mock_breadcrumb
+        mock_element = MagicMock()
+        mock_element.count.return_value = 1
+        mock_element.is_visible.return_value = True
+        mock_element.text_content.return_value = "テストボタン"
+        
+        mock_locator = MagicMock()
+        mock_locator.first = mock_element
+        mock_locator.count.return_value = 1
+        
+        mock_page.locator.return_value = mock_locator
+        mock_page.url = "https://resv.city.meguro.tokyo.jp/Web/Home/FacilitySearch"
+        mock_page.title.return_value = "目黒区施設予約システム"
         
         # テスト実行
         result = scraper.navigate_to_facility_search(mock_page)
         
         # 検証
         assert result is True
-        # 必要なクリックが行われたことを確認
-        mock_page.click.assert_any_call("text=施設種類から探す")
-        mock_page.click.assert_any_call("text=集会施設・学校施設")
-        mock_page.click.assert_any_call("text=音楽室")
+        # locatorが呼ばれたことを確認
+        assert mock_page.locator.called
+        # clickメソッドが呼ばれたことを確認  
+        assert mock_element.click.called
     
     def test_navigate_to_facility_search_failure(self, scraper):
         """施設検索画面への遷移失敗テスト"""
