@@ -3,7 +3,9 @@ export interface TimeSlotStatus {
 }
 
 export interface Facility {
+  centerName: string;
   facilityName: string;
+  roomName: string;
   timeSlots: TimeSlotStatus;
   lastUpdated: string;
 }

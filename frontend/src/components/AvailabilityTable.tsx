@@ -114,14 +114,31 @@ const AvailabilityTable: React.FC = () => {
               </div>
             ) : isMobile ? (
               <div className="space-y-4">
-              {(data[date] || []).map((facility: Facility, facilityIndex: number) => (
-                <MobileCardView
-                  key={facilityIndex}
-                  facility={facility}
-                  formatUpdateTime={formatUpdateTime}
-                />
-              ))}
-            </div>
+                {(() => {
+                  const facilities = data[date] || [];
+                  const groupedByCenter = facilities.reduce((acc: { [key: string]: Facility[] }, facility: Facility) => {
+                    const center = facility.centerName || 'その他';
+                    if (!acc[center]) {
+                      acc[center] = [];
+                    }
+                    acc[center].push(facility);
+                    return acc;
+                  }, {});
+                  
+                  return Object.entries(groupedByCenter).map(([centerName, centerFacilities]) => (
+                    <div key={centerName}>
+                      <h3 className="font-bold text-gray-700 mb-2">【{centerName}】</h3>
+                      {centerFacilities.map((facility: Facility, facilityIndex: number) => (
+                        <MobileCardView
+                          key={`${centerName}-${facilityIndex}`}
+                          facility={facility}
+                          formatUpdateTime={formatUpdateTime}
+                        />
+                      ))}
+                    </div>
+                  ));
+                })()}
+              </div>
           ) : (
             <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
               <table 
@@ -148,13 +165,34 @@ const AvailabilityTable: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(data[date] || []).map((facility: Facility, facilityIndex: number) => (
-                    <AvailabilityTableRow 
-                      key={facilityIndex} 
-                      facility={facility} 
-                      formatUpdateTime={formatUpdateTime}
-                    />
-                  ))}
+                  {(() => {
+                    const facilities = data[date] || [];
+                    const groupedByCenter = facilities.reduce((acc: { [key: string]: Facility[] }, facility: Facility) => {
+                      const center = facility.centerName || 'その他';
+                      if (!acc[center]) {
+                        acc[center] = [];
+                      }
+                      acc[center].push(facility);
+                      return acc;
+                    }, {});
+                    
+                    return Object.entries(groupedByCenter).map(([centerName, centerFacilities]) => (
+                      <React.Fragment key={centerName}>
+                        <tr className="bg-gray-100">
+                          <td colSpan={5} className="p-3 font-bold text-gray-700">
+                            【{centerName}】
+                          </td>
+                        </tr>
+                        {centerFacilities.map((facility: Facility, facilityIndex: number) => (
+                          <AvailabilityTableRow 
+                            key={`${centerName}-${facilityIndex}`} 
+                            facility={facility} 
+                            formatUpdateTime={formatUpdateTime}
+                          />
+                        ))}
+                      </React.Fragment>
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>

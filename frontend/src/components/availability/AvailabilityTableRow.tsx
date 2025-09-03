@@ -14,7 +14,8 @@ const AvailabilityTableRow: React.FC<AvailabilityTableRowProps> = ({
 }) => (
   <tr className="hover:bg-primary-50 transition-colors duration-150">
     <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">
-      {facility.facilityName}
+      <div>{facility.facilityName}</div>
+      <div className="text-sm text-gray-500">- {facility.roomName}</div>
     </td>
     {TIME_SLOTS.map((timeSlot) => (
       <td key={timeSlot} className="p-4 text-center border-b border-gray-200">
