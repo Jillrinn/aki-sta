@@ -23,6 +23,14 @@ class EnsembleStudioScraper(BaseScraper):
             "あんさんぶるStudio音(初台)"
         ]
     
+    def get_center_name(self) -> str:
+        """センター名を返す"""
+        return "あんさんぶるスタジオ"
+    
+    def get_room_name(self, facility_name: str) -> str:
+        """部屋名を返す（あんさんぶるスタジオは練習室で固定）"""
+        return "練習室"
+    
     def find_studio_calendars(self, page: Page) -> List[Tuple[str, Locator]]:
         """
         各スタジオのカレンダー要素を特定

@@ -26,6 +26,15 @@ class MeguroScraper(BaseScraper):
             "緑が丘文化会館"
         ]
     
+    def get_center_name(self) -> str:
+        """センター名を返す"""
+        return "目黒区民センター"
+    
+    def get_room_name(self, facility_name: str) -> str:
+        """部屋名を返す（目黒区の場合は施設ごとに異なる）"""
+        # MeguroScraperでは個別の部屋名が後で設定されるため、ここでは一時的な値
+        return "部屋名"
+    
     def wait_for_calendar_load(self, page: Page):
         """
         カレンダーの読み込みを待つ（目黒区用にオーバーライド）
@@ -1389,52 +1398,44 @@ class MeguroScraper(BaseScraper):
                         print("Warning: No time slot data extracted")
                         raise RuntimeError("Scraping failed - no default data should be saved")
                     
-                    # 結果を整形
+                    # 結果を整形（3層構造で各部屋ごとに個別レコード）
                     results = []
                     for facility_name, rooms in all_time_slots.items():
-                        # 全部屋の状況を統合（最も空いている状態を採用）
-                        combined_slots = {
-                            "9-12": "unknown",
-                            "13-17": "unknown",
-                            "18-21": "unknown"
-                        }
-                        
+                        # 各部屋ごとに個別レコードを作成
                         for room_name, room_slots in rooms.items():
+                            # 時間帯形式を変換
+                            converted_slots = {
+                                "9-12": "unknown",
+                                "13-17": "unknown",
+                                "18-21": "unknown"
+                            }
+                            
                             # morning -> 9-12
                             if room_slots.get("morning") == "available":
-                                combined_slots["9-12"] = "available"
-                            elif combined_slots["9-12"] != "available" and room_slots.get("morning") == "booked":
-                                combined_slots["9-12"] = "booked"
+                                converted_slots["9-12"] = "available"
+                            elif room_slots.get("morning") == "booked":
+                                converted_slots["9-12"] = "booked"
                             
                             # afternoon -> 13-17
                             afternoon_status = room_slots.get("afternoon")
                             if afternoon_status == "available":
-                                combined_slots["13-17"] = "available"
+                                converted_slots["13-17"] = "available"
                             elif afternoon_status in ["booked", "booked_1", "booked_2"]:
-                                # 既存の状態と比較して最も制限の強い状態を採用
-                                current_status = combined_slots["13-17"]
-                                if current_status == "available":
-                                    combined_slots["13-17"] = afternoon_status
-                                elif current_status == "unknown":
-                                    combined_slots["13-17"] = afternoon_status
-                                elif afternoon_status == "booked":
-                                    combined_slots["13-17"] = "booked"
-                                elif current_status in ["booked_1", "booked_2"] and afternoon_status in ["booked_1", "booked_2"]:
-                                    # 両方が部分的に予約済みの場合
-                                    if current_status != afternoon_status:
-                                        combined_slots["13-17"] = "booked"  # 異なる部分が予約済みなら全体をbookedに
+                                converted_slots["13-17"] = "booked"
                             
                             # evening -> 18-21
                             if room_slots.get("evening") == "available":
-                                combined_slots["18-21"] = "available"
-                            elif combined_slots["18-21"] != "available" and room_slots.get("evening") == "booked":
-                                combined_slots["18-21"] = "booked"
-                        
-                        results.append({
-                            "facilityName": facility_name,
-                            "timeSlots": combined_slots,
-                            "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-                        })
+                                converted_slots["18-21"] = "available"
+                            elif room_slots.get("evening") == "booked":
+                                converted_slots["18-21"] = "booked"
+                            
+                            results.append({
+                                "centerName": "目黒区民センター",
+                                "facilityName": facility_name,
+                                "roomName": room_name,
+                                "timeSlots": converted_slots,
+                                "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                            })
                     
                     return results
                     

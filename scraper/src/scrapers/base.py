@@ -123,6 +123,29 @@ class BaseScraper(ABC):
     # ===== 施設固有の実装が必要な抽象メソッド =====
     
     @abstractmethod
+    def get_center_name(self) -> str:
+        """
+        センター名（大分類）を返す
+        
+        Returns:
+            センター名（例: "あんさんぶるスタジオ", "目黒区民センター"）
+        """
+        pass
+    
+    @abstractmethod
+    def get_room_name(self, facility_name: str) -> str:
+        """
+        部屋名（小分類）を返す
+        
+        Args:
+            facility_name: 施設名
+        
+        Returns:
+            部屋名（例: "練習室", "音楽室"）
+        """
+        pass
+    
+    @abstractmethod
     def find_studio_calendars(self, page: Page) -> List[Tuple[str, Locator]]:
         """
         各スタジオのカレンダー要素を特定（施設固有）
@@ -244,7 +267,9 @@ class BaseScraper(ABC):
                         
                         # 結果を追加（有効なデータがある場合のみ）
                         results.append({
+                            "centerName": self.get_center_name(),
                             "facilityName": studio_name,
+                            "roomName": self.get_room_name(studio_name),
                             "timeSlots": time_slots,
                             "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
                         })

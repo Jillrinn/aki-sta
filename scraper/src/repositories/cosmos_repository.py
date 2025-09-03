@@ -34,23 +34,26 @@ class CosmosWriter:
         
         Args:
             date: YYYY-MM-DD形式の日付
-            facilities: 施設データのリスト
+            facilities: 施設データのリスト（3層構造）
         
         Returns:
             成功時True
         """
         try:
             for facility in facilities:
-                # facility IDを生成
+                # IDを3層構造に対応して生成
+                center_id = self._generate_center_id(facility['centerName'])
                 facility_id = self._generate_facility_id(facility['facilityName'])
+                room_id = self._generate_room_id(facility['roomName'])
                 
                 # Cosmos DB用のデータ構造
                 item = {
-                    'id': f"{date}_{facility_id}",
+                    'id': f"{date}_{center_id}_{facility_id}_{room_id}",
                     'partitionKey': date,
                     'date': date,
-                    'facility': facility_id,
+                    'centerName': facility['centerName'],
                     'facilityName': facility['facilityName'],
+                    'roomName': facility['roomName'],
                     'timeSlots': facility['timeSlots'],
                     'updatedAt': facility.get('lastUpdated', datetime.utcnow().isoformat() + 'Z'),
                     'dataSource': 'scraping'
@@ -58,7 +61,7 @@ class CosmosWriter:
                 
                 # upsert（存在する場合は更新、なければ作成）
                 self.container.upsert_item(body=item)
-                print(f"Saved to Cosmos DB: {date} - {facility['facilityName']}")
+                print(f"Saved to Cosmos DB: {date} - {facility['centerName']} - {facility['facilityName']} - {facility['roomName']}")
             
             return True
             
@@ -69,12 +72,14 @@ class CosmosWriter:
             print(f"Unexpected error: {e}")
             return False
     
+    def _generate_center_id(self, center_name: str) -> str:
+        """センター名からIDを生成"""
+        return center_name.replace(' ', '-').replace('(', '').replace(')', '').lower()
+    
     def _generate_facility_id(self, facility_name: str) -> str:
         """施設名からIDを生成"""
-        if "本郷" in facility_name:
-            return "ensemble-hongo"
-        elif "初台" in facility_name:
-            return "ensemble-hatsudai"
-        else:
-            # その他の施設用
-            return facility_name.lower().replace(' ', '-').replace('(', '').replace(')', '')
+        return facility_name.replace(' ', '-').replace('(', '').replace(')', '').lower()
+    
+    def _generate_room_id(self, room_name: str) -> str:
+        """部屋名からIDを生成"""
+        return room_name.replace(' ', '-').replace('(', '').replace(')', '').replace('（', '').replace('）', '').lower()
