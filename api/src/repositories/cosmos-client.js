@@ -1,8 +1,11 @@
 const { CosmosClient } = require('@azure/cosmos');
 
-// ローカル開発時のみdotenvを読み込み
+// 環境に応じて適切な.envファイルを読み込み
 if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
+  const path = require('path');
+  // NODE_ENVがtestの場合は.env.test、それ以外は.envを読み込み
+  const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+  require('dotenv').config({ path: path.join(__dirname, '../../../', envFile) });
 }
 
 class CosmosDBClient {
