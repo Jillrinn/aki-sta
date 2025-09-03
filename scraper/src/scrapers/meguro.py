@@ -1363,9 +1363,6 @@ class MeguroScraper(BaseScraper):
                     print(f"Accessing: {self.base_url}")
                     response = page.goto(self.base_url, wait_until="networkidle", timeout=60000)
                     
-                    if response:
-                        print(f"Response status: {response.status}")
-                    
                     # 施設検索画面へ遷移
                     if not self.navigate_to_facility_search(page):
                         print("Error: Failed to navigate to facility search")

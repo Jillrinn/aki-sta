@@ -67,6 +67,7 @@ class ScrapeService:
         
         # スクレイピング実行
         try:
+            print(f"\n[ScrapeService] Starting {facility_name} scraping for date: {target_date}")
             scraper = scraper_class()
             result = scraper.scrape_and_save(target_date)
             

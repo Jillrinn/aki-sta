@@ -212,7 +212,7 @@ class BaseScraper(ABC):
         Returns:
             スタジオ空き状況のリスト
         """
-        print(f"\n=== Starting human-like scraping for {date} ===")
+        print(f"\n=== Starting Ensemble Studio scraping for {date} ===")
         
         # 日付をパース
         target_date = datetime.strptime(date, "%Y-%m-%d")
@@ -230,9 +230,6 @@ class BaseScraper(ABC):
                     # ページにアクセス
                     print(f"Accessing: {self.base_url}")
                     response = page.goto(self.base_url, wait_until="networkidle", timeout=60000)
-                    
-                    if response:
-                        print(f"Response status: {response.status}")
                     
                     # カレンダーが読み込まれるまで待機（施設によってセレクタが異なる可能性）
                     self.wait_for_calendar_load(page)
