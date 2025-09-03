@@ -55,9 +55,9 @@ describe('MobileCardView', () => {
     );
     
     // Should be expanded (has available slots and afternoon is not booked)
-    expect(screen.getByText('9-12時')).toBeInTheDocument();
-    expect(screen.getByText('13-17時')).toBeInTheDocument();
-    expect(screen.getByText('18-21時')).toBeInTheDocument();
+    expect(screen.getByText('午前')).toBeInTheDocument();
+    expect(screen.getByText('午後')).toBeInTheDocument();
+    expect(screen.getByText('夜間')).toBeInTheDocument();
   });
 
   it('renders status badges for each time slot when expanded', () => {
@@ -98,7 +98,7 @@ describe('MobileCardView', () => {
     expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
     
     // Should not show time slots since it's collapsed
-    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    expect(screen.queryByText('午前')).not.toBeInTheDocument();
   });
 
   it('renders update time correctly', () => {
@@ -135,7 +135,7 @@ describe('MobileCardView', () => {
     
     const availableSlot = container.querySelector('[class*="bg-accent-green"]');
     expect(availableSlot).toBeInTheDocument();
-    expect(availableSlot).toHaveTextContent('9-12時');
+    expect(availableSlot).toHaveTextContent('午前');
   });
 
   it('applies gray background for non-available slots when expanded', () => {
@@ -235,7 +235,7 @@ describe('MobileCardView', () => {
     );
     
     // Should be collapsed by default
-    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    expect(screen.queryByText('午前')).not.toBeInTheDocument();
     expect(screen.queryByText('予約済み')).not.toBeInTheDocument();
     
     // Should show blue header (default color, not red)
@@ -301,7 +301,7 @@ describe('MobileCardView', () => {
     );
     
     // Should be collapsed by default
-    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    expect(screen.queryByText('午前')).not.toBeInTheDocument();
     
     // Should show gray header
     const header = container.querySelector('[class*="from-gray-400"]');
@@ -332,7 +332,7 @@ describe('MobileCardView', () => {
     );
     
     // Should be collapsed even though there are available slots
-    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    expect(screen.queryByText('午前')).not.toBeInTheDocument();
     
     // Should show "希望時間は予約済み" message
     expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
@@ -367,7 +367,7 @@ describe('MobileCardView', () => {
     fireEvent.click(header!);
     
     // Should be collapsed
-    expect(screen.queryByText('9-12時')).not.toBeInTheDocument();
+    expect(screen.queryByText('午前')).not.toBeInTheDocument();
     expect(screen.getByText('＋')).toBeInTheDocument();
     
     // Click to expand again

@@ -95,9 +95,9 @@ describe('RefreshButton', () => {
       />
     );
     
-    // 更新中でない時はアニメーションクラスがない - アイコンをaria-hiddenで検索
+    // 更新中でない時はアニメーションクラスがない
     const button = screen.getByRole('button');
-    const svgIcon = button.querySelector('[aria-hidden="true"]');
+    const svgIcon = button.querySelector('svg');
     expect(svgIcon).toBeInTheDocument();
     expect(svgIcon).not.toHaveClass('animate-spin');
     
@@ -110,7 +110,7 @@ describe('RefreshButton', () => {
     );
     
     const refreshButton = screen.getByRole('button');
-    const svgRefreshing = refreshButton.querySelector('[aria-hidden="true"]');
+    const svgRefreshing = refreshButton.querySelector('svg');
     expect(svgRefreshing).toBeInTheDocument();
     expect(svgRefreshing).toHaveClass('animate-spin');
   });

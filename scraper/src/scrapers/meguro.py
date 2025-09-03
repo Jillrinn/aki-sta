@@ -838,11 +838,27 @@ class MeguroScraper(BaseScraper):
                                 print(f"    Row 0, first cell: '{first_cell_text[:50] if len(first_cell_text) > 50 else first_cell_text}'")
                             
                             if target_column_index < len(cells):
-                                # 部屋名を取得（最初のセル）
+                                # 部屋名を取得（最初のセル、spanタグを除外）
                                 room_name = None
                                 if len(cells) > 0:
                                     room_name_cell = cells[0]
-                                    room_name = room_name_cell.text_content().strip()
+                                    # spanタグを除外してテキストを取得
+                                    try:
+                                        # JavaScriptでspanタグを除去してテキストを取得
+                                        room_name = room_name_cell.evaluate("""
+                                            el => {
+                                                const clone = el.cloneNode(true);
+                                                clone.querySelectorAll('span').forEach(s => s.remove());
+                                                return clone.textContent.trim();
+                                            }
+                                        """)
+                                    except:
+                                        # フォールバック: 通常のテキスト取得
+                                        room_name = room_name_cell.text_content().strip()
+                                    
+                                    # 改行・余分な空白を正規化
+                                    room_name = ' '.join(room_name.split())
+                                    
                                     if not room_name:
                                         room_name = f"Room_{row_idx}"
                                 else:
@@ -856,7 +872,10 @@ class MeguroScraper(BaseScraper):
                                     print(f"    Row {row_idx}: Skipping cell with dash ('{cell_text}')")
                                     continue
                                 
-                                # その他のセル（○、×、空白など）は全てクリック対象
+                                # 休館かどうかチェック
+                                is_closed = "休館" in cell_text
+                                
+                                # その他のセル（○、×、休館、空白など）は全てクリック対象
                                 print(f"    Row {row_idx} ({room_name}): Processing cell ('{cell_text}')...")
                                 try:
                                     # ラベルを優先的にクリック
@@ -867,9 +886,12 @@ class MeguroScraper(BaseScraper):
                                         label.click(timeout=2000, force=True)
                                         table_selections += 1
                                         selected_count += 1
-                                        # クリックした部屋情報を保存
-                                        self.clicked_rooms[(facility_name, room_name)] = i
-                                        print(f"      Successfully clicked label: '{label_text}' - saved room info: {facility_name}/{room_name}")
+                                        # クリックした部屋情報を保存（休館フラグも含む）
+                                        self.clicked_rooms[(facility_name, room_name)] = {
+                                            'table_idx': i,
+                                            'is_closed': is_closed
+                                        }
+                                        print(f"      Successfully clicked label: '{label_text}' - saved room info: {facility_name}/{room_name} (closed={is_closed})")
                                     else:
                                         # ラベルがない場合はチェックボックスを探す
                                         checkbox = target_cell.locator("input[type='checkbox']").first
@@ -878,18 +900,24 @@ class MeguroScraper(BaseScraper):
                                             checkbox.click(timeout=2000, force=True)
                                             table_selections += 1
                                             selected_count += 1
-                                            # クリックした部屋情報を保存
-                                            self.clicked_rooms[(facility_name, room_name)] = i
-                                            print(f"      Successfully clicked checkbox - saved room info: {facility_name}/{room_name}")
+                                            # クリックした部屋情報を保存（休館フラグも含む）
+                                            self.clicked_rooms[(facility_name, room_name)] = {
+                                                'table_idx': i,
+                                                'is_closed': is_closed
+                                            }
+                                            print(f"      Successfully clicked checkbox - saved room info: {facility_name}/{room_name} (closed={is_closed})")
                                         else:
                                             # チェックボックスもない場合はセル自体をクリック
                                             print(f"      No label/checkbox, clicking cell directly: '{cell_text}'...")
                                             target_cell.click(timeout=2000, force=True)
                                             table_selections += 1
                                             selected_count += 1
-                                            # クリックした部屋情報を保存
-                                            self.clicked_rooms[(facility_name, room_name)] = i
-                                            print(f"      Successfully clicked cell: '{cell_text}' - saved room info: {facility_name}/{room_name}")
+                                            # クリックした部屋情報を保存（休館フラグも含む）
+                                            self.clicked_rooms[(facility_name, room_name)] = {
+                                                'table_idx': i,
+                                                'is_closed': is_closed
+                                            }
+                                            print(f"      Successfully clicked cell: '{cell_text}' - saved room info: {facility_name}/{room_name} (closed={is_closed})")
                                     
                                     page.wait_for_timeout(300)
                                 except Exception as e:
@@ -1218,8 +1246,9 @@ class MeguroScraper(BaseScraper):
         """
         print("Extracting time slots for all facilities...")
         print(f"  Using clicked room information: {len(self.clicked_rooms)} rooms")
-        for (facility, room), table_idx in self.clicked_rooms.items():
-            print(f"    - {facility}/{room} (table {table_idx})")
+        for (facility, room), room_info in self.clicked_rooms.items():
+            closed_status = "closed" if room_info.get('is_closed') else "open"
+            print(f"    - {facility}/{room} (table {room_info.get('table_idx', 'N/A')}, {closed_status})")
         
         results = {}
         
@@ -1230,12 +1259,22 @@ class MeguroScraper(BaseScraper):
                 return {}
             
             # clicked_roomsの各部屋に対して直接検索
-            for (facility_name, room_name), _ in self.clicked_rooms.items():
+            for (facility_name, room_name), room_info in self.clicked_rooms.items():
                 print(f"\nSearching for room: {facility_name} - {room_name}")
                 
                 # 施設の結果を初期化
                 if facility_name not in results:
                     results[facility_name] = {}
+                
+                # 休館の部屋は直接unavailableとして処理
+                if room_info.get('is_closed'):
+                    print(f"  Room is closed (休館) - setting all slots to unavailable")
+                    results[facility_name][room_name] = {
+                        "morning": "unavailable",
+                        "afternoon": "unavailable",
+                        "evening": "unavailable"
+                    }
+                    continue
                 
                 # すべてのテーブル行を取得
                 all_rows = page.locator("tbody tr").all()
@@ -1249,9 +1288,22 @@ class MeguroScraper(BaseScraper):
                         if len(cells) < 3:  # 部屋名、定員、時間帯が最低限必要
                             continue
                         
-                        # 最初のセルから部屋名を取得
+                        # 最初のセルから部屋名を取得（spanタグを除外）
                         first_cell = cells[0]
-                        cell_text = first_cell.text_content().strip()
+                        try:
+                            # spanタグを除外してテキストを取得
+                            cell_text = first_cell.evaluate("""
+                                el => {
+                                    const clone = el.cloneNode(true);
+                                    clone.querySelectorAll('span').forEach(s => s.remove());
+                                    return clone.textContent.trim();
+                                }
+                            """)
+                        except:
+                            cell_text = first_cell.text_content().strip()
+                        
+                        # 改行・余分な空白を正規化
+                        cell_text = ' '.join(cell_text.split())
                         
                         # 完全一致または部分一致をチェック
                         if cell_text == room_name or room_name in cell_text:

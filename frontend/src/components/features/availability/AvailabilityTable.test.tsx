@@ -195,9 +195,9 @@ describe('AvailabilityTable', () => {
 
     await waitFor(() => {
       // 全時間帯のステータスが表示されていることを確認
-      expect(screen.getByText('9-12時')).toBeInTheDocument();
-      expect(screen.getByText('13-17時')).toBeInTheDocument();
-      expect(screen.getByText('18-21時')).toBeInTheDocument();
+      expect(screen.getByText('午前')).toBeInTheDocument();
+      expect(screen.getByText('午後')).toBeInTheDocument();
+      expect(screen.getByText('夜間')).toBeInTheDocument();
       
       // 各ステータスが正しく表示されていることを確認（複数の要素がある場合を考慮）
       const availableElements = screen.getAllByText('○');

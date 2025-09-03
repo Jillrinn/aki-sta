@@ -45,7 +45,7 @@ describe('scrape-batch', () => {
       expect(result.jsonBody.success).toBe(true);
       expect(result.jsonBody.message).toBe('空き状況取得を開始しました');
       expect(result.jsonBody.targetDates).toHaveLength(2);
-      expect(scrapeService.executeBatchScraping).toHaveBeenCalledWith('logic-app');
+      expect(scrapeService.executeBatchScraping).toHaveBeenCalledWith('manual');
     });
 
     it('should accept custom source parameter', async () => {
@@ -123,7 +123,7 @@ describe('scrape-batch', () => {
 
       expect(result.status).toBe(202);
       expect(result.jsonBody.success).toBe(true);
-      expect(scrapeService.executeBatchScraping).toHaveBeenCalledWith('logic-app');
+      expect(scrapeService.executeBatchScraping).toHaveBeenCalledWith('manual');
     });
   });
 });
