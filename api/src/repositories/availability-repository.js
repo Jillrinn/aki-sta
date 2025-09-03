@@ -17,9 +17,11 @@ module.exports = {
         .fetchAll();
       
       if (resources && resources.length > 0) {
-        // Cosmos DBからデータを整形して返す
+        // Cosmos DBからデータを整形して返す（3層構造）
         return resources.map(item => ({
+          centerName: item.centerName,
           facilityName: item.facilityName,
+          roomName: item.roomName,
           timeSlots: item.timeSlots,
           lastUpdated: item.updatedAt
         }));
@@ -51,7 +53,9 @@ module.exports = {
             groupedData[item.date] = [];
           }
           groupedData[item.date].push({
+            centerName: item.centerName,
             facilityName: item.facilityName,
+            roomName: item.roomName,
             timeSlots: item.timeSlots,
             lastUpdated: item.updatedAt
           });
