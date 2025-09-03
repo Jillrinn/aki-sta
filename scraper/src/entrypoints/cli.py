@@ -90,7 +90,11 @@ def main():
             facilities = result["data"][normalized_date]
             print(f"\n取得したデータ ({normalized_date}):")
             for facility in facilities:
-                print(f"\n{facility['facilityName']}:")
+                room_name = facility.get('roomName', '')
+                if room_name:
+                    print(f"\n{facility['facilityName']} - {room_name}:")
+                else:
+                    print(f"\n{facility['facilityName']}:")
                 for time_slot, status in facility['timeSlots'].items():
                     status_symbol = "○" if status == "available" else "×" if status == "booked" else "?"
                     print(f"  {time_slot}: {status_symbol} ({status})")
