@@ -1,17 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import AppTitle from '../../../common/AppTitle';
 
 const PageHeader: React.FC = () => {
   return (
     <>
-      <div className="flex items-center justify-center mb-2">
-        <h1 className="text-2xl sm:text-3xl text-gray-800 font-bold">空きスタサーチくん</h1>
-        <img 
-          src="/aki-sta-search-kun.png" 
-          alt="サーチくん" 
-          className="w-12 h-12 sm:w-16 sm:h-16 ml-3"
-        />
-      </div>
+      <AppTitle showLogo={true} />
       <p className="text-center text-gray-600 mb-4">施設空き状況一覧</p>
       
       <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">

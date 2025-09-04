@@ -4,6 +4,7 @@ import { useTargetDates } from '../../../hooks/useTargetDates';
 import { TargetDate } from '../../../types/targetDates';
 import TargetDateModal from './TargetDateModal';
 import { CommonLoadingState, CommonErrorState, CommonEmptyState } from '../../common/states';
+import AppTitle from '../../common/AppTitle';
 
 const DeleteConfirmModal: React.FC<{
   isOpen: boolean;
@@ -54,11 +55,7 @@ const DeleteConfirmModal: React.FC<{
 const TargetDatesHeader: React.FC<{ onRegisterClick: () => void }> = ({ onRegisterClick }) => {
   return (
     <div className="mb-6">
-      <h1 className="text-2xl sm:text-3xl text-gray-800 text-center mb-2 font-bold">
-        <Link to="/" className="hover:text-gray-600 transition-colors">
-          空きスタサーチくん
-        </Link>
-      </h1>
+      <AppTitle isLink={true} showLogo={false} />
       <p className="text-center text-gray-600 mb-4">練習日程一覧</p>
       
       <div className="flex justify-between mb-4">
