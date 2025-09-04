@@ -246,47 +246,7 @@ await act(async () => {
 5. **カテゴリー展開方法**: `page.locator('tr:has-text("【"), button:has-text("【")')` でカテゴリーボタンを取得してクリック
 
 
-## 📊 現在の状態（自動更新対象）
-
-### MVP v1.0 - ✅ 完了（2025-08-21）
-- Backend API: ✅ 実装完了
-- Frontend: ✅ 実装完了
-- テスト: ✅ 実装完了（E2Eテスト含む）
-- 統合動作: ✅ 動作確認済み
-- E2Eテスト: ✅ 実装完了（固定データ戦略採用）
-
-### MVP v2.0 - ✅ 完了（2025-08-24）
-- 実データスクレイピング: ✅ 完了（あんさんぶるスタジオ対応）
-- Playwright実装: ✅ 完了（人間的操作・環境分離システム）
-- データ共有: ✅ 完了（JSONファイルベース、shared-data/）
-- 3時間帯表示: ✅ 完了（9-12, 13-17, 18-21）
-- 環境分離システム: ✅ 完了（バージョン競合完全解決）
-
-**進捗更新時**: `.github/mvp-checklist.md`で完了基準を確認
-
-### MVP v3.0 - ✅ 完了（2025-08-25）
-- ✅ Cosmos DB統合・データ永続化（Phase 3移行完了）
-- ✅ Azure Functions構造修正（availability-api.js復元）
-- ✅ 環境変数設定改善（テスト時自動読み込み）
-- ✅ E2Eテスト柔軟化（データ有無両対応）
-- ✅ 環境変数統合システム（ルートレベル管理）
-- ✅ JSONファイル依存完全削除（フェーズ3完了）
-- ✅ Pure Cosmos DBアーキテクチャ移行完了
-
-### MVP v4.0 - ✅ 完了（2025-08-28）
-- ✅ Azure本番環境デプロイ設定完了
-- ✅ GitHub Actionsデプロイパイプライン構築
-- ✅ Infrastructure as Code (Bicep) 実装
-- ✅ Azure Static Web Apps Managed Functions v4実装
-- ✅ CORS問題完全解決・デプロイ統一化
-- ⏳ Timer Trigger自動実行システム（一部未実装）
-
-### 次期開発: v1.0
-- 複数日付管理機能
-- 手動更新機能（レート制限付き）
-- 監視・運用（Application Insights）
-
-### GitHub Actions  
+## 🔧 GitHub Actions  
 - **main-ci.yml**: push/PR時の全テスト実行（Backend/Frontend/Scraper/E2E）
 - E2Eテスト: Ubuntu 22.04でPlaywright実行
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
