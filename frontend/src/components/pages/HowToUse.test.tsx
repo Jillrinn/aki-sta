@@ -23,24 +23,28 @@ describe('HowToUse', () => {
     expect(screen.getByText('【使い方】')).toBeInTheDocument();
     
     expect(screen.getByText('練習日を登録')).toBeInTheDocument();
-    expect(screen.getByText('「練習日程一覧」ページへ移動し、「新規登録」から希望の日時を登録！')).toBeInTheDocument();
+    expect(screen.getByText('「練習日程一覧」ページへ移動し、')).toBeInTheDocument();
+    expect(screen.getByText('「新規登録」から希望の日時を登録！')).toBeInTheDocument();
     
     expect(screen.getByText('自動でチェック')).toBeInTheDocument();
-    expect(screen.getByText('毎日2回（朝8時・夕方5時）最新の空き状況を更新')).toBeInTheDocument();
+    expect(screen.getByText('毎日3回（深夜1時、朝8時・夕方5時）')).toBeInTheDocument();
+    expect(screen.getByText('最新の空き状況を更新')).toBeInTheDocument();
     
     expect(screen.getByText('結果を確認')).toBeInTheDocument();
-    expect(screen.getByText('「空き状況一覧」ページで、登録した練習日の空き状況を確認！')).toBeInTheDocument();
+    expect(screen.getByText('「空き状況一覧」ページで、登録した')).toBeInTheDocument();
+    expect(screen.getByText('練習日の空き状況を確認！')).toBeInTheDocument();
   });
 
   it('should display instant check section', () => {
     render(<HowToUse />);
     expect(screen.getByText('💡 今すぐ確認したい時は？')).toBeInTheDocument();
-    expect(screen.getByText('「今すぐ情報を取得」ボタンで最新情報をリアルタイム取得！')).toBeInTheDocument();
+    expect(screen.getByText('「今すぐ情報を取得」ボタンを押して')).toBeInTheDocument();
+    expect(screen.getByText('最新情報を取得開始！')).toBeInTheDocument();
   });
 
   it('should display CTA section', () => {
     render(<HowToUse />);
-    expect(screen.getByText('🚀 さっそく始める')).toBeInTheDocument();
+    expect(screen.getByText('🚀 さっそく始める！')).toBeInTheDocument();
   });
 
 

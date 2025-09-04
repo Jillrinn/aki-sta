@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 interface Step {
   icon: string;
   title: string;
-  description: string;
+  description: React.ReactNode;
   color: string;
 }
 
@@ -14,19 +14,34 @@ const HowToUse: React.FC = () => {
     {
       icon: '1️⃣',
       title: '練習日を登録',
-      description: '「練習日程一覧」ページへ移動し、「新規登録」から希望の日時を登録！',
+      description: (
+        <>
+          <span className="block sm:inline">「練習日程一覧」ページへ移動し、</span>
+          <span className="block sm:inline">「新規登録」から希望の日時を登録！</span>
+        </>
+      ),
       color: 'bg-brand-blue'
     },
     {
       icon: '2️⃣',
       title: '自動でチェック',
-      description: '毎日2回（朝8時・夕方5時）最新の空き状況を更新',
+      description: (
+        <>
+          <span className="block sm:inline">毎日3回（深夜1時、朝8時・夕方5時）</span>
+          <span className="block sm:inline">最新の空き状況を更新</span>
+        </>
+      ),
       color: 'bg-brand-green'
     },
     {
       icon: '3️⃣',
       title: '結果を確認',
-      description: '「空き状況一覧」ページで、登録した練習日の空き状況を確認！',
+      description: (
+        <>
+          <span className="block sm:inline">「空き状況一覧」ページで、登録した</span>
+          <span className="block sm:inline">練習日の空き状況を確認！</span>
+        </>
+      ),
       color: 'bg-brand-purple'
     }
   ];
@@ -73,9 +88,9 @@ const HowToUse: React.FC = () => {
                   <h4 className="font-bold text-gray-800 text-sm sm:text-base mb-1">
                     {step.title}
                   </h4>
-                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                  <div className="text-gray-600 text-xs sm:text-sm leading-relaxed">
                     {step.description}
-                  </p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -86,9 +101,10 @@ const HowToUse: React.FC = () => {
             <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2">
               💡 今すぐ確認したい時は？
             </h3>
-            <p className="text-xs sm:text-sm text-gray-700">
-              「今すぐ情報を取得」ボタンで最新情報をリアルタイム取得！
-            </p>
+            <div className="text-xs sm:text-sm text-gray-700">
+              <span className="block sm:inline">「今すぐ情報を取得」ボタンを押して</span>
+              <span className="block sm:inline">最新情報を取得開始！</span>
+            </div>
           </div>
 
           {/* CTA */}
