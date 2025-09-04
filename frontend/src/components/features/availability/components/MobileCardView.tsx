@@ -47,9 +47,12 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold">{facility.facilityName}</h3>
-            <div className="text-sm opacity-90">- {facility.roomName}</div>
+          <div className="flex items-start">
+            <span className="mr-2 text-base">▶</span>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold">【{facility.facilityName}】</h3>
+              <div className="text-sm opacity-90 ml-4">{facility.roomName}</div>
+            </div>
           </div>
           <span className="text-2xl">{isExpanded ? '−' : '＋'}</span>
         </div>

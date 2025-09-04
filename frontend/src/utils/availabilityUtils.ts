@@ -104,10 +104,10 @@ export const getCategoryStatus = (
     };
   }
   
-  // いずれかの施設に空きがある場合（メッセージなし、展開）
+  // いずれかの施設に空きがある場合
   return {
     status: 'has-availability',
-    message: '',
+    message: '空きあり',
     shouldExpand: true
   };
 };
