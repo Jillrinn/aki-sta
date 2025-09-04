@@ -4,10 +4,10 @@ import { useAvailabilityData } from '../../../hooks/useAvailabilityData';
 import { useTargetDates } from '../../../hooks/useTargetDates';
 import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../constants/availability';
 import {
-  LoadingState,
-  ErrorState,
-  EmptyState
-} from './states';
+  CommonLoadingState,
+  CommonErrorState,
+  CommonEmptyState
+} from '../../common/states';
 import {
   LegendSection
 } from './components';
@@ -52,11 +52,11 @@ const AvailabilityTable: React.FC = () => {
     <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
       <PageHeader />
 
-      {loading && <LoadingState />}
+      {loading && <CommonLoadingState />}
       
-      {!loading && error && <ErrorState error={error} />}
+      {!loading && error && <CommonErrorState error={error} />}
       
-      {!loading && !error && sortedDates.length === 0 && <EmptyState />}
+      {!loading && !error && sortedDates.length === 0 && <CommonEmptyState />}
       
       {!loading && !error && sortedDates.length > 0 && (
         <div className={`${isRefreshing ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-300`}>
