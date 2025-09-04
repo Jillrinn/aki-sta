@@ -74,7 +74,17 @@ class ScrapeService {
         };
       }
 
-      const dateStrings = targetDates.map(td => td.date);
+      // isbookedがfalseの日付のみをフィルタリング
+      const unbookedDates = targetDates.filter(td => !td.isbooked);
+      
+      if (unbookedDates.length === 0) {
+        return {
+          success: false,
+          message: 'スクレイピング対象の日程がありません（全て予約済みです）'
+        };
+      }
+
+      const dateStrings = unbookedDates.map(td => td.date);
       
       // Scraperのレスポンスを待つ
       const scraperResponse = await this.triggerScraperApi(dateStrings);
@@ -157,7 +167,17 @@ class ScrapeService {
         };
       }
 
-      const dateStrings = targetDates.map(td => td.date);
+      // isbookedがfalseの日付のみをフィルタリング
+      const unbookedDates = targetDates.filter(td => !td.isbooked);
+      
+      if (unbookedDates.length === 0) {
+        return {
+          success: false,
+          message: 'スクレイピング対象の日程がありません（全て予約済みです）'
+        };
+      }
+
+      const dateStrings = unbookedDates.map(td => td.date);
       
       // Scraperのレスポンスを待つ
       const scraperResponse = await this.triggerScraperApi(dateStrings);

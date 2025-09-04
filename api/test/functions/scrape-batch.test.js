@@ -125,5 +125,20 @@ describe('scrape-batch', () => {
       expect(result.jsonBody.success).toBe(true);
       expect(scrapeService.executeBatchScraping).toHaveBeenCalledWith('manual');
     });
+
+    it('should return 500 when all target dates are booked', async () => {
+      mockRequest.json.mockResolvedValue({});
+      
+      scrapeService.executeBatchScraping.mockResolvedValue({
+        success: false,
+        message: 'スクレイピング対象の日程がありません（全て予約済みです）'
+      });
+
+      const result = await scrapeBatchHandler(mockRequest, mockContext);
+
+      expect(result.status).toBe(500);
+      expect(result.jsonBody.success).toBe(false);
+      expect(result.jsonBody.message).toBe('スクレイピング対象の日程がありません（全て予約済みです）');
+    });
   });
 });
