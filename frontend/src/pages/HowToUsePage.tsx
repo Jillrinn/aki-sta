@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import HowToUse from '../components/pages/HowToUse';
 
 const HowToUsePage: React.FC = () => {
@@ -16,15 +15,6 @@ const HowToUsePage: React.FC = () => {
         </div>
 
         <HowToUse />
-
-        <div className="flex justify-center mt-6">
-          <Link
-            to="/target-dates"
-            className="px-6 py-3 bg-brand-green text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg font-bold text-center"
-          >
-            練習日程一覧 →
-          </Link>
-        </div>
       </div>
     </div>
   );
