@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import { AvailabilityResponse, AllAvailabilityResponse } from '../types/availability';
 import { 
   TargetDatesResponse, 
@@ -10,11 +10,74 @@ import { ScraperResponse, ScrapeBatchResponse } from '../types/scraper';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
+// リトライ設定を拡張したAxiosRequestConfig
+interface RetryConfig extends AxiosRequestConfig {
+  __retryCount?: number;
+}
+
+// axiosインスタンスの作成
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000, // 30秒
+});
+
+// リトライ対象のエラーかどうか判定
+const shouldRetry = (error: AxiosError): boolean => {
+  // ネットワークエラー
+  if (!error.response) {
+    return true;
+  }
+  
+  // 5xxサーバーエラー
+  if (error.response.status >= 500 && error.response.status < 600) {
+    return true;
+  }
+  
+  // タイムアウトエラー
+  if (error.code === 'ECONNABORTED') {
+    return true;
+  }
+  
+  return false;
+};
+
+// 遅延用のヘルパー関数
+const delay = (ms: number): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+// リトライインターセプターの設定
+axiosInstance.interceptors.response.use(
+  response => response,
+  async error => {
+    const config = error.config as RetryConfig;
+    
+    // 設定がない、GETメソッドではない、またはすでにリトライ済みの場合はエラーを返す
+    if (!config || config.method?.toUpperCase() !== 'GET' || (config.__retryCount || 0) >= 1) {
+      return Promise.reject(error);
+    }
+    
+    // リトライ対象のエラーか確認（GETメソッドのみ）
+    if (shouldRetry(error)) {
+      config.__retryCount = (config.__retryCount || 0) + 1;
+      console.log(`Retrying GET request... (attempt ${config.__retryCount})`);
+      
+      // 1秒待機
+      await delay(1000);
+      
+      // リトライ実行
+      return axiosInstance(config);
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 export const availabilityApi = {
   async getAvailability(date: string): Promise<AvailabilityResponse> {
     try {
-      const response = await axios.get<AvailabilityResponse>(
-        `${API_BASE_URL}/availability/${date}`
+      const response = await axiosInstance.get<AvailabilityResponse>(
+        `/availability/${date}`
       );
       return response.data;
     } catch (error) {
@@ -25,8 +88,8 @@ export const availabilityApi = {
   
   async getAllAvailability(): Promise<AllAvailabilityResponse> {
     try {
-      const response = await axios.get<AllAvailabilityResponse>(
-        `${API_BASE_URL}/availability`
+      const response = await axiosInstance.get<AllAvailabilityResponse>(
+        `/availability`
       );
       return response.data;
     } catch (error) {
@@ -39,8 +102,8 @@ export const availabilityApi = {
 export const targetDatesApi = {
   async getAllTargetDates(): Promise<TargetDatesResponse> {
     try {
-      const response = await axios.get<TargetDatesResponse>(
-        `${API_BASE_URL}/target-dates`
+      const response = await axiosInstance.get<TargetDatesResponse>(
+        `/target-dates`
       );
       return response.data;
     } catch (error) {
@@ -51,8 +114,8 @@ export const targetDatesApi = {
   
   async createTargetDate(data: CreateTargetDateRequest): Promise<CreateTargetDateResponse> {
     try {
-      const response = await axios.post<CreateTargetDateResponse>(
-        `${API_BASE_URL}/target-dates`,
+      const response = await axiosInstance.post<CreateTargetDateResponse>(
+        `/target-dates`,
         data
       );
       return response.data;
@@ -64,8 +127,8 @@ export const targetDatesApi = {
   
   async deleteTargetDate(id: string): Promise<DeleteTargetDateResponse> {
     try {
-      const response = await axios.delete<DeleteTargetDateResponse>(
-        `${API_BASE_URL}/target-dates/${id}`
+      const response = await axiosInstance.delete<DeleteTargetDateResponse>(
+        `/target-dates/${id}`
       );
       return response.data;
     } catch (error) {
@@ -78,8 +141,8 @@ export const targetDatesApi = {
 export const scraperApi = {
   async triggerScraping(): Promise<ScraperResponse> {
     try {
-      const response = await axios.post<ScraperResponse>(
-        `${API_BASE_URL}/scrape`
+      const response = await axiosInstance.post<ScraperResponse>(
+        `/scrape`
       );
       return response.data;
     } catch (error) {
@@ -94,8 +157,8 @@ export const scraperApi = {
 
   async triggerBatchScraping(): Promise<ScrapeBatchResponse> {
     try {
-      const response = await axios.post<ScrapeBatchResponse>(
-        `${API_BASE_URL}/scrape/batch`,
+      const response = await axiosInstance.post<ScrapeBatchResponse>(
+        `/scrape/batch`,
         { includeAllTargetDates: true }
       );
       return response.data;
@@ -109,3 +172,6 @@ export const scraperApi = {
     }
   }
 };
+
+// テスト用にaxiosインスタンスをエクスポート
+export { axiosInstance };
