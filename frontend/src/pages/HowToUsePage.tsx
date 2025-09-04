@@ -17,13 +17,7 @@ const HowToUsePage: React.FC = () => {
 
         <HowToUse />
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
-          <Link
-            to="/"
-            className="px-6 py-3 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-center"
-          >
-            ← トップページに戻る
-          </Link>
+        <div className="flex justify-center mt-6">
           <Link
             to="/target-dates"
             className="px-6 py-3 bg-brand-green text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg font-bold text-center"

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface Step {
   icon: string;
@@ -92,9 +93,9 @@ const HowToUse: React.FC = () => {
 
           {/* CTA */}
           <div className="text-center">
-            <p className="text-base sm:text-lg font-bold text-brand-blue">
+            <Link to="/" className="text-base sm:text-lg font-bold text-brand-blue hover:text-blue-600 transition-colors inline-block">
               🚀 さっそく始める
-            </p>
+            </Link>
           </div>
         </div>
       </div>

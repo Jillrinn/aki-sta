@@ -381,6 +381,7 @@ class TestMeguroScraper:
             mock_evening_cell     # 夜間
         ]
         
+        # 行にセルを設定
         mock_row.locator.return_value.all.return_value = mock_cells
         
         # テーブルヘッダーのモック
@@ -399,12 +400,12 @@ class TestMeguroScraper:
         
         mock_headers = [mock_header1, mock_header2, mock_header3, mock_header4, mock_header5, mock_header6]
         
-        # 親テーブルのモック
+        # 親テーブルのモック（行から親要素を辿る）
         mock_parent_table = MagicMock()
         mock_parent_table.locator.return_value.all.return_value = mock_headers
         
-        # 行の親要素設定
-        mock_row.locator.return_value = mock_parent_table
+        # 行の親要素設定（tr -> tbody -> table）
+        mock_row.locator.side_effect = lambda sel: mock_parent_table if "../.." in sel else MagicMock(all=lambda: mock_cells if "td" in sel else [])
         
         # ページのモック設定
         mock_page.locator.return_value.all.return_value = [mock_row]
