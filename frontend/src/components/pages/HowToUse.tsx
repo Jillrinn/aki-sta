@@ -80,13 +80,13 @@ const HowToUse: React.FC = () => {
             ))}
           </div>
 
-          {/* 今すぐチェックセクション */}
+          {/* 今すぐ情報を取得セクション */}
           <div className="p-3 sm:p-4 bg-orange-50 rounded-lg border border-orange-200 mb-4 sm:mb-6">
             <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2">
               💡 今すぐ確認したい時は？
             </h3>
             <p className="text-xs sm:text-sm text-gray-700">
-              「今すぐチェック」ボタンで最新情報をリアルタイム取得！
+              「今すぐ情報を取得」ボタンで最新情報をリアルタイム取得！
             </p>
           </div>
 

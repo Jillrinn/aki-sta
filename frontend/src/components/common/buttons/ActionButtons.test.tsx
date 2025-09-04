@@ -29,14 +29,14 @@ describe('ActionButtons', () => {
   test('renders manual fetch button only', () => {
     render(<ActionButtons />);
     
-    expect(screen.getByLabelText('今すぐ情報を集める')).toBeInTheDocument();
+    expect(screen.getByLabelText('今すぐ情報を取得')).toBeInTheDocument();
     expect(screen.queryByLabelText('新規登録')).not.toBeInTheDocument();
   });
 
   test('shows confirmation modal when button is clicked', () => {
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
     
     expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('ActionButtons', () => {
   test('closes confirmation modal when cancel is clicked', () => {
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
     
     expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe('ActionButtons', () => {
     render(<ActionButtons />);
     
     // ボタンをクリック
-    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
     
     // 確認モーダルで実行をクリック
@@ -100,7 +100,7 @@ describe('ActionButtons', () => {
 
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
     
     const confirmButton = screen.getByText('実行する');
@@ -119,7 +119,7 @@ describe('ActionButtons', () => {
 
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
     
     const confirmButton = screen.getByText('実行する');
@@ -135,7 +135,7 @@ describe('ActionButtons', () => {
   test('button has correct styling', () => {
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     expect(fetchButton).toHaveClass('bg-brand-orange-dark');
     expect(fetchButton).toHaveClass('text-white');
   });
@@ -143,7 +143,7 @@ describe('ActionButtons', () => {
   test('button has proper sizing', () => {
     render(<ActionButtons />);
     
-    const fetchButton = screen.getByLabelText('今すぐ情報を集める');
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     expect(fetchButton).toHaveClass('px-4');
     expect(fetchButton).toHaveClass('py-2');
   });

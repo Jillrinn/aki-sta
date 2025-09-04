@@ -88,9 +88,12 @@ jobs:
     - name: Create .env.docker for testing
       run: |
         cat > scraper/.env.docker <<EOF
-        COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT }}
-        COSMOS_KEY=${{ secrets.COSMOS_KEY }}
-        COSMOS_DATABASE=${{ secrets.COSMOS_DATABASE }}
+        # テスト用のCosmos DB接続情報（存在しない場合は本番用にフォールバック）
+        COSMOS_ENDPOINT=${{ secrets.COSMOS_ENDPOINT_TEST || secrets.COSMOS_ENDPOINT }}
+        COSMOS_KEY=${{ secrets.COSMOS_KEY_TEST || secrets.COSMOS_KEY }}
+        COSMOS_DATABASE=${{ secrets.COSMOS_DATABASE_TEST || secrets.COSMOS_DATABASE }}
+        # テスト時はRate Limitsを無効化して409エラーを回避
+        DISABLE_RATE_LIMITS=true
         DEBUG=true
         PYTHONUNBUFFERED=1
         PLAYWRIGHT_BROWSERS_PATH=/ms-playwright

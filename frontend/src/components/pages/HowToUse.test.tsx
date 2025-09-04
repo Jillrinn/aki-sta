@@ -35,7 +35,7 @@ describe('HowToUse', () => {
   it('should display instant check section', () => {
     render(<HowToUse />);
     expect(screen.getByText('💡 今すぐ確認したい時は？')).toBeInTheDocument();
-    expect(screen.getByText('「今すぐチェック」ボタンで最新情報をリアルタイム取得！')).toBeInTheDocument();
+    expect(screen.getByText('「今すぐ情報を取得」ボタンで最新情報をリアルタイム取得！')).toBeInTheDocument();
   });
 
   it('should display CTA section', () => {

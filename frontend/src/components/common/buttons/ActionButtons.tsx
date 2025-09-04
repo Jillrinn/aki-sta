@@ -50,10 +50,10 @@ const ActionButtons: React.FC = () => {
       <button
         onClick={handleManualFetchClick}
         className="px-4 py-2 bg-brand-orange-dark text-white rounded-lg hover:bg-brand-orange transition-colors shadow-lg font-bold text-sm sm:text-base"
-        aria-label="今すぐ情報を集める"
+        aria-label="今すぐ情報を取得"
         disabled={isLoading}
       >
-        今すぐ情報を集める
+        今すぐ情報を取得
       </button>
 
       <ConfirmationModal
