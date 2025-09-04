@@ -249,6 +249,7 @@ class TestMeguroScraper:
         
         # カレンダーテーブルのモック
         mock_table = MagicMock()
+        mock_table.get_attribute.return_value = "calendar horizon toggle"  # クラス属性
         
         # ヘッダーセルのモック（日付列を含む）
         mock_header1 = MagicMock()
@@ -309,7 +310,7 @@ class TestMeguroScraper:
         # ページロケーターのモック設定
         def locator_side_effect(selector):
             mock_locator = MagicMock()
-            if "table.calendar" in selector:
+            if selector == "table":  # tableタグ全般を探している
                 mock_locator.all.return_value = [mock_table]
             elif "a:has-text('次へ進む')" in selector:
                 mock_locator.first = mock_next_button
@@ -349,8 +350,8 @@ class TestMeguroScraper:
         
         # 最初のセル（部屋名）のモック - JavaScriptの評価をシミュレート
         mock_first_cell = MagicMock()
-        # evaluate メソッドは JavaScript を評価して部屋名を返す
-        mock_first_cell.evaluate.return_value = "別館B101（音楽室）"
+        # evaluate メソッドは JavaScript を評価して部屋名を返す（正規化された形で返す）
+        mock_first_cell.evaluate.return_value = "別館B101（音楽室）"  # spanタグ除外後のテキスト
         mock_first_cell.text_content.return_value = "別館B101（音楽室）"
         
         # 定員セルのモック

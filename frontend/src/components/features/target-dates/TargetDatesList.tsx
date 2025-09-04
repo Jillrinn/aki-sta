@@ -132,7 +132,13 @@ const TargetDatesList: React.FC = () => {
         </h1>
         <p className="text-center text-gray-600 mb-4">練習日程一覧</p>
         
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between mb-4">
+          <Link
+            to="/"
+            className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base inline-block"
+          >
+            ← トップページに戻る
+          </Link>
           <button
             onClick={handleRegisterClick}
             className="px-4 py-2 bg-brand-green-dark text-white rounded-lg hover:bg-brand-green transition-colors shadow-lg font-bold text-sm sm:text-base"
@@ -201,15 +207,6 @@ const TargetDatesList: React.FC = () => {
         onClose={handleModalClose}
       />
       
-      {/* 左下固定の戻るボタン */}
-      <div className="fixed bottom-20 left-12 sm:left-20 z-40">
-        <Link
-          to="/"
-          className="px-6 py-3 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base inline-block"
-        >
-          ← 空き状況に戻る
-        </Link>
-      </div>
     </div>
   );
 };
