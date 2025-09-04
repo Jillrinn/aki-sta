@@ -18,14 +18,16 @@ describe('useTargetDates', () => {
     {
       id: '1',
       date: '2025-01-15',
-      preferredTimeSlots: ['morning', 'afternoon'],
-      description: 'Test date 1',
+      label: 'バンド練習',
+      isbooked: false,
+      updatedAt: '2025-01-10T10:00:00Z'
     },
     {
       id: '2',
       date: '2025-01-20',
-      preferredTimeSlots: ['evening'],
-      description: 'Test date 2',
+      label: 'リハーサル',
+      isbooked: true,
+      updatedAt: '2025-01-10T11:00:00Z'
     },
   ];
 

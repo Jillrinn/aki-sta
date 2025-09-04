@@ -12,7 +12,7 @@ const AppTitle: React.FC<AppTitleProps> = ({
 }) => {
   const titleContent = (
     <>
-      <span className="text-2xl sm:text-3xl text-gray-800 font-bold">
+      <span className="text-xl sm:text-2xl text-gray-800 font-bold">
         空きスタサーチくん
       </span>
       {showLogo && (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import AppTitle from '../../components/common/AppTitle';
 
 interface Step {
   icon: string;
@@ -7,8 +8,6 @@ interface Step {
   description: React.ReactNode;
   color: string;
 }
-
-import AppTitle from '../../components/common/AppTitle';
 
 const HowToUsePage: React.FC = () => {
 
