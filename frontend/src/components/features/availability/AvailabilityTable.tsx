@@ -84,7 +84,7 @@ const AvailabilityTable: React.FC = () => {
         </Link>
         <Link
           to="/target-dates"
-          className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base text-center"
+          className="px-4 py-2 bg-brand-green text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg font-bold text-sm sm:text-base text-center"
         >
           📅 練習日程一覧
         </Link>
