@@ -27,13 +27,15 @@ jobs:
     
     - name: Run tests in Docker
       run: |
-        docker run --rm aki-sta-scraper:test python -m pytest tests/ -v
+        # 結合テストも含めて全て実行（DISABLE_RATE_LIMITSを設定）
+        docker run --rm -e DISABLE_RATE_LIMITS=true aki-sta-scraper:test python -m pytest tests/ -v --tb=short
       working-directory: ./scraper
+      timeout-minutes: 10
     
     - name: Check coverage threshold
       run: |
-        # Run tests with coverage and extract percentage
-        docker run --rm aki-sta-scraper:test python -m pytest tests/ --cov=src --cov-report=term 2>&1 | tee coverage.txt
+        # Run tests with coverage and extract percentage (DISABLE_RATE_LIMITSを設定)
+        docker run --rm -e DISABLE_RATE_LIMITS=true aki-sta-scraper:test python -m pytest tests/ --cov=src --cov-report=term 2>&1 | tee coverage.txt
         COVERAGE=$(grep "TOTAL" coverage.txt | awk '{print $4}' | sed 's/%//')
         echo "Scraper test coverage: $COVERAGE%"
         

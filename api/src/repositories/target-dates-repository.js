@@ -82,6 +82,7 @@ module.exports = {
           id: date,
           date,
           label,
+          isbooked: false,
           updatedAt: new Date().toISOString()
         };
         

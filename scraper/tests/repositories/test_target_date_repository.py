@@ -47,9 +47,9 @@ class TestTargetDateRepository:
         # モックセットアップ
         mock_container = Mock()
         mock_container.query_items.return_value = [
-            {'date': '2025-11-15', 'active': True, 'priority': 1},
-            {'date': '2025-11-16', 'active': True, 'priority': 2},
-            {'date': '2025-11-17', 'active': True, 'priority': 3}
+            {'date': '2025-11-15', 'active': True, 'priority': 1, 'isbooked': False},
+            {'date': '2025-11-16', 'active': True, 'priority': 2, 'isbooked': False},
+            {'date': '2025-11-17', 'active': True, 'priority': 3, 'isbooked': False}
         ]
         
         mock_database = Mock()

@@ -89,6 +89,7 @@ class TargetDateRepository:
                 'date': date,
                 'priority': priority,
                 'active': True,
+                'isbooked': False,
                 'createdAt': datetime.utcnow().isoformat() + 'Z'
             }
             

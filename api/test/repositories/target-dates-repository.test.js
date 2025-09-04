@@ -35,9 +35,9 @@ describe('target-dates-repository', () => {
   describe('getAllTargetDates', () => {
     it('should return all target dates sorted by date', async () => {
       const mockData = [
-        { id: '2025-11-20', date: '2025-11-20', label: 'イベント2', updatedAt: '2025-08-19T10:00:00Z' },
-        { id: '2025-11-15', date: '2025-11-15', label: '本番ライブ', updatedAt: '2025-08-19T10:00:00Z' },
-        { id: '2025-11-18', date: '2025-11-18', label: 'イベント1', updatedAt: '2025-08-19T10:00:00Z' }
+        { id: '2025-11-20', date: '2025-11-20', label: 'イベント2', isbooked: false, updatedAt: '2025-08-19T10:00:00Z' },
+        { id: '2025-11-15', date: '2025-11-15', label: '本番ライブ', isbooked: false, updatedAt: '2025-08-19T10:00:00Z' },
+        { id: '2025-11-18', date: '2025-11-18', label: 'イベント1', isbooked: false, updatedAt: '2025-08-19T10:00:00Z' }
       ];
 
       mockItems.readAll.mockReturnValue({
@@ -130,6 +130,7 @@ describe('target-dates-repository', () => {
         id: mockDate,
         date: mockDate,
         label: mockLabel,
+        isbooked: false,
         updatedAt: '2025-08-19T10:00:00Z'
       };
 
@@ -144,6 +145,7 @@ describe('target-dates-repository', () => {
           id: mockDate,
           date: mockDate,
           label: mockLabel,
+          isbooked: false,
           updatedAt: expect.any(String)
         })
       );

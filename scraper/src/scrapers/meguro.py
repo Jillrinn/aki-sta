@@ -1540,6 +1540,7 @@ class MeguroScraper(BaseScraper):
                                 "centerName": "目黒区民センター",
                                 "facilityName": facility_name,
                                 "roomName": room_name,
+                                "date": date,
                                 "timeSlots": validated_slots,
                                 "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
                             })

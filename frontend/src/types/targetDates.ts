@@ -2,6 +2,7 @@ export interface TargetDate {
   id: string;
   date: string;
   label: string;
+  isbooked: boolean;
   updatedAt: string;
 }
 
@@ -18,6 +19,7 @@ export interface CreateTargetDateResponse {
   id: string;
   date: string;
   label: string;
+  isbooked: boolean;
   updatedAt: string;
 }
 
