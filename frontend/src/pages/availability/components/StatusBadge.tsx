@@ -4,7 +4,7 @@ import {
   STATUS_SYMBOLS, 
   STATUS_COLORS, 
   STATUS_LABELS 
-} from '../../../../constants/availability';
+} from '../../../constants/availability';
 
 interface StatusBadgeProps {
   status: string;

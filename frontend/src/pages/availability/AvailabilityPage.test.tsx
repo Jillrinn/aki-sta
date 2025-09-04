@@ -1,13 +1,13 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import AvailabilityTable from './AvailabilityTable';
-import { availabilityApi } from '../../../services/api';
+import AvailabilityPage from './AvailabilityPage';
+import { availabilityApi } from '../../services/api';
 
-jest.mock('../../../services/api');
+jest.mock('../../services/api');
 
 // useTargetDatesフックをモック
-jest.mock('../../../hooks/useTargetDates', () => ({
+jest.mock('../../hooks/useTargetDates', () => ({
   useTargetDates: () => ({
     data: [],
     loading: false,
@@ -17,7 +17,7 @@ jest.mock('../../../hooks/useTargetDates', () => ({
   })
 }));
 
-describe('AvailabilityTable', () => {
+describe('AvailabilityPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset window size to desktop by default
@@ -33,7 +33,7 @@ describe('AvailabilityTable', () => {
       new Promise(() => {})
     );
     
-    render(<AvailabilityTable />);
+    render(<AvailabilityPage />);
     expect(screen.getByText('データを読み込み中...')).toBeInTheDocument();
   });
 
@@ -84,7 +84,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -158,7 +158,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -190,7 +190,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -218,7 +218,7 @@ describe('AvailabilityTable', () => {
     );
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -249,7 +249,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockRejectedValue(httpError);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -273,7 +273,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockRejectedValue(httpError);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -294,7 +294,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockRejectedValue(networkError);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -310,7 +310,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -354,7 +354,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -381,7 +381,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockRejectedValue(httpError);
 
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
 
     await waitFor(() => {
@@ -406,7 +406,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(invalidData);
     
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
     
     await waitFor(() => {
@@ -433,7 +433,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(incompleteData);
     
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
     
     await waitFor(() => {
@@ -461,7 +461,7 @@ describe('AvailabilityTable', () => {
     (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(invalidTimeSlots);
     
     await act(async () => {
-      render(<AvailabilityTable />);
+      render(<AvailabilityPage />);
     });
     
     await waitFor(() => {
@@ -508,7 +508,7 @@ describe('AvailabilityTable', () => {
 
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
-      const { container } = render(<AvailabilityTable />);
+      const { container } = render(<AvailabilityPage />);
 
       await waitFor(() => {
         // First ensure the content has loaded
@@ -560,7 +560,7 @@ describe('AvailabilityTable', () => {
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
       await act(async () => {
-        render(<AvailabilityTable />);
+        render(<AvailabilityPage />);
       });
 
       await waitFor(() => {
@@ -602,7 +602,7 @@ describe('AvailabilityTable', () => {
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
       await act(async () => {
-        render(<AvailabilityTable />);
+        render(<AvailabilityPage />);
       });
 
       // Initially should show table
@@ -652,7 +652,7 @@ describe('AvailabilityTable', () => {
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
       await act(async () => {
-        render(<AvailabilityTable />);
+        render(<AvailabilityPage />);
       });
 
       // Initially should show mobile cards
@@ -713,7 +713,7 @@ describe('AvailabilityTable', () => {
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
       await act(async () => {
-        render(<AvailabilityTable />);
+        render(<AvailabilityPage />);
       });
 
       await waitFor(() => {
@@ -753,7 +753,7 @@ describe('AvailabilityTable', () => {
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
       await act(async () => {
-        render(<AvailabilityTable />);
+        render(<AvailabilityPage />);
       });
 
       await waitFor(() => {
@@ -787,7 +787,7 @@ describe('AvailabilityTable', () => {
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
       await act(async () => {
-        render(<AvailabilityTable />);
+        render(<AvailabilityPage />);
       });
 
       await waitFor(() => {
@@ -823,7 +823,7 @@ describe('AvailabilityTable', () => {
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
       await act(async () => {
-        render(<AvailabilityTable />);
+        render(<AvailabilityPage />);
       });
 
       await waitFor(() => {
@@ -852,7 +852,7 @@ describe('AvailabilityTable', () => {
 
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
-      const { unmount } = render(<AvailabilityTable />);
+      const { unmount } = render(<AvailabilityPage />);
 
       await waitFor(() => {
         expect(screen.getByText('空きスタサーチくん')).toBeInTheDocument();

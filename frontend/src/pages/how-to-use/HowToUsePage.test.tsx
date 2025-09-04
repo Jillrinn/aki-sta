@@ -1,24 +1,24 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import HowToUse from './HowToUse';
+import HowToUsePage from './HowToUsePage';
 
-describe('HowToUse', () => {
+describe('HowToUsePage', () => {
   it('should render the component with title', () => {
-    render(<HowToUse />);
+    render(<HowToUsePage />);
     expect(screen.getByText('🎵 ようこそ！ 🎵')).toBeInTheDocument();
     expect(screen.getByText('音楽スタジオの空き状況をかんたんチェック！')).toBeInTheDocument();
   });
 
   it('should display facilities section', () => {
-    render(<HowToUse />);
+    render(<HowToUsePage />);
     expect(screen.getByText('📍 対応施設（順次拡大中！）')).toBeInTheDocument();
     expect(screen.getByText('・あんさんぶるスタジオ')).toBeInTheDocument();
     expect(screen.getByText('・目黒区民センター')).toBeInTheDocument();
   });
 
   it('should display all steps', () => {
-    render(<HowToUse />);
+    render(<HowToUsePage />);
     
     expect(screen.getByText('【使い方】')).toBeInTheDocument();
     
@@ -36,20 +36,20 @@ describe('HowToUse', () => {
   });
 
   it('should display instant check section', () => {
-    render(<HowToUse />);
+    render(<HowToUsePage />);
     expect(screen.getByText('今すぐ確認したい時は？')).toBeInTheDocument();
     expect(screen.getByText('「今すぐ情報を取得」ボタンを押して')).toBeInTheDocument();
     expect(screen.getByText('最新情報を取得開始！')).toBeInTheDocument();
   });
 
   it('should display CTA section', () => {
-    render(<HowToUse />);
+    render(<HowToUsePage />);
     expect(screen.getByText('🚀 さっそく始める！')).toBeInTheDocument();
   });
 
 
   it('should display all step icons', () => {
-    render(<HowToUse />);
+    render(<HowToUsePage />);
     
     expect(screen.getByText('1️⃣')).toBeInTheDocument();
     expect(screen.getByText('2️⃣')).toBeInTheDocument();

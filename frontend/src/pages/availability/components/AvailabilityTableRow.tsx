@@ -1,8 +1,8 @@
 import React from 'react';
-import { Facility } from '../../../../types/availability';
+import { Facility } from '../../../types/availability';
 import StatusBadge from './StatusBadge';
-import { TIME_SLOTS } from '../../../../constants/availability';
-import { openBookingUrl } from '../../../../utils/availabilityUtils';
+import { TIME_SLOTS } from '../../../constants/availability';
+import { openBookingUrl } from '../../../utils/availabilityUtils';
 
 interface AvailabilityTableRowProps {
   facility: Facility;

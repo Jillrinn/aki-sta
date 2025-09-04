@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Modal from 'react-modal';
-import AvailabilityTable from './components/features/availability/AvailabilityTable';
-import TargetDatesList from './components/features/target-dates/TargetDatesList';
-import HowToUsePage from './pages/HowToUsePage';
+import AvailabilityPage from './pages/availability/AvailabilityPage';
+import TargetDatesPage from './pages/target-dates/TargetDatesPage';
+import HowToUsePage from './pages/how-to-use/HowToUsePage';
 
 function App() {
   useEffect(() => {
@@ -14,8 +14,8 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-5">
         <Routes>
-          <Route path="/" element={<AvailabilityTable />} />
-          <Route path="/target-dates" element={<TargetDatesList />} />
+          <Route path="/" element={<AvailabilityPage />} />
+          <Route path="/target-dates" element={<TargetDatesPage />} />
           <Route path="/how-to-use" element={<HowToUsePage />} />
         </Routes>
       </div>

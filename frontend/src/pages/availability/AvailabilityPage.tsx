@@ -1,21 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Facility } from '../../../types/availability';
-import { useAvailabilityData } from '../../../hooks/useAvailabilityData';
-import { useTargetDates } from '../../../hooks/useTargetDates';
-import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../constants/availability';
+import { Facility } from '../../types/availability';
+import { useAvailabilityData } from '../../hooks/useAvailabilityData';
+import { useTargetDates } from '../../hooks/useTargetDates';
+import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../constants/availability';
 import {
   CommonLoadingState,
   CommonErrorState,
   CommonEmptyState
-} from '../../common/states';
-import {
-  LegendSection
-} from './components';
-import CollapsibleCategorySection from './CollapsibleCategorySection';
+} from '../../components/common/states';
+import LegendSection from './components/LegendSection';
+import CollapsibleCategorySection from './components/CollapsibleCategorySection';
 import PageHeader from './components/PageHeader';
 import PageFooter from './components/PageFooter';
 
-const AvailabilityTable: React.FC = () => {
+const AvailabilityPage: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
   const { data: targetDates } = useTargetDates();
   const [isMobile, setIsMobile] = useState(false);
@@ -167,4 +165,4 @@ const AvailabilityTable: React.FC = () => {
   );
 };
 
-export default AvailabilityTable;
+export default AvailabilityPage;

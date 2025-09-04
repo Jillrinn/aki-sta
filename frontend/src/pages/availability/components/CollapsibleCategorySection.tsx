@@ -4,7 +4,8 @@ import {
   getCategoryStatus
 } from '../../../utils/availabilityUtils';
 import { formatUpdateTime } from '../../../utils/dateFormatter';
-import { AvailabilityTableRow, MobileCardView } from './components';
+import AvailabilityTableRow from './AvailabilityTableRow';
+import MobileCardView from './MobileCardView';
 
 interface CollapsibleCategorySectionProps {
   centerName: string;

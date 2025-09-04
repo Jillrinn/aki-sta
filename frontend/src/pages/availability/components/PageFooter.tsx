@@ -1,6 +1,6 @@
 import React from 'react';
-import RefreshButton from '../../../common/buttons/RefreshButton';
-import ActionButtons from '../../../common/buttons/ActionButtons';
+import RefreshButton from '../../../components/common/buttons/RefreshButton';
+import ActionButtons from '../../../components/common/buttons/ActionButtons';
 
 interface PageFooterProps {
   onRefresh: () => void;

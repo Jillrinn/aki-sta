@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import AvailabilityTableRow from './AvailabilityTableRow';
-import { Facility } from '../../../../types/availability';
-import * as availabilityUtils from '../../../../utils/availabilityUtils';
+import { Facility } from '../../../types/availability';
+import * as availabilityUtils from '../../../utils/availabilityUtils';
 
 // Mock the utility function
-jest.mock('../../../../utils/availabilityUtils', () => ({
+jest.mock('../../../utils/availabilityUtils', () => ({
   openBookingUrl: jest.fn()
 }));
 

@@ -2,11 +2,11 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MobileCardView from './MobileCardView';
-import { Facility } from '../../../../types/availability';
-import * as availabilityUtils from '../../../../utils/availabilityUtils';
+import { Facility } from '../../../types/availability';
+import * as availabilityUtils from '../../../utils/availabilityUtils';
 
 // Mock the utility function
-jest.mock('../../../../utils/availabilityUtils', () => ({
+jest.mock('../../../utils/availabilityUtils', () => ({
   openBookingUrl: jest.fn()
 }));
 

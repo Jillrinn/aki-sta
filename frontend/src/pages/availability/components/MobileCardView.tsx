@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Facility } from '../../../../types/availability';
-import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../../constants/availability';
+import { Facility } from '../../../types/availability';
+import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../constants/availability';
 import StatusBadge from './StatusBadge';
-import { openBookingUrl } from '../../../../utils/availabilityUtils';
+import { openBookingUrl } from '../../../utils/availabilityUtils';
 
 interface MobileCardViewProps {
   facility: Facility;

@@ -8,7 +8,9 @@ interface Step {
   color: string;
 }
 
-const HowToUse: React.FC = () => {
+import AppTitle from '../../components/common/AppTitle';
+
+const HowToUsePage: React.FC = () => {
 
   const steps: Step[] = [
     {
@@ -47,8 +49,13 @@ const HowToUse: React.FC = () => {
   ];
 
   return (
-    <div className="w-full max-w-full bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-      <div className="p-3 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-5">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <AppTitle isLink={true} showLogo={true} />
+        </div>
+        <div className="w-full max-w-full bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+          <div className="p-3 sm:p-6">
           {/* ヘッダー部分 */}
           <div className="text-center mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
@@ -120,10 +127,12 @@ const HowToUse: React.FC = () => {
               🚀 さっそく始める！
             </Link>
           </div>
+          </div>
         </div>
       </div>
     </div>
+  </div>
   );
 };
 
-export default HowToUse;
+export default HowToUsePage;

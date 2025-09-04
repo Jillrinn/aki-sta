@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useTargetDates } from '../../../hooks/useTargetDates';
-import { TargetDate } from '../../../types/targetDates';
-import TargetDateModal from './TargetDateModal';
-import { CommonLoadingState, CommonErrorState, CommonEmptyState } from '../../common/states';
-import AppTitle from '../../common/AppTitle';
+import { useTargetDates } from '../../hooks/useTargetDates';
+import { TargetDate } from '../../types/targetDates';
+import TargetDateModal from './components/TargetDateModal';
+import { CommonLoadingState, CommonErrorState, CommonEmptyState } from '../../components/common/states';
+import AppTitle from '../../components/common/AppTitle';
 
 const DeleteConfirmModal: React.FC<{
   isOpen: boolean;
@@ -77,7 +77,7 @@ const TargetDatesHeader: React.FC<{ onRegisterClick: () => void }> = ({ onRegist
   );
 };
 
-const TargetDatesList: React.FC = () => {
+const TargetDatesPage: React.FC = () => {
   const { data, loading, error, deleteTargetDate, refetch } = useTargetDates();
   const [deleteTarget, setDeleteTarget] = useState<TargetDate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -211,4 +211,4 @@ const TargetDatesList: React.FC = () => {
   );
 };
 
-export default TargetDatesList;
+export default TargetDatesPage;
