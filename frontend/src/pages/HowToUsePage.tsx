@@ -22,7 +22,7 @@ const HowToUsePage: React.FC = () => {
             to="/target-dates"
             className="px-6 py-3 bg-brand-green text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg font-bold text-center"
           >
-            練習日程一覧を見る →
+            練習日程一覧 →
           </Link>
         </div>
       </div>

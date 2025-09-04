@@ -23,13 +23,13 @@ describe('HowToUse', () => {
     expect(screen.getByText('【使い方】')).toBeInTheDocument();
     
     expect(screen.getByText('練習日を登録')).toBeInTheDocument();
-    expect(screen.getByText('希望の日時を選ぶだけ（複数登録OK）')).toBeInTheDocument();
+    expect(screen.getByText('「練習日程一覧」ページへ移動し、「新規登録」から希望の日時を登録！')).toBeInTheDocument();
     
     expect(screen.getByText('自動でチェック')).toBeInTheDocument();
     expect(screen.getByText('毎日2回（朝8時・夕方5時）最新の空き状況を更新')).toBeInTheDocument();
     
     expect(screen.getByText('結果を確認')).toBeInTheDocument();
-    expect(screen.getByText('登録した日の空き状況がひと目でわかる！')).toBeInTheDocument();
+    expect(screen.getByText('「空き状況一覧」ページで、登録した練習日の空き状況を確認！')).toBeInTheDocument();
   });
 
   it('should display instant check section', () => {

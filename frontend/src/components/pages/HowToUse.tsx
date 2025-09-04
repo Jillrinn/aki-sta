@@ -14,7 +14,7 @@ const HowToUse: React.FC = () => {
     {
       icon: '1️⃣',
       title: '練習日を登録',
-      description: '希望の日時を選ぶだけ（複数登録OK）',
+      description: '「練習日程一覧」ページへ移動し、「新規登録」から希望の日時を登録！',
       color: 'bg-brand-blue'
     },
     {
@@ -26,7 +26,7 @@ const HowToUse: React.FC = () => {
     {
       icon: '3️⃣',
       title: '結果を確認',
-      description: '登録した日の空き状況がひと目でわかる！',
+      description: '「空き状況一覧」ページで、登録した練習日の空き状況を確認！',
       color: 'bg-brand-purple'
     }
   ];
@@ -93,7 +93,7 @@ const HowToUse: React.FC = () => {
 
           {/* CTA */}
           <div className="text-center">
-            <Link to="/" className="text-base sm:text-lg font-bold text-brand-blue hover:text-blue-600 transition-colors inline-block">
+            <Link to="/" className="text-base sm:text-lg font-bold text-brand-blue hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors inline-block">
               🚀 さっそく始める
             </Link>
           </div>

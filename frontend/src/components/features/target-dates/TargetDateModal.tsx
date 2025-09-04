@@ -102,7 +102,7 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
               id="label"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="例：本番ライブ"
+              placeholder="パルバ練習"
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={isLoading}
               required
