@@ -22,10 +22,11 @@ describe('AvailabilityTableRow', () => {
     lastUpdated: '2024-01-20T10:00:00Z'
   };
 
-  const mockFormatUpdateTime = jest.fn((date) => '08/20 10:00');
+  const mockFormatUpdateTime = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFormatUpdateTime.mockReturnValue('08/20 10:00');
   });
 
   it('should render facility information correctly', () => {
@@ -43,6 +44,7 @@ describe('AvailabilityTableRow', () => {
     expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
     expect(screen.getByText('- 練習室')).toBeInTheDocument();
     expect(screen.getByText('08/20 10:00')).toBeInTheDocument();
+    expect(mockFormatUpdateTime).toHaveBeenCalledWith('2024-01-20T10:00:00Z');
   });
 
   it('should render status badges for each time slot', () => {
@@ -65,7 +67,7 @@ describe('AvailabilityTableRow', () => {
     expect(badges[2]).toHaveTextContent('△'); // evening: lottery
   });
 
-  it('should make all badges clickable', () => {
+  it('should make entire row clickable', () => {
     render(
       <table>
         <tbody>
@@ -77,14 +79,11 @@ describe('AvailabilityTableRow', () => {
       </table>
     );
 
-    const badges = screen.getAllByRole('img');
-    badges.forEach(badge => {
-      expect(badge).toHaveClass('cursor-pointer');
-      expect(badge).toHaveClass('hover:opacity-80');
-    });
+    const row = screen.getByText('あんさんぶるStudio和(本郷)').closest('tr');
+    expect(row).toHaveClass('cursor-pointer');
   });
 
-  it('should call openBookingUrl when any badge is clicked', () => {
+  it('should call openBookingUrl when row is clicked', () => {
     render(
       <table>
         <tbody>
@@ -96,15 +95,45 @@ describe('AvailabilityTableRow', () => {
       </table>
     );
 
-    const badges = screen.getAllByRole('img');
-    
-    // 各バッジをクリック
-    badges.forEach(badge => {
-      fireEvent.click(badge);
-    });
+    // 行全体をクリック
+    const row = screen.getByText('あんさんぶるStudio和(本郷)').closest('tr');
+    fireEvent.click(row!);
 
-    // 各バッジのクリックでopenBookingUrlが呼ばれることを確認
-    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledTimes(3);
+    // openBookingUrlが呼ばれることを確認
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledTimes(1);
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるスタジオ');
+  });
+
+  it('should call openBookingUrl when any part of the row is clicked', () => {
+    render(
+      <table>
+        <tbody>
+          <AvailabilityTableRow 
+            facility={mockFacility} 
+            formatUpdateTime={mockFormatUpdateTime} 
+          />
+        </tbody>
+      </table>
+    );
+
+    // 施設名をクリック
+    fireEvent.click(screen.getByText('あんさんぶるStudio和(本郷)'));
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledTimes(1);
+    
+    jest.clearAllMocks();
+    
+    // 更新時刻をクリック
+    fireEvent.click(screen.getByText('08/20 10:00'));
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledTimes(1);
+    
+    jest.clearAllMocks();
+    
+    // バッジをクリック
+    const badge = screen.getAllByRole('img')[0];
+    fireEvent.click(badge);
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledTimes(1);
+    
+    // すべてのクリックで同じセンター名が渡される
     expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるスタジオ');
   });
 
@@ -127,8 +156,8 @@ describe('AvailabilityTableRow', () => {
       </table>
     );
 
-    const badge = screen.getAllByRole('img')[0];
-    fireEvent.click(badge);
+    const row = screen.getByText('田道住区センター三田分室').closest('tr');
+    fireEvent.click(row!);
 
     expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('目黒区民センター');
   });

@@ -51,14 +51,13 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex justify-between items-center">
-          <div className="flex items-start">
-            <span className="mr-2 text-base">▶</span>
-            <div className="flex-1">
-              <h3 className="text-base font-semibold">【{facility.facilityName}】</h3>
-              <div className="text-sm opacity-90 ml-4">{facility.roomName}</div>
-            </div>
+          <div className="flex-1 mr-2">
+            <h3 className="text-base font-semibold whitespace-nowrap overflow-hidden text-ellipsis">
+              {facility.facilityName}
+            </h3>
+            <div className="text-sm opacity-90">{facility.roomName}</div>
           </div>
-          <span className="text-2xl">{isExpanded ? '−' : '＋'}</span>
+          <span className="text-2xl flex-shrink-0">{isExpanded ? '−' : '＋'}</span>
         </div>
       </div>
       

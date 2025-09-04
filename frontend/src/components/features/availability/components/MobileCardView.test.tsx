@@ -3,6 +3,12 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MobileCardView from './MobileCardView';
 import { Facility } from '../../../../types/availability';
+import * as availabilityUtils from '../../../../utils/availabilityUtils';
+
+// Mock the utility function
+jest.mock('../../../../utils/availabilityUtils', () => ({
+  openBookingUrl: jest.fn()
+}));
 
 describe('MobileCardView', () => {
   const mockFormatUpdateTime = (dateString: string) => {
@@ -22,6 +28,10 @@ describe('MobileCardView', () => {
     lastUpdated: '2025-08-24T14:18:03Z'
   };
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders facility name correctly', () => {
     render(
       <MobileCardView 
@@ -30,7 +40,7 @@ describe('MobileCardView', () => {
       />
     );
     
-    expect(screen.getByText('【あんさんぶるStudio和(本郷)】')).toBeInTheDocument();
+    expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
   });
 
   it('renders all time slots with labels when expanded', () => {
@@ -363,7 +373,7 @@ describe('MobileCardView', () => {
     expect(screen.getByText('−')).toBeInTheDocument();
     
     // Click to collapse
-    const header = screen.getByText('【テスト施設】').closest('div')?.parentElement;
+    const header = screen.getByText('テスト施設').closest('div')?.parentElement;
     fireEvent.click(header!);
     
     // Should be collapsed
@@ -376,5 +386,59 @@ describe('MobileCardView', () => {
     // Should be expanded
     expect(screen.getByText('午前')).toBeInTheDocument();
     expect(screen.getByText('−')).toBeInTheDocument();
+  });
+
+  it('calls openBookingUrl when time slot is clicked', () => {
+    const expandedFacility: Facility = {
+      centerName: 'テストセンター',
+      facilityName: 'テスト施設',
+      roomName: 'テスト室',
+      timeSlots: {
+        'morning': 'available',
+        'afternoon': 'available',
+        'evening': 'booked'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
+    render(
+      <MobileCardView 
+        facility={expandedFacility} 
+        formatUpdateTime={mockFormatUpdateTime}
+      />
+    );
+    
+    // Initially expanded (has available slots and afternoon is not booked)
+    const morningSlot = screen.getByText('午前').closest('div');
+    fireEvent.click(morningSlot!);
+    
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('テストセンター');
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls openBookingUrl with correct center name for different facilities', () => {
+    const ensembleFacility: Facility = {
+      centerName: 'あんさんぶるスタジオ',
+      facilityName: 'あんさんぶるStudio和(本郷)',
+      roomName: '練習室',
+      timeSlots: {
+        'morning': 'available',
+        'afternoon': 'available',
+        'evening': 'available'
+      },
+      lastUpdated: '2025-08-24T14:18:03Z'
+    };
+
+    render(
+      <MobileCardView 
+        facility={ensembleFacility} 
+        formatUpdateTime={mockFormatUpdateTime}
+      />
+    );
+    
+    const afternoonSlot = screen.getByText('午後').closest('div');
+    fireEvent.click(afternoonSlot!);
+    
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるスタジオ');
   });
 });

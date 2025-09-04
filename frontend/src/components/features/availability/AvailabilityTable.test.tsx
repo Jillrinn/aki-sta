@@ -513,7 +513,7 @@ describe('AvailabilityTable', () => {
 
       // Check that mobile card elements are rendered
       // Facility name should be visible
-      expect(screen.getByText('【あんさんぶるStudio和(本郷)】')).toBeInTheDocument();
+      expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
       
       // Room name should be visible
       expect(screen.getByText('練習室')).toBeInTheDocument();
@@ -702,8 +702,8 @@ describe('AvailabilityTable', () => {
 
       await waitFor(() => {
         // Both facilities should be visible
-        expect(screen.getByText('【あんさんぶるStudio和(本郷)】')).toBeInTheDocument();
-        expect(screen.getByText('【あんさんぶるStudio音(初台)】')).toBeInTheDocument();
+        expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
+        expect(screen.getByText('あんさんぶるStudio音(初台)')).toBeInTheDocument();
 
         // Check that the second facility (音) is expanded (13-17 is available)
         expect(screen.getByText('午前')).toBeInTheDocument();

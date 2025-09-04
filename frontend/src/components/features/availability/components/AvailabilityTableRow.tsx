@@ -13,12 +13,15 @@ const AvailabilityTableRow: React.FC<AvailabilityTableRowProps> = ({
   facility, 
   formatUpdateTime 
 }) => {
-  const handleBadgeClick = () => {
+  const handleRowClick = () => {
     openBookingUrl(facility.centerName);
   };
 
   return (
-    <tr className="hover:bg-primary-50 transition-colors duration-150">
+    <tr 
+      className="hover:bg-primary-50 transition-colors duration-150 cursor-pointer"
+      onClick={handleRowClick}
+    >
       <td className="p-4 text-left border-b border-gray-200 font-medium text-slate-700">
         <div>{facility.facilityName}</div>
         <div className="text-sm text-gray-500">- {facility.roomName}</div>
@@ -27,8 +30,6 @@ const AvailabilityTableRow: React.FC<AvailabilityTableRowProps> = ({
         <td key={timeSlot} className="p-4 text-center border-b border-gray-200">
           <StatusBadge 
             status={facility.timeSlots[timeSlot]} 
-            onClick={handleBadgeClick}
-            clickable={true}
           />
         </td>
       ))}
