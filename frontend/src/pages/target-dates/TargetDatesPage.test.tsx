@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
 import TargetDatesPage from './TargetDatesPage';
+import { useTargetDates } from '../../hooks/useTargetDates';
 
 const mockDeleteTargetDate = jest.fn();
 const mockRefetch = jest.fn();
@@ -17,7 +18,6 @@ jest.mock('./components/TargetDateModal', () => {
   };
 });
 
-import { useTargetDates } from '../../hooks/useTargetDates';
 
 describe('TargetDatesPage', () => {
   const mockTargetDates = [

@@ -508,7 +508,7 @@ describe('AvailabilityPage', () => {
 
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue(mockData);
 
-      const { container } = render(<AvailabilityPage />);
+      render(<AvailabilityPage />);
 
       await waitFor(() => {
         // First ensure the content has loaded
