@@ -93,8 +93,8 @@ const HowToUse: React.FC = () => {
 
           {/* CTA */}
           <div className="text-center">
-            <Link to="/" className="text-base sm:text-lg font-bold text-brand-blue hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors inline-block">
-              🚀 さっそく始める
+            <Link to="/" className="text-base sm:text-lg font-bold text-white bg-brand-blue hover:bg-blue-600 px-6 py-3 rounded-lg transition-colors inline-block shadow-md">
+              🚀 さっそく始める！
             </Link>
           </div>
         </div>
