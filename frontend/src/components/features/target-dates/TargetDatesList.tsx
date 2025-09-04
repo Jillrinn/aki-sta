@@ -55,7 +55,7 @@ const DeleteConfirmModal: React.FC<{
 const TargetDatesHeader: React.FC<{ onRegisterClick: () => void }> = ({ onRegisterClick }) => {
   return (
     <div className="mb-6">
-      <AppTitle isLink={true} showLogo={false} />
+      <AppTitle isLink={true} showLogo={true} />
       <p className="text-center text-gray-600 mb-4">練習日程一覧</p>
       
       <div className="flex justify-between mb-4">
