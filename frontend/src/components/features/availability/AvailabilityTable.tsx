@@ -48,25 +48,19 @@ const AvailabilityTable: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  if (loading) {
-    return <LoadingState />;
-  }
-
-  if (error) {
-    return <ErrorState error={error} onRefresh={refetch} isRefreshing={isRefreshing} />;
-  }
-
-  // 表示する日付がない場合
-  if (sortedDates.length === 0) {
-    return <EmptyState onRefresh={refetch} isRefreshing={isRefreshing} />;
-  }
-
-  const mainContent = (
-    <>
+  return (
+    <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
       <PageHeader />
 
-      <div className={`${isRefreshing ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-300`}>
-        {sortedDates.map((date, dateIndex) => (
+      {loading && <LoadingState />}
+      
+      {!loading && error && <ErrorState error={error} />}
+      
+      {!loading && !error && sortedDates.length === 0 && <EmptyState />}
+      
+      {!loading && !error && sortedDates.length > 0 && (
+        <div className={`${isRefreshing ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-300`}>
+          {sortedDates.map((date, dateIndex) => (
           <div key={date} className="mb-8">
             <h2 
               className="text-xl text-gray-700 mb-3 font-semibold"
@@ -157,9 +151,10 @@ const AvailabilityTable: React.FC = () => {
               </table>
             </div>
           )}
+          </div>
+          ))}
         </div>
-        ))}
-      </div>
+      )}
       
       <LegendSection />
       
@@ -168,12 +163,6 @@ const AvailabilityTable: React.FC = () => {
         isRefreshing={isRefreshing}
         disabled={loading}
       />
-    </>
-  );
-
-  return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
-      {mainContent}
     </div>
   );
 };

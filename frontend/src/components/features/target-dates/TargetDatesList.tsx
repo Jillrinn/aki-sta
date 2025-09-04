@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTargetDates } from '../../../hooks/useTargetDates';
 import { TargetDate } from '../../../types/targetDates';
 import TargetDateModal from './TargetDateModal';
+import { CommonLoadingState, CommonErrorState, CommonEmptyState } from '../../common/states';
 
 const DeleteConfirmModal: React.FC<{
   isOpen: boolean;
@@ -45,6 +46,35 @@ const DeleteConfirmModal: React.FC<{
             {isDeleting ? '削除中...' : '削除'}
           </button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const TargetDatesHeader: React.FC<{ onRegisterClick: () => void }> = ({ onRegisterClick }) => {
+  return (
+    <div className="mb-6">
+      <h1 className="text-2xl sm:text-3xl text-gray-800 text-center mb-2 font-bold">
+        <Link to="/" className="hover:text-gray-600 transition-colors">
+          空きスタサーチくん
+        </Link>
+      </h1>
+      <p className="text-center text-gray-600 mb-4">練習日程一覧</p>
+      
+      <div className="flex justify-between mb-4">
+        <Link
+          to="/"
+          className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base inline-block"
+        >
+          ← 空き状況一覧に戻る
+        </Link>
+        <button
+          onClick={onRegisterClick}
+          className="px-4 py-2 bg-brand-green-dark text-white rounded-lg hover:bg-brand-green transition-colors shadow-lg font-bold text-sm sm:text-base"
+          aria-label="新規登録"
+        >
+          新規登録
+        </button>
       </div>
     </div>
   );
@@ -98,62 +128,21 @@ const TargetDatesList: React.FC = () => {
     refetch(); // 登録後にリストを更新
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">データを読み込み中...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h3 className="text-red-800 font-bold mb-2">エラーが発生しました</h3>
-          <p className="text-red-600">{error.message}</p>
-          {error.originalError && (
-            <p className="text-sm text-red-500 mt-2">詳細: {error.originalError}</p>
-          )}
-        </div>
-      </div>
-    );
-  }
+  // ヘッダーとモーダルは常に表示される状態に移動
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl text-gray-800 text-center mb-2 font-bold">
-          <Link to="/" className="hover:text-gray-600 transition-colors">
-            空きスタサーチくん
-          </Link>
-        </h1>
-        <p className="text-center text-gray-600 mb-4">練習日程一覧</p>
-        
-        <div className="flex justify-between mb-4">
-          <Link
-            to="/"
-            className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base inline-block"
-          >
-            ← 空き状況一覧に戻る
-          </Link>
-          <button
-            onClick={handleRegisterClick}
-            className="px-4 py-2 bg-brand-green-dark text-white rounded-lg hover:bg-brand-green transition-colors shadow-lg font-bold text-sm sm:text-base"
-            aria-label="新規登録"
-          >
-            新規登録
-          </button>
-        </div>
-      </div>
-
-      {data.length === 0 ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <p className="text-gray-600">登録されている日程はありません</p>
-        </div>
-      ) : (
+      <TargetDatesHeader onRegisterClick={handleRegisterClick} />
+      
+      {loading && <CommonLoadingState />}
+      
+      {!loading && error && <CommonErrorState error={error} />}
+      
+      {!loading && !error && data.length === 0 && (
+        <CommonEmptyState message="登録されている日程はありません" />
+      )}
+      
+      {!loading && !error && data.length > 0 && (
         <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
           <table className="w-full border-collapse bg-white">
             <thead className="bg-gradient-to-r from-primary-400 to-primary-700 text-white">

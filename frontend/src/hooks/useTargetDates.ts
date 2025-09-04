@@ -1,13 +1,7 @@
 import { useState, useEffect } from 'react';
 import { targetDatesApi, availabilityApi } from '../services/api';
 import { TargetDate } from '../types/targetDates';
-
-export interface ErrorDetails {
-  message: string;
-  statusCode?: number;
-  statusText?: string;
-  originalError?: string;
-}
+import { ErrorDetails } from '../types/common';
 
 export const useTargetDates = () => {
   const [data, setData] = useState<TargetDate[]>([]);
