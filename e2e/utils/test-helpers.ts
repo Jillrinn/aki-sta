@@ -170,7 +170,7 @@ export async function testResponsiveDesign(page: Page, viewport: { width: number
       await expect(tables.first()).toBeVisible();
     } else {
       // データがない場合のメッセージを確認
-      const messageElement = page.getByText(/データがありません|読み込み中|エラー/);
+      const messageElement = page.getByText(/データがありません|読み込み中|エラー|空き状況はまだ取得されていません/);
       await expect(messageElement.first()).toBeVisible();
     }
   }
