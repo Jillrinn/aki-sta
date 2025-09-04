@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Facility } from '../../../types/availability';
 import { useAvailabilityData } from '../../../hooks/useAvailabilityData';
 import { useTargetDates } from '../../../hooks/useTargetDates';
@@ -13,8 +12,8 @@ import {
   LegendSection
 } from './components';
 import CollapsibleCategorySection from './CollapsibleCategorySection';
-import ActionButtons from '../../common/buttons/ActionButtons';
-import RefreshButton from '../../common/buttons/RefreshButton';
+import PageHeader from './components/PageHeader';
+import PageFooter from './components/PageFooter';
 
 const AvailabilityTable: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
@@ -54,41 +53,17 @@ const AvailabilityTable: React.FC = () => {
   }
 
   if (error) {
-    return <ErrorState error={error} />;
+    return <ErrorState error={error} onRefresh={refetch} isRefreshing={isRefreshing} />;
   }
 
   // 表示する日付がない場合
   if (sortedDates.length === 0) {
-    return <EmptyState />;
+    return <EmptyState onRefresh={refetch} isRefreshing={isRefreshing} />;
   }
 
   const mainContent = (
     <>
-      <div className="flex items-center justify-center mb-2">
-        <h1 className="text-2xl sm:text-3xl text-gray-800 font-bold">空きスタサーチくん</h1>
-        <img 
-          src="/aki-sta-search-kun.png" 
-          alt="サーチくん" 
-          className="w-12 h-12 sm:w-16 sm:h-16 ml-3"
-        />
-      </div>
-      <p className="text-center text-gray-600 mb-4">施設空き状況一覧</p>
-      
-      
-      <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
-        <Link
-          to="/how-to-use"
-          className="px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-orange-600 transition-colors shadow-lg font-bold text-sm sm:text-base text-center"
-        >
-          💡 使い方
-        </Link>
-        <Link
-          to="/target-dates"
-          className="px-4 py-2 bg-brand-green text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg font-bold text-sm sm:text-base text-center"
-        >
-          📅 練習日程一覧
-        </Link>
-      </div>
+      <PageHeader />
 
       <div className={`${isRefreshing ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-300`}>
         {sortedDates.map((date, dateIndex) => (
@@ -188,14 +163,11 @@ const AvailabilityTable: React.FC = () => {
       
       <LegendSection />
       
-      <div className="flex justify-end gap-2 mt-6">
-        <RefreshButton
-          onClick={refetch}
-          isRefreshing={isRefreshing}
-          disabled={loading}
-        />
-        <ActionButtons />
-      </div>
+      <PageFooter 
+        onRefresh={refetch}
+        isRefreshing={isRefreshing}
+        disabled={loading}
+      />
     </>
   );
 

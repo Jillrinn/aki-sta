@@ -224,6 +224,14 @@ describe('AvailabilityTable', () => {
     await waitFor(() => {
       expect(screen.getByText('データの取得に失敗しました')).toBeInTheDocument();
       expect(screen.getByText('詳細: API Error')).toBeInTheDocument();
+      
+      // 共通UIコンポーネントが表示されていることを確認
+      expect(screen.getByText('空きスタサーチくん')).toBeInTheDocument();
+      expect(screen.getByText('施設空き状況一覧')).toBeInTheDocument();
+      expect(screen.getByText('💡 使い方')).toBeInTheDocument();
+      expect(screen.getByText('📅 練習日程一覧')).toBeInTheDocument();
+      expect(screen.getByText('今すぐ情報を取得')).toBeInTheDocument();
+      expect(screen.getByText('更新')).toBeInTheDocument();
     });
     
     consoleErrorSpy.mockRestore();
@@ -307,6 +315,14 @@ describe('AvailabilityTable', () => {
 
     await waitFor(() => {
       expect(screen.getByText('データがありません')).toBeInTheDocument();
+      
+      // 共通UIコンポーネントが表示されていることを確認
+      expect(screen.getByText('空きスタサーチくん')).toBeInTheDocument();
+      expect(screen.getByText('施設空き状況一覧')).toBeInTheDocument();
+      expect(screen.getByText('💡 使い方')).toBeInTheDocument();
+      expect(screen.getByText('📅 練習日程一覧')).toBeInTheDocument();
+      expect(screen.getByText('今すぐ情報を取得')).toBeInTheDocument();
+      expect(screen.getByText('更新')).toBeInTheDocument();
     });
   });
 
