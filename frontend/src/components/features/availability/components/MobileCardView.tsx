@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Facility } from '../../../../types/availability';
 import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../../../constants/availability';
 import StatusBadge from './StatusBadge';
+import { openBookingUrl } from '../../../../utils/availabilityUtils';
 
 interface MobileCardViewProps {
   facility: Facility;
@@ -11,6 +12,9 @@ interface MobileCardViewProps {
 const TIME_SLOT_LABELS = TIME_SLOT_DISPLAY;
 
 const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateTime }) => {
+  const handleTimeSlotClick = () => {
+    openBookingUrl(facility.centerName);
+  };
   const getStatusText = (status: string): string => {
     const statusMap: Record<string, string> = {
       available: '空き',
@@ -68,9 +72,10 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
             return (
               <div 
                 key={timeSlot}
-                className={`flex items-center justify-between p-3 rounded-lg ${
+                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:opacity-80 transition-opacity ${
                   isAvailable ? 'bg-accent-green/10' : 'bg-gray-50'
                 }`}
+                onClick={handleTimeSlotClick}
               >
                 <span className="text-base font-medium text-gray-700">
                   {TIME_SLOT_LABELS[timeSlot]}

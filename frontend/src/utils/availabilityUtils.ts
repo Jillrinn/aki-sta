@@ -1,4 +1,5 @@
 import { Facility } from '../types/availability';
+import { BOOKING_URLS } from '../constants/availability';
 
 /**
  * 施設の空き状況を判定するユーティリティ関数
@@ -110,5 +111,22 @@ export const getCategoryStatus = (
     message: '空きあり',
     shouldExpand: true
   };
+};
+
+/**
+ * 施設の予約URLを取得
+ */
+export const getBookingUrl = (centerName: string): string | undefined => {
+  return BOOKING_URLS[centerName];
+};
+
+/**
+ * 予約サイトを新しいタブで開く
+ */
+export const openBookingUrl = (centerName: string): void => {
+  const url = getBookingUrl(centerName);
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
 };
 

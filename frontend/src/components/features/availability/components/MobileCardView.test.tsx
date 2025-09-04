@@ -30,7 +30,7 @@ describe('MobileCardView', () => {
       />
     );
     
-    expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
+    expect(screen.getByText('【あんさんぶるStudio和(本郷)】')).toBeInTheDocument();
   });
 
   it('renders all time slots with labels when expanded', () => {
@@ -363,7 +363,7 @@ describe('MobileCardView', () => {
     expect(screen.getByText('−')).toBeInTheDocument();
     
     // Click to collapse
-    const header = screen.getByText('テスト施設').closest('div')?.parentElement;
+    const header = screen.getByText('【テスト施設】').closest('div')?.parentElement;
     fireEvent.click(header!);
     
     // Should be collapsed

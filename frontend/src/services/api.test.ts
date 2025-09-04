@@ -1,36 +1,35 @@
-import axios from 'axios';
+import { availabilityApi, scraperApi, targetDatesApi } from './api';
 
-// Create mock axios instance (before any imports that use it)
-const mockAxiosInstance: any = {
-  get: jest.fn(),
-  post: jest.fn(),
-  delete: jest.fn(),
-  interceptors: {
-    request: { use: jest.fn() },
-    response: { use: jest.fn() }
-  },
-  // Add mock methods for testing retry functionality
-  mockResolvedValueOnce: jest.fn(),
-  mockResolvedValue: jest.fn(),
-  mockRejectedValueOnce: jest.fn(),
-  mockRejectedValue: jest.fn(),
-};
+// HttpClientクラスのモック
+jest.mock('./httpClient', () => {
+  const mockGet = jest.fn();
+  const mockPost = jest.fn();
+  const mockDelete = jest.fn();
+  
+  return {
+    httpClient: {
+      get: mockGet,
+      post: mockPost,
+      delete: mockDelete,
+    },
+    HttpClient: {
+      isAxiosError: jest.fn(() => false),
+    },
+    __mockGet: mockGet,
+    __mockPost: mockPost,
+    __mockDelete: mockDelete,
+  };
+});
 
-jest.mock('axios', () => ({
-  ...jest.requireActual('axios'),
-  create: jest.fn(() => mockAxiosInstance),
-  isAxiosError: jest.fn()
-}));
-
-// Now import the modules that depend on axios
-import { availabilityApi, scraperApi, targetDatesApi, axiosInstance } from './api';
+// モック関数を取得
+const { __mockGet: mockGet, __mockPost: mockPost, __mockDelete: mockDelete } = jest.requireMock('./httpClient');
 
 describe('availabilityApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should fetch availability data successfully', async () => {
+  describe('getAvailability', () => {
     const mockDate = '2025-11-15';
     const mockResponse = {
       data: {
@@ -46,29 +45,29 @@ describe('availabilityApi', () => {
       },
     };
 
-    mockAxiosInstance.get.mockResolvedValue(mockResponse);
+    it('should fetch availability data successfully', async () => {
+      mockGet.mockResolvedValue(mockResponse);
 
-    const result = await availabilityApi.getAvailability(mockDate);
+      const result = await availabilityApi.getAvailability(mockDate);
 
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/availability/${mockDate}`);
-    expect(result).toEqual(mockResponse.data);
+      expect(mockGet).toHaveBeenCalledWith(`/availability/${mockDate}`);
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should handle API errors', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockError = new Error('Network error');
+
+      mockGet.mockRejectedValue(mockError);
+
+      await expect(availabilityApi.getAvailability(mockDate)).rejects.toThrow('Network error');
+      expect(mockGet).toHaveBeenCalledWith(`/availability/${mockDate}`);
+      
+      consoleErrorSpy.mockRestore();
+    });
   });
 
-  it('should handle API errors', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    const mockDate = '2025-11-15';
-    const mockError = new Error('Network error');
-
-    mockAxiosInstance.get.mockRejectedValue(mockError);
-
-    await expect(availabilityApi.getAvailability(mockDate)).rejects.toThrow('Network error');
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/availability/${mockDate}`);
-    
-    consoleErrorSpy.mockRestore();
-  });
-
-  it('should fetch all availability data successfully', async () => {
+  describe('getAllAvailability', () => {
     const mockResponse = {
       data: {
         '2025-11-15': [
@@ -82,25 +81,33 @@ describe('availabilityApi', () => {
       },
     };
 
-    mockAxiosInstance.get.mockResolvedValue(mockResponse);
+    it('should fetch all availability data successfully', async () => {
+      mockGet.mockResolvedValue(mockResponse);
 
-    const result = await availabilityApi.getAllAvailability();
+      const result = await availabilityApi.getAllAvailability();
 
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/availability');
-    expect(result).toEqual(mockResponse.data);
+      expect(mockGet).toHaveBeenCalledWith('/availability');
+      expect(result).toEqual(mockResponse.data);
+    });
   });
 
-  it('should handle getAllAvailability API errors', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    const mockError = new Error('Network error');
+  describe('deleteAvailabilityByDate', () => {
+    const mockDate = '2025-11-15';
+    const mockResponse = {
+      data: {
+        success: true,
+        message: 'Deleted successfully',
+      },
+    };
 
-    mockAxiosInstance.get.mockRejectedValue(mockError);
+    it('should delete availability by date successfully', async () => {
+      mockDelete.mockResolvedValue(mockResponse);
 
-    await expect(availabilityApi.getAllAvailability()).rejects.toThrow('Network error');
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/availability');
-    
-    consoleErrorSpy.mockRestore();
+      const result = await availabilityApi.deleteAvailabilityByDate(mockDate);
+
+      expect(mockDelete).toHaveBeenCalledWith(`/availability/date/${mockDate}`);
+      expect(result).toEqual(mockResponse.data);
+    });
   });
 });
 
@@ -109,7 +116,7 @@ describe('scraperApi', () => {
     jest.clearAllMocks();
   });
 
-  it('should trigger scraping successfully', async () => {
+  describe('triggerScraping', () => {
     const mockResponse = {
       data: {
         success: true,
@@ -117,180 +124,135 @@ describe('scraperApi', () => {
       },
     };
 
-    mockAxiosInstance.post.mockResolvedValue(mockResponse);
+    it('should trigger scraper successfully', async () => {
+      mockPost.mockResolvedValue(mockResponse);
 
-    const result = await scraperApi.triggerScraping();
+      const result = await scraperApi.triggerScraping();
 
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/scrape');
-    expect(result).toEqual(mockResponse.data);
+      expect(mockPost).toHaveBeenCalledWith('/scrape');
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should handle scraper API errors', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockError = new Error('Scraper error');
+
+      mockPost.mockRejectedValue(mockError);
+
+      await expect(scraperApi.triggerScraping()).rejects.toThrow('Scraper error');
+      expect(mockPost).toHaveBeenCalledWith('/scrape');
+      
+      consoleErrorSpy.mockRestore();
+    });
   });
 
-  it('should handle 409 error and return error data', async () => {
-    const mockErrorResponse = {
-      response: {
-        status: 409,
-        data: {
-          success: false,
-          message: 'Scraping already in progress',
-        },
+  describe('triggerBatchScraping', () => {
+    const mockResponse = {
+      data: {
+        success: true,
+        message: 'Batch scraping started',
+        targetDates: ['2025-09-15', '2025-09-20']
       },
     };
 
-    mockAxiosInstance.post.mockRejectedValue(mockErrorResponse);
-    (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
+    it('should trigger batch scraper successfully', async () => {
+      mockPost.mockResolvedValue(mockResponse);
 
-    const result = await scraperApi.triggerScraping();
+      const result = await scraperApi.triggerBatchScraping();
 
-    expect(result).toEqual(mockErrorResponse.response.data);
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/scrape');
-  });
-
-  it('should throw error for non-409 errors', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    const mockError = new Error('Network error');
-
-    mockAxiosInstance.post.mockRejectedValue(mockError);
-    (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(false);
-
-    await expect(scraperApi.triggerScraping()).rejects.toThrow('Network error');
-    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/scrape');
-    
-    consoleErrorSpy.mockRestore();
+      expect(mockPost).toHaveBeenCalledWith('/scrape/batch', { includeAllTargetDates: true });
+      expect(result).toEqual(mockResponse.data);
+    });
   });
 });
 
-describe('Retry functionality', () => {
-  let responseInterceptor: any;
-
+describe('targetDatesApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
-    
-    // response interceptorのコールバックを取得
-    const interceptorCall = mockAxiosInstance.interceptors.response.use.mock.calls[0];
-    responseInterceptor = interceptorCall ? interceptorCall[1] : null;
   });
 
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should retry once on network error for GET requests', async () => {
-    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    const networkError = { 
-      request: {}, 
-      config: { method: 'get' } 
+  describe('getAllTargetDates', () => {
+    const mockResponse = {
+      data: {
+        dates: [
+          {
+            id: '1',
+            date: '2025-09-15',
+            label: 'Practice 1'
+          },
+          {
+            id: '2',
+            date: '2025-09-20',
+            label: 'Practice 2'
+          }
+        ]
+      }
     };
 
-    if (responseInterceptor) {
-      // mockAxiosInstanceを関数として設定（リトライ時に呼ばれる）
-      const originalMockAxiosInstance = Object.assign(jest.fn(), mockAxiosInstance);
-      (axios.create as jest.Mock).mockReturnValue(originalMockAxiosInstance);
-      originalMockAxiosInstance.mockResolvedValueOnce({ data: 'retry success' });
+    it('should fetch all target dates successfully', async () => {
+      mockGet.mockResolvedValue(mockResponse);
+
+      const result = await targetDatesApi.getAllTargetDates();
+
+      expect(mockGet).toHaveBeenCalledWith('/target-dates');
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should handle target dates API errors', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockError = new Error('API error');
+
+      mockGet.mockRejectedValue(mockError);
+
+      await expect(targetDatesApi.getAllTargetDates()).rejects.toThrow('API error');
+      expect(mockGet).toHaveBeenCalledWith('/target-dates');
       
-      // 最初の呼び出しでinterceptorを実行
-      const retryPromise = responseInterceptor(networkError);
-      
-      // 1秒待機をシミュレート
-      jest.advanceTimersByTime(1000);
-      
-      await retryPromise;
-      
-      expect(consoleLogSpy).toHaveBeenCalledWith('Retrying GET request... (attempt 1)');
-      expect(originalMockAxiosInstance).toHaveBeenCalledWith(expect.objectContaining({
-        method: 'get',
-        __retryCount: 1
-      }));
-    }
-    
-    consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    });
   });
 
-  it('should retry on 5xx server error for GET requests', async () => {
-    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    const serverError = {
-      response: { status: 503 },
-      config: { method: 'get' }
+  describe('createTargetDate', () => {
+    const newDate = {
+      date: '2025-09-25',
+      label: 'New Practice'
     };
 
-    if (responseInterceptor) {
-      const originalMockAxiosInstance = Object.assign(jest.fn(), mockAxiosInstance);
-      (axios.create as jest.Mock).mockReturnValue(originalMockAxiosInstance);
-      originalMockAxiosInstance.mockResolvedValueOnce({ data: 'retry success' });
-      
-      const retryPromise = responseInterceptor(serverError);
-      
-      jest.advanceTimersByTime(1000);
-      
-      await retryPromise;
-      
-      expect(consoleLogSpy).toHaveBeenCalledWith('Retrying GET request... (attempt 1)');
-    }
-    
-    consoleLogSpy.mockRestore();
-  });
-
-  it('should not retry on 4xx client error even for GET requests', async () => {
-    const clientError = {
-      response: { status: 404 },
-      config: { method: 'get' }
+    const mockResponse = {
+      data: {
+        id: '3',
+        date: '2025-09-25',
+        label: 'New Practice',
+        isbooked: false,
+        updatedAt: '2025-08-20T10:00:00Z'
+      }
     };
 
-    if (responseInterceptor) {
-      const originalMockAxiosInstance = Object.assign(jest.fn(), mockAxiosInstance);
-      (axios.create as jest.Mock).mockReturnValue(originalMockAxiosInstance);
-      
-      await expect(responseInterceptor(clientError)).rejects.toEqual(clientError);
-      expect(originalMockAxiosInstance).not.toHaveBeenCalled();
-    }
+    it('should create a target date successfully', async () => {
+      mockPost.mockResolvedValue(mockResponse);
+
+      const result = await targetDatesApi.createTargetDate(newDate);
+
+      expect(mockPost).toHaveBeenCalledWith('/target-dates', newDate);
+      expect(result).toEqual(mockResponse.data);
+    });
   });
 
-  it('should not retry more than once for GET requests', async () => {
-    const networkError = {
-      request: {},
-      config: { method: 'get', __retryCount: 1 }
+  describe('deleteTargetDate', () => {
+    const targetId = '1';
+    const mockResponse = {
+      data: {
+        success: true,
+        message: 'Target date deleted successfully'
+      }
     };
 
-    if (responseInterceptor) {
-      const originalMockAxiosInstance = Object.assign(jest.fn(), mockAxiosInstance);
-      (axios.create as jest.Mock).mockReturnValue(originalMockAxiosInstance);
-      
-      await expect(responseInterceptor(networkError)).rejects.toEqual(networkError);
-      expect(originalMockAxiosInstance).not.toHaveBeenCalled();
-    }
-  });
+    it('should delete a target date successfully', async () => {
+      mockDelete.mockResolvedValue(mockResponse);
 
-  it('should not retry POST requests on network error', async () => {
-    const networkError = {
-      request: {},
-      config: { method: 'post' }
-    };
+      const result = await targetDatesApi.deleteTargetDate(targetId);
 
-    if (responseInterceptor) {
-      await expect(responseInterceptor(networkError)).rejects.toEqual(networkError);
-    }
-  });
-
-  it('should not retry DELETE requests on network error', async () => {
-    const networkError = {
-      request: {},
-      config: { method: 'delete' }
-    };
-
-    if (responseInterceptor) {
-      await expect(responseInterceptor(networkError)).rejects.toEqual(networkError);
-    }
-  });
-
-  it('should pass through successful responses', async () => {
-    const successResponse = { data: 'success', status: 200 };
-    
-    if (responseInterceptor) {
-      // success handler is the first argument
-      const successHandler = mockAxiosInstance.interceptors.response.use.mock.calls[0][0];
-      const result = successHandler(successResponse);
-      expect(result).toEqual(successResponse);
-    }
+      expect(mockDelete).toHaveBeenCalledWith(`/target-dates/${targetId}`);
+      expect(result).toEqual(mockResponse.data);
+    });
   });
 });

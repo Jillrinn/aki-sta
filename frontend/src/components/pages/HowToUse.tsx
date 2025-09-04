@@ -52,7 +52,7 @@ const HowToUse: React.FC = () => {
           {/* ヘッダー部分 */}
           <div className="text-center mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
-              🎵 空きスタサーチくん
+              🎵 ようこそ！ 🎵
             </h2>
             <p className="text-sm sm:text-base text-gray-600">
               音楽スタジオの空き状況をかんたんチェック！

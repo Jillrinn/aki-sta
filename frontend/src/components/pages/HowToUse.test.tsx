@@ -6,7 +6,7 @@ import HowToUse from './HowToUse';
 describe('HowToUse', () => {
   it('should render the component with title', () => {
     render(<HowToUse />);
-    expect(screen.getByText('🎵 空きスタサーチくん')).toBeInTheDocument();
+    expect(screen.getByText('🎵 ようこそ！ 🎵')).toBeInTheDocument();
     expect(screen.getByText('音楽スタジオの空き状況をかんたんチェック！')).toBeInTheDocument();
   });
 

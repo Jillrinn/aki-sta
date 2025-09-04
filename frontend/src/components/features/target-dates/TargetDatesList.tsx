@@ -164,6 +164,9 @@ const TargetDatesList: React.FC = () => {
                 <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
                   ラベル
                 </th>
+                <th className="p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
+                  予約状況
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -178,6 +181,17 @@ const TargetDatesList: React.FC = () => {
                   </td>
                   <td className="p-4 border-b border-gray-200">
                     {targetDate.label}
+                  </td>
+                  <td className="p-4 border-b border-gray-200">
+                    {targetDate.isbooked ? (
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
+                        予約済み
+                      </span>
+                    ) : (
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-300">
+                        未予約
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
