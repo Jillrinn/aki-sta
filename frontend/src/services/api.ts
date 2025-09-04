@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
-import { AvailabilityResponse, AllAvailabilityResponse } from '../types/availability';
+import { AvailabilityResponse, AllAvailabilityResponse, DeleteAvailabilityResponse } from '../types/availability';
 import { 
   TargetDatesResponse, 
   CreateTargetDateRequest, 
@@ -94,6 +94,18 @@ export const availabilityApi = {
       return response.data;
     } catch (error) {
       console.error('Failed to fetch all availability:', error);
+      throw error;
+    }
+  },
+  
+  async deleteAvailabilityByDate(date: string): Promise<DeleteAvailabilityResponse> {
+    try {
+      const response = await axiosInstance.delete<DeleteAvailabilityResponse>(
+        `/availability/date/${date}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Failed to delete availability by date:', error);
       throw error;
     }
   },

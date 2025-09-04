@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { targetDatesApi } from '../services/api';
+import { targetDatesApi, availabilityApi } from '../services/api';
 import { TargetDate } from '../types/targetDates';
 
 export interface ErrorDetails {
@@ -62,9 +62,24 @@ export const useTargetDates = () => {
     fetchData();
   }, []);
 
-  const deleteTargetDate = async (id: string): Promise<boolean> => {
+  const deleteTargetDate = async (id: string, date?: string): Promise<boolean> => {
     try {
+      // 練習日を削除
       await targetDatesApi.deleteTargetDate(id);
+      
+      // 日付が提供されている場合、該当日のavailabilityデータも削除
+      if (date) {
+        try {
+          await availabilityApi.deleteAvailabilityByDate(date);
+          console.log(`Deleted availability data for date: ${date}`);
+        } catch (availErr: any) {
+          // availabilityデータの削除に失敗してもログに記録するのみ
+          // 練習日削除は成功として扱う（availabilityデータは次回スクレイピングで上書きされるため）
+          console.warn(`Failed to delete availability data for date ${date}:`, availErr);
+        }
+      }
+      
+      // データを再取得
       await fetchData();
       return true;
     } catch (err: any) {

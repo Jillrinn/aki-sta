@@ -19,3 +19,9 @@ export interface AvailabilityResponse {
 export interface AllAvailabilityResponse {
   [date: string]: Facility[];
 }
+
+export interface DeleteAvailabilityResponse {
+  success: boolean;
+  message: string;
+  deletedCount?: number;
+}

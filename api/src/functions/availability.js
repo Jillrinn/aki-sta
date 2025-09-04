@@ -96,6 +96,52 @@ async function deleteAvailabilityHandler(request, context) {
   }
 }
 
+// DELETE: 日付で空き状況データを削除
+async function deleteAvailabilityByDateHandler(request, context) {
+  const date = request.params.date;
+  
+  if (!date) {
+    return {
+      status: 400,
+      jsonBody: {
+        error: 'Bad Request',
+        message: 'Date is required'
+      }
+    };
+  }
+  
+  try {
+    const result = await availabilityRepository.deleteAvailabilityByDate(date);
+    
+    return {
+      status: 200,
+      jsonBody: result
+    };
+  } catch (error) {
+    context.log.error(`Failed to delete availability data by date: ${error.message}`);
+    
+    // バリデーションエラー
+    if (error.message.includes('Invalid date format')) {
+      return {
+        status: 400,
+        jsonBody: {
+          error: 'Bad Request',
+          message: error.message
+        }
+      };
+    }
+    
+    // その他のエラー
+    return {
+      status: 503,
+      jsonBody: {
+        error: 'Service temporarily unavailable',
+        details: error.message
+      }
+    };
+  }
+}
+
 // 関数登録
 app.http('availability', {
   methods: ['GET', 'OPTIONS'],
@@ -111,6 +157,14 @@ app.http('availability-delete', {
   handler: deleteAvailabilityHandler
 });
 
+app.http('availability-delete-by-date', {
+  methods: ['DELETE'],
+  route: 'availability/date/{date}',
+  authLevel: 'anonymous',
+  handler: deleteAvailabilityByDateHandler
+});
+
 module.exports = app;
 module.exports.availabilityHandler = availabilityHandler;
 module.exports.deleteAvailabilityHandler = deleteAvailabilityHandler;
+module.exports.deleteAvailabilityByDateHandler = deleteAvailabilityByDateHandler;

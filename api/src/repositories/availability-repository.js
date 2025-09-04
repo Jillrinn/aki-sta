@@ -119,5 +119,68 @@ module.exports = {
       console.error('Failed to delete availability data:', error);
       throw new Error(`Failed to delete availability data from Cosmos DB: ${error.message}`);
     }
+  },
+
+  deleteAvailabilityByDate: async (date) => {
+    const operation = async () => {
+      try {
+        await cosmosClient.initializeWithRetry();
+        const container = cosmosClient.getContainer('availability');
+        
+        // 日付フォーマットの検証
+        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          throw new Error(`Invalid date format: ${date}. Expected format: YYYY-MM-DD`);
+        }
+        
+        // 指定日付のデータをクエリ
+        const querySpec = {
+          query: 'SELECT * FROM c WHERE c.date = @date',
+          parameters: [{ name: '@date', value: date }]
+        };
+        
+        const { resources } = await container.items
+          .query(querySpec)
+          .fetchAll();
+        
+        if (!resources || resources.length === 0) {
+          console.log(`No availability data found for date: ${date}`);
+          return { 
+            success: true, 
+            message: `No availability data to delete for date ${date}`,
+            deletedCount: 0
+          };
+        }
+        
+        // 各アイテムを削除
+        let deletedCount = 0;
+        const deletePromises = resources.map(async (item) => {
+          try {
+            await container.item(item.id, item.date).delete();
+            deletedCount++;
+          } catch (error) {
+            console.error(`Failed to delete item ${item.id}:`, error);
+            // 個別のアイテム削除失敗は継続
+          }
+        });
+        
+        await Promise.all(deletePromises);
+        
+        return { 
+          success: true, 
+          message: `Deleted ${deletedCount} availability records for date ${date}`,
+          deletedCount
+        };
+      } catch (error) {
+        console.error('Failed to delete availability data by date:', error);
+        throw error;
+      }
+    };
+
+    // リトライ付きで実行
+    try {
+      return await retryWithBackoff(operation);
+    } catch (error) {
+      throw new Error(`Failed to delete availability data for date ${date}: ${error.message}`);
+    }
   }
 };

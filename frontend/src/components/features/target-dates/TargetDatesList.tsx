@@ -74,7 +74,7 @@ const TargetDatesList: React.FC = () => {
     if (!deleteTarget) return;
 
     setIsDeleting(true);
-    const success = await deleteTargetDate(deleteTarget.id);
+    const success = await deleteTargetDate(deleteTarget.id, deleteTarget.date);
     
     if (success) {
       setDeleteTarget(null);
