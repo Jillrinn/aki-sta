@@ -236,6 +236,7 @@ await act(async () => {
 ### 新しいスクレイピング追加時の手順
 1. scraper/src/scrapers/に新しいPythonファイルを作成
 2. scraper/src/scrapers/base.pyに定義されたBaseScraperを継承したクラスを実装
+3. 現在対応済み施設: あんさんぶるスタジオ、目黒区民センター
 
 ### E2Eテスト追加・修正時の注意事項
 1. **カテゴリーセクション対応**: 施設データは折りたたみ可能なカテゴリーセクション内に表示されるため、テスト時は先に展開が必要
@@ -272,15 +273,31 @@ await act(async () => {
 - ✅ JSONファイル依存完全削除（フェーズ3完了）
 - ✅ Pure Cosmos DBアーキテクチャ移行完了
 
-### 次の作業: MVP v4.0
-- Azure本番環境デプロイ
-- Timer Trigger自動実行システム
+### MVP v4.0 - ✅ 完了（2025-08-28）
+- ✅ Azure本番環境デプロイ設定完了
+- ✅ GitHub Actionsデプロイパイプライン構築
+- ✅ Infrastructure as Code (Bicep) 実装
+- ✅ Azure Static Web Apps Managed Functions v4実装
+- ✅ CORS問題完全解決・デプロイ統一化
+- ⏳ Timer Trigger自動実行システム（一部未実装）
+
+### 次期開発: v1.0
 - 複数日付管理機能
+- 手動更新機能（レート制限付き）
+- 監視・運用（Application Insights）
 
 ### GitHub Actions  
 - **main-ci.yml**: push/PR時の全テスト実行（Backend/Frontend/Scraper/E2E）
 - E2Eテスト: Ubuntu 22.04でPlaywright実行
 - 詳細: [docs/GITHUB_ACTIONS.md](./docs/GITHUB_ACTIONS.md)
+
+## 📁 環境変数の優先順位
+
+1. **ルートの.envファイル**（存在する場合）
+2. **api/.envファイル**（APIディレクトリ内）
+3. local.settings.json（sync-env.jsで自動同期）
+
+※ sync-env.jsはルートまたはapiディレクトリの.envを読み込んでlocal.settings.jsonに反映
 
 ## 🔄 コミット時の自動タスク
 

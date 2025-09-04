@@ -275,8 +275,9 @@ git push origin main
 ```
 
 ### 本番環境URL
-- **アプリケーション**: https://swa-aki-sta-prod.azurestaticapps.net
-- **API**: https://func-aki-sta-prod.azurewebsites.net/api
+- **アプリケーション**: https://delightful-smoke-0d4827500.1.azurestaticapps.net
+- **API**: https://delightful-smoke-0d4827500.1.azurestaticapps.net/api
+- **スクレイパー**: https://aki-sta-scraper-cygfc8fvc2f5ebfq.eastasia-01.azurewebsites.net
 
 ### デプロイ関連ドキュメント
 - [Azure デプロイ詳細手順](./docs/AZURE_DEPLOYMENT.md)

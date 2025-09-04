@@ -17,20 +17,33 @@
 - [x] **Playwright環境分離システム**（バージョン競合解決）
 - [x] **自動修復・ブラウザインストール機能**
 
-## MVP v3.0 完了基準（Azure本番環境）
-- [ ] **Cosmos DB統合**（データ永続化、環境変数管理）
+## MVP v3.0 完了基準（Cosmos DB統合）
+- [x] **Cosmos DB統合**（データ永続化、環境変数管理）
+- [x] **データマイグレーション機能**
+- [x] **Pure Cosmos DBアーキテクチャ移行**
+- [x] **環境変数統合システム**
+- [x] **JSONファイル依存完全削除**
+
+## MVP v4.0 完了基準（Azure本番環境）
+- [x] **Azure本番環境デプロイ設定完了**
+- [x] **GitHub Actionsデプロイパイプライン構築**
+- [x] **Infrastructure as Code (Bicep) 実装**
+- [x] **Azure Static Web Apps Managed Functions v4実装**
+- [x] **CORS問題完全解決・デプロイ統一化**
+- [ ] **Timer Trigger自動実行システム**（1日2回）
+
+## 次期開発項目（v1.0）
 - [ ] **複数日付管理機能**（日付CRUD、UI実装）
-- [ ] **自動スケジュール実行**（Timer Trigger、1日2回）
 - [ ] **手動更新機能**（レート制限付き）
-- [ ] **Azure本番環境デプロイ**（Functions、Static Web Apps）
 - [ ] **監視・運用**（Application Insights、アラート）
+- [ ] **複数施設対応**（目黒区民センター追加済み、さらに拡張）
 
 ## 進捗更新前の確認事項
 1. **動作確認**
    ```bash
    # 統合動作確認
-   npm run dev
-   # → http://localhost:3000 でUI確認
+   npm start
+   # → http://localhost:3300 でUI確認
    ```
 
 2. **ステータス判定ルール**
