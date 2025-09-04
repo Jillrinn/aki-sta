@@ -98,12 +98,19 @@ const HowToUse: React.FC = () => {
 
           {/* 今すぐ情報を取得セクション */}
           <div className="p-3 sm:p-4 bg-orange-50 rounded-lg border border-orange-200 mb-4 sm:mb-6">
-            <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-2">
-              💡 今すぐ確認したい時は？
-            </h3>
-            <div className="text-xs sm:text-sm text-gray-700">
-              <span className="block sm:inline">「今すぐ情報を取得」ボタンを押して</span>
-              <span className="block sm:inline">最新情報を取得開始！</span>
+            <div className="flex">
+              <span className="text-xl sm:text-2xl mr-2 flex-shrink-0">
+                💡
+              </span>
+              <div className="flex-1">
+                <h4 className="font-bold text-gray-800 text-sm sm:text-base mb-1">
+                  今すぐ確認したい時は？
+                </h4>
+                <div className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                  <span className="block sm:inline">「今すぐ情報を取得」ボタンを押して</span>
+                  <span className="block sm:inline">最新情報を取得開始！</span>
+                </div>
+              </div>
             </div>
           </div>
 

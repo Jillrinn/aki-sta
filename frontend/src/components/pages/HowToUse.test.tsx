@@ -37,7 +37,7 @@ describe('HowToUse', () => {
 
   it('should display instant check section', () => {
     render(<HowToUse />);
-    expect(screen.getByText('💡 今すぐ確認したい時は？')).toBeInTheDocument();
+    expect(screen.getByText('今すぐ確認したい時は？')).toBeInTheDocument();
     expect(screen.getByText('「今すぐ情報を取得」ボタンを押して')).toBeInTheDocument();
     expect(screen.getByText('最新情報を取得開始！')).toBeInTheDocument();
   });
