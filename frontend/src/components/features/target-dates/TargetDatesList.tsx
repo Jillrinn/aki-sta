@@ -137,7 +137,7 @@ const TargetDatesList: React.FC = () => {
             to="/"
             className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg font-bold text-sm sm:text-base inline-block"
           >
-            ← トップページに戻る
+            ← 空き状況一覧に戻る
           </Link>
           <button
             onClick={handleRegisterClick}

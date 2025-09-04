@@ -393,27 +393,34 @@ def scrape_ensemble():
     rate_limits_repo = None
     
     try:
-        # Rate limits制御を試みる
-        try:
-            from src.repositories.rate_limits_repository import RateLimitsRepository
-            rate_limits_repo = RateLimitsRepository()
-            rate_result = rate_limits_repo.create_or_update_record('running')
-            
-            if rate_result.get('is_already_running'):
-                return jsonify({
-                    'success': False,
-                    'message': '空き状況取得は実行中の可能性があります'
-                }), 409
-            
-            record_id = rate_result['record']['id']
-            record_date = rate_result['record']['date']
-            use_rate_limits = True
-            logger.info(f"Rate limit check passed for ensemble. Record ID: {record_id}")
-            
-        except Exception as e:
-            # Cosmos DB接続失敗時はrate_limits無効で続行
-            logger.warning(f"Rate limits unavailable for ensemble, continuing without rate limit control: {str(e)}")
+        # 環境変数でRate Limitsが無効化されているかチェック
+        disable_rate_limits = os.environ.get('DISABLE_RATE_LIMITS', '').lower() == 'true'
+        
+        if disable_rate_limits:
+            logger.info("Rate limits are disabled by environment variable (ensemble)")
             use_rate_limits = False
+        else:
+            # Rate limits制御を試みる
+            try:
+                from src.repositories.rate_limits_repository import RateLimitsRepository
+                rate_limits_repo = RateLimitsRepository()
+                rate_result = rate_limits_repo.create_or_update_record('running')
+                
+                if rate_result.get('is_already_running'):
+                    return jsonify({
+                        'success': False,
+                        'message': '空き状況取得は実行中の可能性があります'
+                    }), 409
+                
+                record_id = rate_result['record']['id']
+                record_date = rate_result['record']['date']
+                use_rate_limits = True
+                logger.info(f"Rate limit check passed for ensemble. Record ID: {record_id}")
+                
+            except Exception as e:
+                # Cosmos DB接続失敗時はrate_limits無効で続行
+                logger.warning(f"Rate limits unavailable for ensemble, continuing without rate limit control: {str(e)}")
+                use_rate_limits = False
         # リクエストから日付を取得
         date = request.args.get('date')
         if not date:

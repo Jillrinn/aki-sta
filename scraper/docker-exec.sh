@@ -67,11 +67,12 @@ case "$1" in
         
         info "Running tests in Docker..."
         # テスト用イメージで実行（環境変数は既にイメージに含まれている）
+        # DISABLE_RATE_LIMITSを明示的に設定
         # 引数がある場合はそれを使用、ない場合はデフォルト
         if [ $# -eq 0 ]; then
-            docker run --rm ${IMAGE_NAME}:test python -m pytest tests/ -v
+            docker run --rm -e DISABLE_RATE_LIMITS=true ${IMAGE_NAME}:test python -m pytest tests/ -v
         else
-            docker run --rm ${IMAGE_NAME}:test python -m pytest "$@"
+            docker run --rm -e DISABLE_RATE_LIMITS=true ${IMAGE_NAME}:test python -m pytest "$@"
         fi
         ;;
     
@@ -98,7 +99,8 @@ case "$1" in
         check_env_file "$env_file"
         
         info "Running scraper with args: $@"
-        docker run --rm --env-file "$env_file" $IMAGE_NAME python src/entrypoints/cli.py "$@"
+        # ローカル実行時はDISABLE_RATE_LIMITSを設定
+        docker run --rm --env-file "$env_file" -e DISABLE_RATE_LIMITS=true $IMAGE_NAME python src/entrypoints/cli.py "$@"
         ;;
     
     shell)
