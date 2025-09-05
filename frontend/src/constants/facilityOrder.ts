@@ -4,7 +4,7 @@
  * ここに記載された順番で表示されます
  */
 export const FACILITY_PRIORITY: { [centerName: string]: string[] } = {
-  'Ensemble Studio': [
+  'あんさんぶるスタジオ': [
     'あんさんぶるStudio和(本郷)',
     'あんさんぶるStudio音(初台)',
   ],
@@ -18,6 +18,6 @@ export const FACILITY_PRIORITY: { [centerName: string]: string[] } = {
  * centerNameのソート順を定義
  */
 export const CENTER_PRIORITY = [
-  'Ensemble Studio',
+  'あんさんぶるスタジオ',
   '目黒区民センター',
 ];
