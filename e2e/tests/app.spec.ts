@@ -119,6 +119,15 @@ test.describe('空きスタサーチくん E2E Tests', () => {
     
     const hasData = await hasAvailabilityData(page);
     if (hasData) {
+      // カテゴリーセクションがある場合は展開
+      const categoryButtons = page.locator('tr:has-text("【"), button:has-text("【")');
+      const categoryCount = await categoryButtons.count();
+      
+      if (categoryCount > 0) {
+        await categoryButtons.first().click();
+        await page.waitForTimeout(500);
+      }
+      
       // 更新時刻のフォーマットを確認（MM/DD HH:mm形式）
       const timePattern = /\d{2}\/\d{2} \d{2}:\d{2}/;
       const tables = page.getByRole('table');
