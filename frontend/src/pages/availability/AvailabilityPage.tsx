@@ -89,7 +89,15 @@ const AvailabilityPage: React.FC = () => {
                     return acc;
                   }, {});
                   
-                  return Object.entries(groupedByCenter).map(([centerName, centerFacilities]) => (
+                  // centerNameでソートし、各グループ内のfacilitiesもソート
+                  const sortedEntries = Object.entries(groupedByCenter)
+                    .sort(([a], [b]) => a.localeCompare(b, 'ja'))
+                    .map(([centerName, centerFacilities]) => [
+                      centerName,
+                      centerFacilities.sort((a, b) => a.facilityName.localeCompare(b.facilityName, 'ja'))
+                    ] as [string, Facility[]]);
+                  
+                  return sortedEntries.map(([centerName, centerFacilities]) => (
                     <CollapsibleCategorySection
                       key={centerName}
                       centerName={centerName}
@@ -136,7 +144,15 @@ const AvailabilityPage: React.FC = () => {
                       return acc;
                     }, {});
                     
-                    return Object.entries(groupedByCenter).map(([centerName, centerFacilities]) => (
+                    // centerNameでソートし、各グループ内のfacilitiesもソート
+                    const sortedEntries = Object.entries(groupedByCenter)
+                      .sort(([a], [b]) => a.localeCompare(b, 'ja'))
+                      .map(([centerName, centerFacilities]) => [
+                        centerName,
+                        centerFacilities.sort((a, b) => a.facilityName.localeCompare(b.facilityName, 'ja'))
+                      ] as [string, Facility[]]);
+                    
+                    return sortedEntries.map(([centerName, centerFacilities]) => (
                       <CollapsibleCategorySection
                         key={centerName}
                         centerName={centerName}

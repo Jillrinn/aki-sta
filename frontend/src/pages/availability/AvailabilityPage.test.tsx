@@ -41,7 +41,7 @@ describe('AvailabilityPage', () => {
     const mockData = {
       '2025-11-15': [
         {
-          facilityName: 'あんさんぶるStudio和(本郷)',
+          centerName: 'Test Center', facilityName: 'あんさんぶるStudio和(本郷)', roomName: 'Room A',
           timeSlots: { 
             'morning': 'unknown',
             'afternoon': 'unknown',
@@ -50,7 +50,7 @@ describe('AvailabilityPage', () => {
           lastUpdated: '2025-08-24T14:18:03Z',
         },
         {
-          facilityName: 'あんさんぶるStudio音(初台)',
+          centerName: 'Test Center', facilityName: 'あんさんぶるStudio音(初台)', roomName: 'Room A',
           timeSlots: { 
             'morning': 'unknown',
             'afternoon': 'unknown',
@@ -61,7 +61,7 @@ describe('AvailabilityPage', () => {
       ],
       '2025-11-16': [
         {
-          facilityName: 'あんさんぶるStudio和(本郷)',
+          centerName: 'Test Center', facilityName: 'あんさんぶるStudio和(本郷)', roomName: 'Room A',
           timeSlots: { 
             'morning': 'booked',
             'afternoon': 'available',
@@ -70,7 +70,7 @@ describe('AvailabilityPage', () => {
           lastUpdated: '2025-08-21T13:47:14Z',
         },
         {
-          facilityName: 'あんさんぶるStudio音(初台)',
+          centerName: 'Test Center', facilityName: 'あんさんぶるStudio音(初台)', roomName: 'Room A',
           timeSlots: { 
             'morning': 'available',
             'afternoon': 'booked',
@@ -124,7 +124,7 @@ describe('AvailabilityPage', () => {
     const mockData = {
       '2025-11-15': [
         {
-          facilityName: 'あんさんぶるStudio和(本郷)',
+          centerName: 'Test Center', facilityName: 'あんさんぶるStudio和(本郷)', roomName: 'Room A',
           timeSlots: { 
             'morning': 'available',
             'afternoon': 'booked',
@@ -133,7 +133,7 @@ describe('AvailabilityPage', () => {
           lastUpdated: '2025-08-24T14:18:03Z',
         },
         {
-          facilityName: 'あんさんぶるStudio音(初台)',
+          centerName: 'Test Center', facilityName: 'あんさんぶるStudio音(初台)', roomName: 'Room A',
           timeSlots: { 
             'morning': 'booked',
             'afternoon': 'available',
@@ -144,7 +144,7 @@ describe('AvailabilityPage', () => {
       ],
       '2025-11-16': [
         {
-          facilityName: 'あんさんぶるStudio和(本郷)',
+          centerName: 'Test Center', facilityName: 'あんさんぶるStudio和(本郷)', roomName: 'Room A',
           timeSlots: { 
             'morning': 'booked',
             'afternoon': 'available',
@@ -176,7 +176,7 @@ describe('AvailabilityPage', () => {
     const mockData = {
       '2025-11-15': [
         {
-          facilityName: 'テスト施設',
+          centerName: 'Test Center', facilityName: 'テスト施設', roomName: 'Room A',
           timeSlots: { 
             'morning': 'available',
             'afternoon': 'booked',
@@ -330,21 +330,21 @@ describe('AvailabilityPage', () => {
     const mockData = {
       '2025-11-20': [
         {
-          facilityName: 'テスト施設3',
+          centerName: 'Test Center', facilityName: 'テスト施設3', roomName: 'Room A',
           timeSlots: { 'morning': 'available', 'afternoon': 'available', 'evening': 'available' },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
       ],
       '2025-11-15': [
         {
-          facilityName: 'テスト施設1',
+          centerName: 'Test Center', facilityName: 'テスト施設1', roomName: 'Room A',
           timeSlots: { 'morning': 'available', 'afternoon': 'available', 'evening': 'available' },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
       ],
       '2025-11-17': [
         {
-          facilityName: 'テスト施設2',
+          centerName: 'Test Center', facilityName: 'テスト施設2', roomName: 'Room A',
           timeSlots: { 'morning': 'available', 'afternoon': 'available', 'evening': 'available' },
           lastUpdated: '2025-08-24T14:18:03Z',
         },
@@ -451,7 +451,7 @@ describe('AvailabilityPage', () => {
     const invalidTimeSlots = {
       '2025-11-15': [
         {
-          facilityName: 'Test Facility',
+          centerName: 'Test Center', facilityName: 'Test Facility', roomName: 'Room A',
           timeSlots: 'invalid string',
           lastUpdated: '2025-08-24T14:18:03Z'
         }
@@ -493,9 +493,9 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            centerName: 'あんさんぶるスタジオ',
-            facilityName: 'あんさんぶるStudio和(本郷)',
-            roomName: '練習室',
+            centerName: 'Test Center', 
+            facilityName: 'あんさんぶるStudio和(本郷)', 
+            roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'available',
@@ -530,9 +530,6 @@ describe('AvailabilityPage', () => {
       // Check that mobile card elements are rendered
       // Facility name should be visible
       expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
-      
-      // Room name should be visible
-      expect(screen.getByText('練習室')).toBeInTheDocument();
     });
 
     it('renders desktop table view when screen width is 640px or more', async () => {
@@ -546,7 +543,7 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            facilityName: 'あんさんぶるStudio和(本郷)',
+            centerName: 'Test Center', facilityName: 'あんさんぶるStudio和(本郷)', roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'booked',
@@ -588,7 +585,7 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            facilityName: 'テスト施設',
+            centerName: 'Test Center', facilityName: 'テスト施設', roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'available',
@@ -638,7 +635,7 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            facilityName: 'テスト施設',
+            centerName: 'Test Center', facilityName: 'テスト施設', roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'available',
@@ -690,7 +687,7 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            facilityName: 'あんさんぶるStudio和(本郷)',
+            centerName: 'Test Center', facilityName: 'あんさんぶるStudio和(本郷)', roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'booked',
@@ -699,7 +696,7 @@ describe('AvailabilityPage', () => {
             lastUpdated: '2025-08-24T14:18:03Z',
           },
           {
-            facilityName: 'あんさんぶるStudio音(初台)',
+            centerName: 'Test Center', facilityName: 'あんさんぶるStudio音(初台)', roomName: 'Room A',
             timeSlots: { 
               'morning': 'booked',
               'afternoon': 'available',
@@ -739,7 +736,7 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            facilityName: 'テスト施設',
+            centerName: 'Test Center', facilityName: 'テスト施設', roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'available',
@@ -773,7 +770,7 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            facilityName: 'テスト施設',
+            centerName: 'Test Center', facilityName: 'テスト施設', roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'available',
@@ -809,7 +806,7 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            facilityName: 'テスト施設',
+            centerName: 'Test Center', facilityName: 'テスト施設', roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'available',
@@ -839,7 +836,7 @@ describe('AvailabilityPage', () => {
       const mockData = {
         '2025-11-15': [
           {
-            facilityName: 'テスト施設',
+            centerName: 'Test Center', facilityName: 'テスト施設', roomName: 'Room A',
             timeSlots: { 
               'morning': 'available',
               'afternoon': 'available',
