@@ -83,3 +83,36 @@ class CosmosWriter:
     def _generate_room_id(self, room_name: str) -> str:
         """部屋名からIDを生成"""
         return room_name.replace(' ', '-').replace('(', '').replace(')', '').replace('（', '').replace('）', '').lower()
+    
+    def warm_up(self) -> Dict:
+        """
+        接続のウォームアップ（接続維持用）
+        軽量なクエリを実行して接続をアクティブに保つ
+        
+        Returns:
+            実行結果を含む辞書
+        """
+        try:
+            # 最小限のデータを取得（1件のみ）
+            query = "SELECT TOP 1 c.id FROM c"
+            items = list(self.container.query_items(
+                query=query,
+                enable_cross_partition_query=True
+            ))
+            
+            return {
+                'status': 'success',
+                'message': 'Connection warmed up successfully',
+                'items_found': len(items)
+            }
+            
+        except exceptions.CosmosHttpResponseError as e:
+            return {
+                'status': 'error',
+                'message': f'Cosmos DB error: {e.message}'
+            }
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Unexpected error: {str(e)}'
+            }

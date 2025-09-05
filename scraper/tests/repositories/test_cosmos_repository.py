@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch, MagicMock
 import os
 import sys
 import pytest
+from azure.cosmos import exceptions
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from src.repositories.cosmos_repository import CosmosWriter
@@ -98,6 +99,52 @@ class TestCosmosWriter(unittest.TestCase):
         for facility_name, expected_id in test_cases:
             result = self.writer._generate_facility_id(facility_name)
             self.assertEqual(result, expected_id)
+    
+    def test_warm_up_success(self):
+        """warm_upメソッドの成功テスト"""
+        # モックの設定
+        self.mock_container.query_items.return_value = [{'id': 'test-item'}]
+        
+        # 実行
+        result = self.writer.warm_up()
+        
+        # 検証
+        self.assertEqual(result['status'], 'success')
+        self.assertEqual(result['message'], 'Connection warmed up successfully')
+        self.assertEqual(result['items_found'], 1)
+        
+        # query_itemsが正しく呼ばれたことを確認
+        self.mock_container.query_items.assert_called_once_with(
+            query="SELECT TOP 1 c.id FROM c",
+            enable_cross_partition_query=True
+        )
+    
+    def test_warm_up_cosmos_error(self):
+        """warm_upメソッドのCosmos DBエラーテスト"""
+        # Cosmos DBエラーを発生させる
+        self.mock_container.query_items.side_effect = exceptions.CosmosHttpResponseError(
+            status_code=500,
+            message="Database error"
+        )
+        
+        # 実行
+        result = self.writer.warm_up()
+        
+        # 検証
+        self.assertEqual(result['status'], 'error')
+        self.assertIn('Database error', result['message'])
+    
+    def test_warm_up_unexpected_error(self):
+        """warm_upメソッドの予期しないエラーテスト"""
+        # 予期しないエラーを発生させる
+        self.mock_container.query_items.side_effect = Exception("Unexpected error")
+        
+        # 実行
+        result = self.writer.warm_up()
+        
+        # 検証
+        self.assertEqual(result['status'], 'error')
+        self.assertIn('Unexpected error', result['message'])
     
     @patch.dict(os.environ, {}, clear=True)
     @patch('src.repositories.cosmos_repository.load_dotenv')

@@ -44,6 +44,63 @@ class TestBasicEndpoints:
         assert data['status'] == 'healthy'
         assert 'timestamp' in data
     
+    @patch('src.repositories.cosmos_repository.CosmosWriter')
+    def test_warm_up_endpoint_success(self, mock_cosmos_writer, client):
+        """warm-upエンドポイントの成功テスト"""
+        # モックの設定
+        mock_instance = Mock()
+        mock_instance.warm_up.return_value = {
+            'status': 'success',
+            'message': 'Connection warmed up successfully',
+            'items_found': 1
+        }
+        mock_cosmos_writer.return_value = mock_instance
+        
+        response = client.get('/warm-up')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 200
+        assert data['status'] == 'success'
+        assert data['message'] == 'Connection warmed up successfully'
+        assert data['items_found'] == 1
+        assert 'timestamp' in data
+        
+        # warm_upメソッドが呼ばれたことを確認
+        mock_instance.warm_up.assert_called_once()
+    
+    @patch('src.repositories.cosmos_repository.CosmosWriter')
+    def test_warm_up_endpoint_error(self, mock_cosmos_writer, client):
+        """warm-upエンドポイントのエラーテスト"""
+        # モックの設定
+        mock_instance = Mock()
+        mock_instance.warm_up.return_value = {
+            'status': 'error',
+            'message': 'Cosmos DB connection error'
+        }
+        mock_cosmos_writer.return_value = mock_instance
+        
+        response = client.get('/warm-up')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 500
+        assert data['status'] == 'error'
+        assert 'Cosmos DB connection error' in data['message']
+        assert 'timestamp' in data
+    
+    @patch('src.repositories.cosmos_repository.CosmosWriter')
+    def test_warm_up_endpoint_exception(self, mock_cosmos_writer, client):
+        """warm-upエンドポイントの例外テスト"""
+        # CosmosWriter初期化時に例外を発生させる
+        mock_cosmos_writer.side_effect = Exception('Connection failed')
+        
+        response = client.get('/warm-up')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 500
+        assert data['status'] == 'error'
+        assert 'Connection failed' in data['message']
+        assert 'timestamp' in data
+    
     def test_404_error(self, client):
         """存在しないエンドポイントのテスト"""
         response = client.get('/nonexistent')

@@ -83,6 +83,51 @@ def health():
     })
 
 
+@app.route('/warm-up')
+def warm_up():
+    """
+    Warm-up endpoint for maintaining Cosmos DB connection
+    Executes a lightweight query to keep the connection active
+    """
+    timestamp = datetime.now().isoformat()
+    logger.info(f"Warm-up function executed at {timestamp}")
+    
+    try:
+        # Cosmos DB接続を維持
+        from src.repositories.cosmos_repository import CosmosWriter
+        cosmos_writer = CosmosWriter()
+        
+        # 軽量なヘルスチェッククエリを実行
+        result = cosmos_writer.warm_up()
+        
+        if result['status'] == 'success':
+            logger.info(f"Warm-up successful. Connection is active. Found {result.get('items_found', 0)} items.")
+            return jsonify({
+                'status': 'success',
+                'timestamp': timestamp,
+                'message': result['message'],
+                'items_found': result.get('items_found', 0)
+            })
+        else:
+            logger.error(f"Warm-up failed: {result['message']}")
+            return jsonify({
+                'status': 'error',
+                'timestamp': timestamp,
+                'message': result['message']
+            }), 500
+            
+    except Exception as e:
+        error_message = f"Warm-up failed with exception: {str(e)}"
+        logger.error(error_message)
+        
+        # エラーが発生してもサービスは継続
+        return jsonify({
+            'status': 'error',
+            'timestamp': timestamp,
+            'message': error_message
+        }), 500
+
+
 def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility='both'):
     """
     非同期でスクレイピングを実行するタスク
