@@ -31,9 +31,19 @@ export async function validateFacilityStructure(page: Page) {
   const tableCount = await tables.count();
   
   if (tableCount === 0) {
-    // データがない場合はメッセージを確認
-    const messageExists = await page.getByText(/データがありません|読み込み中|空き状況はまだ取得されていません/).isVisible().catch(() => false);
-    expect(messageExists).toBeTruthy();
+    // データがない場合は日付ヘッダーの存在をチェック
+    const dateHeaders = await page.locator('[data-testid^="date-header-"]').count();
+    
+    if (dateHeaders > 0) {
+      // 日付ヘッダーがある場合、その中のメッセージを確認
+      const noDataMessage = await page.getByText('空き状況はまだ取得されていません。').isVisible().catch(() => false);
+      const reservedMessage = await page.getByText('🎵 この日は予約済みです').isVisible().catch(() => false);
+      expect(noDataMessage || reservedMessage).toBeTruthy();
+    } else {
+      // 全体的なメッセージを確認
+      const messageExists = await page.getByText(/データがありません|読み込み中/).isVisible().catch(() => false);
+      expect(messageExists).toBeTruthy();
+    }
     return;
   }
 

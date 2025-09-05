@@ -54,22 +54,32 @@ test.describe('空きスタサーチくん E2E Tests', () => {
       await validateFacilityNames(page);
     } else {
       // データがない場合はメッセージが表示されることを確認
-      const messages = [
-        'データがありません',
-        'データを読み込み中',
-        'Service temporarily unavailable',
-        '空き状況はまだ取得されていません'
-      ];
+      // 日付ヘッダーが表示されているかチェック
+      const dateHeaders = await page.locator('[data-testid^="date-header-"]').count();
       
-      let messageFound = false;
-      for (const msg of messages) {
-        const visible = await page.getByText(msg).isVisible().catch(() => false);
-        if (visible) {
-          messageFound = true;
-          break;
+      if (dateHeaders > 0) {
+        // 日付ヘッダーがある場合は、その中にメッセージがあるはず
+        const noDataMessage = await page.getByText('空き状況はまだ取得されていません。').isVisible().catch(() => false);
+        const reservedMessage = await page.getByText('🎵 この日は予約済みです').isVisible().catch(() => false);
+        expect(noDataMessage || reservedMessage).toBeTruthy();
+      } else {
+        // 日付ヘッダーもない場合は、全体的なメッセージを確認
+        const messages = [
+          'データがありません',
+          'データを読み込み中',
+          'Service temporarily unavailable'
+        ];
+        
+        let messageFound = false;
+        for (const msg of messages) {
+          const visible = await page.getByText(msg).isVisible().catch(() => false);
+          if (visible) {
+            messageFound = true;
+            break;
+          }
         }
+        expect(messageFound).toBeTruthy();
       }
-      expect(messageFound).toBeTruthy();
     }
   });
 
