@@ -86,7 +86,11 @@ const AvailabilityPage: React.FC = () => {
             </h2>
             
             {!data || !data[date] ? (
-              <div className="p-5 text-center bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+              <div className={`p-5 text-center rounded-lg border shadow-sm ${
+                targetDateMap[date]?.isbooked 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-gray-50 border-gray-200'
+              }`}>
                 {targetDateMap[date]?.isbooked ? (
                   <>
                     <p className="text-gray-800 text-lg font-semibold mb-2">

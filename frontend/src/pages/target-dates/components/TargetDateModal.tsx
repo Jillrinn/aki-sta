@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { targetDatesApi } from '../../../services/api';
 import { CreateTargetDateRequest } from '../../../types/targetDates';
 
+// よく使われるラベルの候補
+const COMMON_LABELS = [
+  '全体練習',
+  'レッスン',
+  'パート練習',
+];
+
 interface TargetDateModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -12,6 +19,7 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
   const [label, setLabel] = useState('');
   const [memo, setMemo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -45,10 +53,12 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
       setDate('');
       setLabel('');
       setMemo('');
+      setIsClosing(true);
       
       // 成功メッセージを表示してからモーダルを閉じる
       setTimeout(() => {
         setSuccessMessage('');
+        setIsClosing(false);
         onClose();
       }, 1500);
     } catch (err: any) {
@@ -65,11 +75,15 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
   };
 
   const handleClose = () => {
+    // 閉じる処理中は何もしない
+    if (isClosing) return;
+    
     setDate('');
     setLabel('');
     setMemo('');
     setError('');
     setSuccessMessage('');
+    setIsClosing(false);
     onClose();
   };
 
@@ -100,7 +114,7 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
               onChange={(e) => setDate(e.target.value)}
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
               style={{ WebkitAppearance: 'none' }}
-              disabled={isLoading}
+              disabled={isLoading || isClosing}
               required
             />
           </div>
@@ -112,13 +126,19 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
             <input
               type="text"
               id="label"
+              list="label-options"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="パルバ練習"
+              placeholder="例: パルバ練習"
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isLoading}
+              disabled={isLoading || isClosing}
               required
             />
+            <datalist id="label-options">
+              {COMMON_LABELS.map(option => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
           </div>
 
           <div className="mb-6">
@@ -133,7 +153,7 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
               rows={3}
               maxLength={500}
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              disabled={isLoading}
+              disabled={isLoading || isClosing}
             />
             <div className="text-right text-sm text-gray-500 mt-1">
               {memo.length}/500
@@ -160,14 +180,14 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
               type="button"
               onClick={handleClose}
               className="px-6 py-3 text-base font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-              disabled={isLoading}
+              disabled={isLoading || isClosing}
             >
               キャンセル
             </button>
             <button
               type="submit"
               className="px-6 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading}
+              disabled={isLoading || isClosing}
             >
               {isLoading ? '登録中...' : '登録'}
             </button>

@@ -6,7 +6,7 @@ import HowToUsePage from './HowToUsePage';
 describe('HowToUsePage', () => {
   it('should render the component with title', () => {
     render(<HowToUsePage />);
-    expect(screen.getByText('🎵 ようこそ！ 🎵')).toBeInTheDocument();
+    expect(screen.getByText('🔍 ようこそ！ 🎵')).toBeInTheDocument();
     expect(screen.getByText('音楽スタジオの空き状況をかんたんチェック！')).toBeInTheDocument();
   });
 
