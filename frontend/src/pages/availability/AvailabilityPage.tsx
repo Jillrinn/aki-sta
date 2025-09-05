@@ -3,6 +3,7 @@ import { Facility } from '../../types/availability';
 import { useAvailabilityData } from '../../hooks/useAvailabilityData';
 import { useTargetDates } from '../../hooks/useTargetDates';
 import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../constants/availability';
+import { sortGroupedFacilities } from '../../utils/sortingUtils';
 import {
   CommonLoadingState,
   CommonErrorState,
@@ -89,13 +90,8 @@ const AvailabilityPage: React.FC = () => {
                     return acc;
                   }, {});
                   
-                  // centerNameでソートし、各グループ内のfacilitiesもソート
-                  const sortedEntries = Object.entries(groupedByCenter)
-                    .sort(([a], [b]) => a.localeCompare(b, 'ja'))
-                    .map(([centerName, centerFacilities]) => [
-                      centerName,
-                      centerFacilities.sort((a, b) => a.facilityName.localeCompare(b.facilityName, 'ja'))
-                    ] as [string, Facility[]]);
+                  // 優先度順でソート
+                  const sortedEntries = sortGroupedFacilities(groupedByCenter);
                   
                   return sortedEntries.map(([centerName, centerFacilities]) => (
                     <CollapsibleCategorySection
@@ -144,13 +140,8 @@ const AvailabilityPage: React.FC = () => {
                       return acc;
                     }, {});
                     
-                    // centerNameでソートし、各グループ内のfacilitiesもソート
-                    const sortedEntries = Object.entries(groupedByCenter)
-                      .sort(([a], [b]) => a.localeCompare(b, 'ja'))
-                      .map(([centerName, centerFacilities]) => [
-                        centerName,
-                        centerFacilities.sort((a, b) => a.facilityName.localeCompare(b.facilityName, 'ja'))
-                      ] as [string, Facility[]]);
+                    // 優先度順でソート
+                    const sortedEntries = sortGroupedFacilities(groupedByCenter);
                     
                     return sortedEntries.map(([centerName, centerFacilities]) => (
                       <CollapsibleCategorySection
