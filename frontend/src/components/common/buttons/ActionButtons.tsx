@@ -1,17 +1,38 @@
 import React, { useState } from 'react';
-import { scraperApi } from '../../../services/api';
+import { scraperApi, rateLimitsApi } from '../../../services/api';
 import ScrapeResultModal from '../modals/ScrapeResultModal';
 import ConfirmationModal from '../modals/ConfirmationModal';
+import RateLimitWarningModal from '../modals/RateLimitWarningModal';
+import CheckingModal from '../modals/CheckingModal';
 
 const ActionButtons: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+  const [isRateLimitWarningOpen, setIsRateLimitWarningOpen] = useState(false);
+  const [isCheckingModalOpen, setIsCheckingModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
-  const handleManualFetchClick = () => {
-    setIsConfirmModalOpen(true);
+  const handleManualFetchClick = async () => {
+    setIsCheckingModalOpen(true);
+    
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const rateLimitRecord = await rateLimitsApi.getRateLimitByDate(today);
+      
+      setIsCheckingModalOpen(false);
+      
+      if (rateLimitRecord && rateLimitRecord.status === 'running') {
+        setIsRateLimitWarningOpen(true);
+      } else {
+        setIsConfirmModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Failed to check rate limit:', error);
+      setIsCheckingModalOpen(false);
+      setIsConfirmModalOpen(true);
+    }
   };
 
   const handleConfirm = async () => {
@@ -68,6 +89,15 @@ const ActionButtons: React.FC = () => {
         message={message}
         isLoading={isLoading}
         isError={isError}
+      />
+
+      <RateLimitWarningModal
+        isOpen={isRateLimitWarningOpen}
+        onClose={() => setIsRateLimitWarningOpen(false)}
+      />
+
+      <CheckingModal
+        isOpen={isCheckingModalOpen}
       />
     </>
   );

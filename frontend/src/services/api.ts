@@ -6,6 +6,7 @@ import {
   DeleteTargetDateResponse 
 } from '../types/targetDates';
 import { ScraperResponse, ScrapeBatchResponse } from '../types/scraper';
+import { RateLimitResponse } from '../types/rateLimits';
 import { httpClient, HttpClient } from './httpClient';
 
 export const availabilityApi = {
@@ -115,6 +116,23 @@ export const scraperApi = {
         return error.response.data as ScrapeBatchResponse;
       }
       console.error('Failed to trigger batch scraping:', error);
+      throw error;
+    }
+  }
+};
+
+export const rateLimitsApi = {
+  async getRateLimitByDate(date: string): Promise<RateLimitResponse | null> {
+    try {
+      const response = await httpClient.get<RateLimitResponse>(
+        `/rate-limits/${date}`
+      );
+      return response.data;
+    } catch (error) {
+      if (HttpClient.isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+      console.error('Failed to fetch rate limit:', error);
       throw error;
     }
   }

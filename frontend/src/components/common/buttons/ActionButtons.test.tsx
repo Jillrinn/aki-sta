@@ -1,11 +1,14 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import ActionButtons from './ActionButtons';
-import { scraperApi } from '../../../services/api';
+import { scraperApi, rateLimitsApi } from '../../../services/api';
 
 jest.mock('../../../services/api', () => ({
   scraperApi: {
     triggerBatchScraping: jest.fn(),
+  },
+  rateLimitsApi: {
+    getRateLimitByDate: jest.fn(),
   },
 }));
 
@@ -16,6 +19,29 @@ jest.mock('../modals/ConfirmationModal', () => {
       <div data-testid="confirmation-modal">
         <button onClick={onConfirm}>実行する</button>
         <button onClick={onCancel}>キャンセル</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../modals/RateLimitWarningModal', () => {
+  return function MockRateLimitWarningModal({ isOpen, onClose }: any) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="rate-limit-warning-modal">
+        <p>現在、情報取得処理が実行中です</p>
+        <button onClick={onClose}>閉じる</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../modals/CheckingModal', () => {
+  return function MockCheckingModal({ isOpen }: any) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="checking-modal">
+        <p>実行状況を確認中...</p>
       </div>
     );
   };
@@ -33,22 +59,30 @@ describe('ActionButtons', () => {
     expect(screen.queryByLabelText('新規登録')).not.toBeInTheDocument();
   });
 
-  test('shows confirmation modal when button is clicked', () => {
+  test('shows confirmation modal when button is clicked', async () => {
+    (rateLimitsApi.getRateLimitByDate as jest.Mock).mockResolvedValue(null);
+    
     render(<ActionButtons />);
     
     const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
     
-    expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    });
   });
 
-  test('closes confirmation modal when cancel is clicked', () => {
+  test('closes confirmation modal when cancel is clicked', async () => {
+    (rateLimitsApi.getRateLimitByDate as jest.Mock).mockResolvedValue(null);
+    
     render(<ActionButtons />);
     
     const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
     
-    expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    });
     
     const cancelButton = screen.getByText('キャンセル');
     fireEvent.click(cancelButton);
@@ -56,7 +90,32 @@ describe('ActionButtons', () => {
     expect(screen.queryByTestId('confirmation-modal')).not.toBeInTheDocument();
   });
 
+  test('shows rate limit warning when scraping is running', async () => {
+    const today = new Date().toISOString().split('T')[0];
+    (rateLimitsApi.getRateLimitByDate as jest.Mock).mockResolvedValue({
+      id: `rate-limit-${today}`,
+      date: today,
+      status: 'running',
+      count: 1,
+      lastRequestedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    });
+
+    render(<ActionButtons />);
+    
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
+    fireEvent.click(fetchButton);
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('rate-limit-warning-modal')).toBeInTheDocument();
+      expect(screen.getByText('現在、情報取得処理が実行中です')).toBeInTheDocument();
+    });
+    
+    expect(screen.queryByTestId('confirmation-modal')).not.toBeInTheDocument();
+  });
+
   test('triggers batch scraping when confirmed', async () => {
+    (rateLimitsApi.getRateLimitByDate as jest.Mock).mockResolvedValue(null);
     (scraperApi.triggerBatchScraping as jest.Mock).mockResolvedValue({
       success: true,
       message: '空き状況取得を開始しました',
@@ -68,6 +127,11 @@ describe('ActionButtons', () => {
     // ボタンをクリック
     const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
+    
+    // 確認モーダルが表示されるのを待つ
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    });
     
     // 確認モーダルで実行をクリック
     const confirmButton = screen.getByText('実行する');
@@ -92,7 +156,23 @@ describe('ActionButtons', () => {
     );
   });
 
+  test('shows confirmation modal when rate limit check fails', async () => {
+    (rateLimitsApi.getRateLimitByDate as jest.Mock).mockRejectedValue(new Error('API Error'));
+    
+    render(<ActionButtons />);
+    
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
+    fireEvent.click(fetchButton);
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    });
+    
+    expect(screen.queryByTestId('rate-limit-warning-modal')).not.toBeInTheDocument();
+  });
+
   test('shows error modal when no target dates are found', async () => {
+    (rateLimitsApi.getRateLimitByDate as jest.Mock).mockResolvedValue(null);
     (scraperApi.triggerBatchScraping as jest.Mock).mockResolvedValue({
       success: false,
       message: '練習日程が登録されていません',
@@ -102,6 +182,11 @@ describe('ActionButtons', () => {
     
     const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
+    
+    // 確認モーダルが表示されるのを待つ
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    });
     
     const confirmButton = screen.getByText('実行する');
     fireEvent.click(confirmButton);
@@ -115,12 +200,18 @@ describe('ActionButtons', () => {
   });
 
   test('shows error modal when API call fails', async () => {
+    (rateLimitsApi.getRateLimitByDate as jest.Mock).mockResolvedValue(null);
     (scraperApi.triggerBatchScraping as jest.Mock).mockRejectedValue(new Error('Network error'));
 
     render(<ActionButtons />);
     
     const fetchButton = screen.getByLabelText('今すぐ情報を取得');
     fireEvent.click(fetchButton);
+    
+    // 確認モーダルが表示されるのを待つ
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    });
     
     const confirmButton = screen.getByText('実行する');
     fireEvent.click(confirmButton);
