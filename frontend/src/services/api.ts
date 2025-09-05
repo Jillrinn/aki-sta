@@ -7,7 +7,7 @@ import {
   UpdateTargetDateRequest,
   UpdateTargetDateResponse 
 } from '../types/targetDates';
-import { ScraperResponse, ScrapeBatchResponse } from '../types/scraper';
+import { ScraperResponse, ScrapeBatchResponse, ScrapeDateResponse } from '../types/scraper';
 import { RateLimitResponse } from '../types/rateLimits';
 import { httpClient, HttpClient } from './httpClient';
 
@@ -131,6 +131,23 @@ export const scraperApi = {
         return error.response.data as ScrapeBatchResponse;
       }
       console.error('Failed to trigger batch scraping:', error);
+      throw error;
+    }
+  },
+
+  async triggerScrapingByDate(date: string): Promise<ScrapeDateResponse> {
+    try {
+      const response = await httpClient.post<ScrapeDateResponse>(
+        `/scrape/date`,
+        { date }
+      );
+      return response.data;
+    } catch (error) {
+      if (HttpClient.isAxiosError(error) && error.response) {
+        // 409エラー（すでに実行中）の場合もエラーデータを返す
+        return error.response.data as ScrapeDateResponse;
+      }
+      console.error('Failed to trigger scraping by date:', error);
       throw error;
     }
   }

@@ -164,6 +164,60 @@ describe('scraperApi', () => {
       expect(result).toEqual(mockResponse.data);
     });
   });
+
+  describe('triggerScrapingByDate', () => {
+    const testDate = '2025-09-20';
+    const mockResponse = {
+      data: {
+        success: true,
+        message: '2025-09-20の空き状況取得を開始しました',
+        date: testDate
+      },
+    };
+
+    it('should trigger scraping for a specific date successfully', async () => {
+      mockPost.mockResolvedValue(mockResponse);
+
+      const result = await scraperApi.triggerScrapingByDate(testDate);
+
+      expect(mockPost).toHaveBeenCalledWith('/scrape/date', { date: testDate });
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should handle 409 error (already running)', async () => {
+      const mockError = {
+        response: {
+          status: 409,
+          data: {
+            success: false,
+            message: '現在スクレイピング処理が実行中です'
+          }
+        }
+      };
+      
+      const { HttpClient } = jest.requireMock('./httpClient');
+      HttpClient.isAxiosError.mockReturnValue(true);
+      mockPost.mockRejectedValue(mockError);
+
+      const result = await scraperApi.triggerScrapingByDate(testDate);
+
+      expect(result).toEqual(mockError.response.data);
+    });
+
+    it('should handle other errors', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockError = new Error('Network error');
+      mockPost.mockRejectedValue(mockError);
+      
+      const { HttpClient } = jest.requireMock('./httpClient');
+      HttpClient.isAxiosError.mockReturnValue(false);
+
+      await expect(scraperApi.triggerScrapingByDate(testDate)).rejects.toThrow('Network error');
+      expect(mockPost).toHaveBeenCalledWith('/scrape/date', { date: testDate });
+      
+      consoleErrorSpy.mockRestore();
+    });
+  });
 });
 
 describe('targetDatesApi', () => {

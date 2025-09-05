@@ -26,3 +26,13 @@ export interface ScrapeBatchResponse {
   message: string;
   targetDates?: string[];
 }
+
+export interface ScrapeDateRequest {
+  date: string;
+}
+
+export interface ScrapeDateResponse {
+  success: boolean;
+  message: string;
+  date?: string;
+}
