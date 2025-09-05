@@ -31,7 +31,7 @@ describe('scrape-batch', () => {
 
   describe('POST /api/scrape/batch', () => {
     it('should successfully initiate batch scraping with default parameters', async () => {
-      mockRequest.json.mockResolvedValue({});
+      mockRequest.json.mockResolvedValue({ includeAllTargetDates: true });
       
       scrapeService.executeBatchScraping.mockResolvedValue({
         success: true,
@@ -81,7 +81,7 @@ describe('scrape-batch', () => {
     });
 
     it('should return 500 when no target dates are found', async () => {
-      mockRequest.json.mockResolvedValue({});
+      mockRequest.json.mockResolvedValue({ includeAllTargetDates: true });
       
       scrapeService.executeBatchScraping.mockResolvedValue({
         success: false,
@@ -96,7 +96,7 @@ describe('scrape-batch', () => {
     });
 
     it('should handle service errors gracefully', async () => {
-      mockRequest.json.mockResolvedValue({});
+      mockRequest.json.mockResolvedValue({ includeAllTargetDates: true });
       
       scrapeService.executeBatchScraping.mockRejectedValue(
         new Error('Service unavailable')
@@ -126,8 +126,24 @@ describe('scrape-batch', () => {
       expect(scrapeService.executeBatchScraping).toHaveBeenCalledWith('manual');
     });
 
-    it('should return 500 when all target dates are booked', async () => {
+    it('should handle empty request body with default includeAllTargetDates', async () => {
       mockRequest.json.mockResolvedValue({});
+      
+      scrapeService.executeBatchScraping.mockResolvedValue({
+        success: true,
+        message: '空き状況取得を開始しました',
+        targetDates: ['2025-09-15']
+      });
+
+      const result = await scrapeBatchHandler(mockRequest, mockContext);
+
+      expect(result.status).toBe(202);
+      expect(result.jsonBody.success).toBe(true);
+      expect(scrapeService.executeBatchScraping).toHaveBeenCalledWith('manual');
+    });
+
+    it('should return 500 when all target dates are booked', async () => {
+      mockRequest.json.mockResolvedValue({ includeAllTargetDates: true });
       
       scrapeService.executeBatchScraping.mockResolvedValue({
         success: false,
