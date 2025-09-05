@@ -3,6 +3,7 @@
 全ての施設スクレイパーが継承する共通処理を実装
 """
 import json
+import logging
 import os
 import platform
 import re
@@ -18,10 +19,46 @@ from ..types.time_slots import TimeSlots, validate_time_slots
 class BaseScraper(ABC):
     """全施設共通の基底スクレイパークラス"""
     
-    def __init__(self):
-        """初期化処理"""
+    def __init__(self, log_level: Optional[str] = None):
+        """初期化処理
+        
+        Args:
+            log_level: ログレベル（DEBUG/INFO/WARNING/ERROR）。Noneの場合は環境変数から取得
+        """
         self.base_url = self.get_base_url()
         self.studios = self.get_studios()
+        
+        # ログレベル設定（環境変数 > 引数 > デフォルト）
+        level = os.environ.get('SCRAPER_LOG_LEVEL', log_level or 'INFO').upper()
+        self.log_level = getattr(logging, level, logging.INFO)
+        
+        # ログ設定
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(self.log_level)
+        
+        # ハンドラが未設定の場合のみ追加
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setLevel(self.log_level)
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+    
+    def log_debug(self, message: str):
+        """デバッグログ出力"""
+        self.logger.debug(message)
+    
+    def log_info(self, message: str):
+        """情報ログ出力"""
+        self.logger.info(message)
+    
+    def log_warning(self, message: str):
+        """警告ログ出力"""
+        self.logger.warning(message)
+    
+    def log_error(self, message: str):
+        """エラーログ出力"""
+        self.logger.error(message)
     
     @abstractmethod
     def get_base_url(self) -> str:
@@ -76,7 +113,7 @@ class BaseScraper(ABC):
         platform_override = os.environ.get('PLATFORM_OVERRIDE')
         system = platform_override if platform_override else platform.system()
         
-        print(f"Platform detection: system={system}, override={platform_override}")
+        self.log_debug(f"Platform detection: system={system}, override={platform_override}")
         
         # Azure Web Appやコンテナ環境を明示的に判定
         is_container = os.environ.get('CONTAINER_ENV') == 'true'
@@ -84,15 +121,15 @@ class BaseScraper(ABC):
         
         if is_azure or is_container:
             # Azure/Dockerでは必ずChromiumを使用
-            print(f"Azure/Container environment detected, forcing Chromium browser")
+            self.log_debug(f"Azure/Container environment detected, forcing Chromium browser")
             return playwright.chromium.launch(headless=True)
         elif system == "Darwin":  # macOS
             # macOSではWebKitを使用（GPUクラッシュ回避）
-            print(f"Running on macOS, using WebKit browser")
+            self.log_debug(f"Running on macOS, using WebKit browser")
             return playwright.webkit.launch(headless=True)
         else:  # Linux/その他の環境
             # その他の環境ではChromiumが安定
-            print(f"Running on {system}, using Chromium browser")
+            self.log_debug(f"Running on {system}, using Chromium browser")
             return playwright.chromium.launch(headless=True)
     
     def create_browser_context(self, browser):
@@ -213,7 +250,7 @@ class BaseScraper(ABC):
         Returns:
             スタジオ空き状況のリスト
         """
-        print(f"\n=== Starting Ensemble Studio scraping for {date} ===")
+        self.log_info(f"\n=== Starting Ensemble Studio scraping for {date} ===")
         
         # 日付をパース
         target_date = datetime.strptime(date, "%Y-%m-%d")
@@ -229,7 +266,7 @@ class BaseScraper(ABC):
                     page = context.new_page()
                     
                     # ページにアクセス
-                    print(f"Accessing: {self.base_url}")
+                    self.log_info(f"Accessing: {self.base_url}")
                     response = page.goto(self.base_url, wait_until="networkidle", timeout=60000)
                     
                     # カレンダーが読み込まれるまで待機（施設によってセレクタが異なる可能性）
@@ -239,25 +276,25 @@ class BaseScraper(ABC):
                     calendars = self.find_studio_calendars(page)
                     
                     if not calendars:
-                        print("Warning: No calendars found")
+                        self.log_warning("No calendars found")
                         return self._get_default_data()
                     
                     results = []
                     
                     # 各スタジオのデータを抽出
                     for studio_name, calendar in calendars:
-                        print(f"\n--- Processing {studio_name} ---")
+                        self.log_info(f"\n--- Processing {studio_name} ---")
                         
                         # 目的の年月に移動
                         if not self.navigate_to_month(page, calendar, target_date):
-                            print(f"Warning: Skipping {studio_name} - could not navigate to target month")
+                            self.log_warning(f"Skipping {studio_name} - could not navigate to target month")
                             continue  # このスタジオをスキップ
                         
                         # 日付セルを特定
                         date_cell = self.find_date_cell(calendar, target_day)
                         
                         if not date_cell:
-                            print(f"Warning: Skipping {studio_name} - date cell not found for day {target_day}")
+                            self.log_warning(f"Skipping {studio_name} - date cell not found for day {target_day}")
                             continue  # このスタジオをスキップ
                         
                         # 時刻情報を抽出
@@ -278,9 +315,9 @@ class BaseScraper(ABC):
                     browser.close()
                     
         except Exception as e:
-            print(f"Error during scraping: {e}")
+            self.log_error(f"Error during scraping: {e}")
             import traceback
-            traceback.print_exc()
+            self.log_error(traceback.format_exc())
             # エラーを上位に伝搬するために例外を再度投げる
             raise
     
@@ -320,13 +357,13 @@ class BaseScraper(ABC):
                 }
             
             # スクレイピング実行（正規化された日付を使用）
-            print(f"\nスクレイピング開始: {normalized_date}")
+            self.log_info(f"\nスクレイピング開始: {normalized_date}")
             try:
                 facilities = self.scrape_availability(normalized_date)
             except RuntimeError as e:
                 # _get_default_dataからのエラーをキャッチ
                 if "no default data should be saved" in str(e):
-                    print("ERROR: Scraping failed, not saving any data to DB")
+                    self.log_error("Scraping failed, not saving any data to DB")
                     return {
                         "status": "error",
                         "message": "Scraping failed - navigation error",
@@ -363,7 +400,7 @@ class BaseScraper(ABC):
             
             # データが空または無効な場合はエラーを返す
             if not facilities:
-                print("ERROR: No facilities data retrieved")
+                self.log_error("No facilities data retrieved")
                 return {
                     "status": "error",
                     "message": f"No data found for date: {normalized_date}",
@@ -376,9 +413,9 @@ class BaseScraper(ABC):
                 from src.repositories.cosmos_repository import CosmosWriter
                 writer = CosmosWriter()
                 if writer.save_availability(normalized_date, facilities):
-                    print(f"\n保存先:")
-                    print(f"  ✅ Cosmos DB: {normalized_date}")
-                    print(f"\nスクレイピング完了")
+                    self.log_info(f"\n保存先:")
+                    self.log_info(f"  ✅ Cosmos DB: {normalized_date}")
+                    self.log_info(f"\nスクレイピング完了")
                     return {
                         "status": "success",
                         "data": {normalized_date: facilities}
@@ -397,8 +434,8 @@ class BaseScraper(ABC):
                     "details": str(e)
                 }
             except Exception as e:
-                print(f"\n❌ エラー: Cosmos DB保存失敗")
-                print(f"   理由: {e}")
+                self.log_error(f"\n❌ エラー: Cosmos DB保存失敗")
+                self.log_error(f"   理由: {e}")
                 return {
                     "status": "error",
                     "message": f"Database error: {str(e)}",
@@ -421,7 +458,7 @@ class BaseScraper(ABC):
                 "details": str(e)
             }
         except Exception as e:
-            print(f"\n❌ スクレイピングエラー: {e}")
+            self.log_error(f"\n❌ スクレイピングエラー: {e}")
             return {
                 "status": "error",
                 "message": f"Scraping failed: {str(e)}",
