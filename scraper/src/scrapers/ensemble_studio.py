@@ -4,7 +4,7 @@
 """
 import re
 from datetime import datetime
-from typing import List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple, cast
 from playwright.sync_api import Page, Locator, sync_playwright
 from .base import BaseScraper
 from ..types.time_slots import TimeSlots, create_default_time_slots
@@ -258,3 +258,154 @@ class EnsembleStudioScraper(BaseScraper):
         
         return time_slots
     
+    def scrape_multiple_dates(self, dates: List[str]) -> Dict:
+        """
+        複数日付の空き状況を効率的にスクレイピング（Ensemble Studio用）
+        同月内の日付は画面遷移なしで取得
+        
+        Args:
+            dates: ["YYYY-MM-DD", ...]形式の日付リスト
+        
+        Returns:
+            {
+                "results": {
+                    "2025-01-30": {"status": "success", "data": [...]},
+                    "2025-01-31": {"status": "error", "message": "...", "error_type": "..."}
+                },
+                "summary": {
+                    "total": 2,
+                    "success": 1,
+                    "failed": 1
+                }
+            }
+        """
+        self.log_info(f"\n=== Starting Ensemble Studio multiple dates scraping for {len(dates)} dates ===")
+        self.log_info(f"Dates: {', '.join(dates)}")
+        
+        # 日付を年月でグループ化
+        grouped_dates = self._group_dates_by_month(dates)
+        self.log_info(f"Grouped into {len(grouped_dates)} month(s)")
+        
+        results = {}
+        
+        try:
+            with sync_playwright() as p:
+                # ブラウザを起動
+                browser = self.setup_browser(p)
+                
+                try:
+                    context = self.create_browser_context(browser)
+                    page = context.new_page()
+                    
+                    # ページにアクセス
+                    self.log_info(f"Accessing: {self.base_url}")
+                    page.goto(self.base_url, wait_until="networkidle", timeout=60000)
+                    
+                    # カレンダーが読み込まれるまで待機
+                    self.wait_for_calendar_load(page)
+                    
+                    # 各スタジオのカレンダーを特定
+                    calendars = self.find_studio_calendars(page)
+                    
+                    if not calendars:
+                        self.log_warning("No calendars found")
+                        for date in dates:
+                            results[date] = {
+                                "status": "error",
+                                "message": "No calendars found on page",
+                                "error_type": "NAVIGATION_ERROR"
+                            }
+                        return self._summarize_results(results)
+                    
+                    # 月ごとに処理
+                    for year_month, month_dates in grouped_dates.items():
+                        self.log_info(f"\n--- Processing month: {year_month} ({len(month_dates)} dates) ---")
+                        
+                        # 最初の日付を使って月を特定
+                        target_month_date = datetime.strptime(month_dates[0], "%Y-%m-%d")
+                        
+                        # 各スタジオのカレンダーを対象月に移動（一度だけ）
+                        moved_calendars = []
+                        for studio_name, calendar in calendars:
+                            if self.navigate_to_month(page, calendar, target_month_date):
+                                moved_calendars.append((studio_name, calendar))
+                                self.log_info(f"Moved {studio_name} calendar to {year_month}")
+                            else:
+                                self.log_warning(f"Failed to navigate {studio_name} to {year_month}")
+                        
+                        # この月の各日付を処理
+                        for date in month_dates:
+                            target_date = datetime.strptime(date, "%Y-%m-%d")
+                            target_day = target_date.day
+                            self.log_info(f"\nProcessing date: {date} (day {target_day})")
+                            
+                            date_results = []
+                            
+                            # 各スタジオのデータを取得
+                            for studio_name, calendar in moved_calendars:
+                                self.log_info(f"Extracting data for {studio_name} on {date}")
+                                
+                                # 日付セルを特定
+                                date_cell = self.find_date_cell(calendar, target_day)
+                                
+                                if not date_cell:
+                                    self.log_warning(f"Date cell not found for {studio_name} on day {target_day}")
+                                    continue
+                                
+                                # 時刻情報を抽出
+                                time_slots = self.extract_time_slots(date_cell)
+                                
+                                # 結果を追加
+                                date_results.append({
+                                    "centerName": self.get_center_name(),
+                                    "facilityName": studio_name,
+                                    "roomName": self.get_room_name(studio_name),
+                                    "timeSlots": time_slots,
+                                    "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                                })
+                            
+                            # この日付のデータが取得できた場合、即座にDB保存
+                            if date_results:
+                                if self._save_to_cosmos_immediately(date, date_results):
+                                    results[date] = {
+                                        "status": "success",
+                                        "data": date_results
+                                    }
+                                    self.log_info(f"✅ Successfully saved data for {date}")
+                                else:
+                                    results[date] = {
+                                        "status": "error",
+                                        "message": "Failed to save to database",
+                                        "error_type": "DATABASE_ERROR"
+                                    }
+                                    self.log_warning(f"⚠️ Failed to save data for {date}")
+                            else:
+                                results[date] = {
+                                    "status": "error",
+                                    "message": "No data found for this date",
+                                    "error_type": "NO_DATA_FOUND"
+                                }
+                                self.log_warning(f"No data found for {date}")
+                    
+                finally:
+                    browser.close()
+                    
+        except Exception as e:
+            self.log_error(f"Error during multiple dates scraping: {e}")
+            # 処理されていない日付にエラーを設定
+            for date in dates:
+                if date not in results:
+                    results[date] = {
+                        "status": "error",
+                        "message": f"Processing failed: {str(e)}",
+                        "error_type": "SCRAPING_ERROR",
+                        "details": str(e)
+                    }
+        
+        # 結果をサマリー化
+        summary = self._summarize_results(results)
+        
+        self.log_info(f"\n=== Ensemble Studio multiple dates scraping completed ===")
+        self.log_info(f"Success: {summary['summary']['success']}/{summary['summary']['total']}")
+        
+        return summary

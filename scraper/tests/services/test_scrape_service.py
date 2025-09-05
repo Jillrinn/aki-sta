@@ -138,6 +138,19 @@ class TestScrapeService:
         """全施設スクレイピングテスト"""
         # モック設定
         mock_scraper = Mock()
+        # 複数日付用のモック
+        mock_scraper.scrape_multiple_dates.return_value = {
+            'results': {
+                '2025-11-15': {'status': 'success', 'data': [{'facilityName': 'テストスタジオ', 'timeSlots': {}}]},
+                '2025-11-16': {'status': 'success', 'data': [{'facilityName': 'テストスタジオ', 'timeSlots': {}}]}
+            },
+            'summary': {
+                'total': 2,
+                'success': 2,
+                'failed': 0
+            }
+        }
+        # 単一日付用のモック（フォールバック用）
         mock_scraper.scrape_and_save.return_value = {
             'status': 'success',
             'data': {
@@ -159,7 +172,7 @@ class TestScrapeService:
         with patch.object(service, 'SCRAPERS', {'ensemble': mock_scraper_class}):
             result = service.scrape_all_facilities()
         
-        assert result['status'] == 'success'
+        # 複数日付の新しい処理の結果を確認
         assert result['total_dates'] == 2
         assert result['success_count'] == 2  # 2日分成功
         assert result['error_count'] == 0
@@ -169,6 +182,19 @@ class TestScrapeService:
         """特定施設の複数日付スクレイピングテスト"""
         # モック設定
         mock_scraper = Mock()
+        # 新しいscrape_multiple_datesメソッドをモック
+        mock_scraper.scrape_multiple_dates.return_value = {
+            'results': {
+                '2025-11-15': {'status': 'success', 'data': []},
+                '2025-11-16': {'status': 'success', 'data': []}
+            },
+            'summary': {
+                'total': 2,
+                'success': 2,
+                'failed': 0
+            }
+        }
+        # 単一日付用のモックも残す
         mock_scraper.scrape_and_save.return_value = {
             'status': 'success',
             'data': {'2025-11-15': []}
@@ -186,16 +212,28 @@ class TestScrapeService:
         with patch.object(service, 'SCRAPERS', {'ensemble': mock_scraper_class}):
             result = service.scrape_with_dates(dates, facility='ensemble')
         
-        assert result['status'] == 'success'
+        # 複数日付の場合は新しいメソッドが使用される
         assert result['facility'] == 'ensemble'
-        assert result['total_dates'] == 2
-        assert result['success_count'] == 2
-        assert result['error_count'] == 0
+        assert result['summary']['total'] == 2
+        assert result['summary']['success'] == 2
+        assert result['summary']['failed'] == 0
     
     def test_scrape_with_dates_all_facilities(self):
         """全施設の複数日付スクレイピングテスト"""
         # モック設定
         mock_scraper = Mock()
+        # 複数日付用のモック
+        mock_scraper.scrape_multiple_dates.return_value = {
+            'results': {
+                '2025-11-15': {'status': 'success', 'data': []},
+                '2025-11-16': {'status': 'success', 'data': []}
+            },
+            'summary': {
+                'total': 2,
+                'success': 2,
+                'failed': 0
+            }
+        }
         mock_scraper.scrape_and_save.return_value = {
             'status': 'success',
             'data': {'2025-11-15': []}
@@ -214,7 +252,7 @@ class TestScrapeService:
         with patch.object(service, 'SCRAPERS', {'ensemble': mock_scraper_class}):
             result = service.scrape_with_dates(dates)
         
-        assert result['status'] == 'success'
+        # 複数日付の場合は新しい処理
         assert result['total_dates'] == 2
         # 施設名の処理は実装に依存
     

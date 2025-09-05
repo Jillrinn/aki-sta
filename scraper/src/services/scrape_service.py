@@ -92,6 +92,7 @@ class ScrapeService:
     ) -> Dict:
         """
         全施設の予約状況をスクレイピング
+        複数日付の場合は各施設で効率的なメソッドを使用
         
         Args:
             dates: YYYY-MM-DD形式の日付リスト（省略時はtarget_datesを使用）
@@ -102,47 +103,103 @@ class ScrapeService:
         # 日付リストを決定
         target_dates = self.target_date_service.get_dates_to_scrape(dates)
         
-        results = []
-        success_count = 0
-        error_count = 0
-        
-        # 各日付・各施設でスクレイピング
-        for date in target_dates:
-            date_results = {
-                'date': date,
-                'facilities': []
+        # 複数日付の場合は効率的な処理
+        if len(target_dates) > 1:
+            all_results = {}
+            
+            # 重複を除いた施設リスト
+            unique_facilities = ['ensemble', 'meguro']
+            
+            for facility_key in unique_facilities:
+                scraper_class = self._get_scraper_class(facility_key)
+                if scraper_class:
+                    try:
+                        print(f"\n[ScrapeService] Processing {facility_key} for {len(target_dates)} dates")
+                        scraper = scraper_class()
+                        facility_result = scraper.scrape_multiple_dates(target_dates)
+                        all_results[facility_key] = facility_result
+                    except Exception as e:
+                        all_results[facility_key] = {
+                            'status': 'error',
+                            'message': str(e),
+                            'error_type': 'SCRAPING_ERROR'
+                        }
+            
+            # 結果を統合
+            combined_results = {}
+            total_success = 0
+            total_failed = 0
+            
+            for facility_key, facility_result in all_results.items():
+                if 'results' in facility_result:
+                    for date, date_result in facility_result['results'].items():
+                        if date not in combined_results:
+                            combined_results[date] = {
+                                'date': date,
+                                'facilities': []
+                            }
+                        
+                        if date_result.get('status') == 'success' and 'data' in date_result:
+                            combined_results[date]['facilities'].extend(date_result['data'])
+                            total_success += 1
+                        else:
+                            combined_results[date]['facilities'].append({
+                                'facility': facility_key,
+                                'status': 'error',
+                                'error': date_result.get('message', 'Unknown error')
+                            })
+                            total_failed += 1
+            
+            return {
+                'status': 'success' if total_failed == 0 else 'partial',
+                'total_dates': len(target_dates),
+                'total_facilities': len(unique_facilities),
+                'success_count': total_success,
+                'error_count': total_failed,
+                'results': list(combined_results.values())
             }
+        else:
+            # 単一日付の場合は従来の処理
+            results = []
+            success_count = 0
+            error_count = 0
             
-            for facility_key in self.SCRAPERS.keys():
-                # ensemble系は重複するので最初の1つだけ実行
-                if facility_key in ['ensemble_studio', 'あんさんぶるStudio']:
-                    continue
+            for date in target_dates:
+                date_results = {
+                    'date': date,
+                    'facilities': []
+                }
                 
-                result = self.scrape_facility(facility_key, date)
+                for facility_key in self.SCRAPERS.keys():
+                    # ensemble系は重複するので最初の1つだけ実行
+                    if facility_key in ['ensemble_studio', 'あんさんぶるStudio']:
+                        continue
+                    
+                    result = self.scrape_facility(facility_key, date)
+                    
+                    if result.get('status') == 'success':
+                        success_count += 1
+                        # 成功時のデータ整形
+                        if date in result.get('data', {}):
+                            date_results['facilities'].extend(result['data'][date])
+                    else:
+                        error_count += 1
+                        date_results['facilities'].append({
+                            'facility': facility_key,
+                            'status': 'error',
+                            'error': result.get('message', 'Unknown error')
+                        })
                 
-                if result.get('status') == 'success':
-                    success_count += 1
-                    # 成功時のデータ整形
-                    if date in result.get('data', {}):
-                        date_results['facilities'].extend(result['data'][date])
-                else:
-                    error_count += 1
-                    date_results['facilities'].append({
-                        'facility': facility_key,
-                        'status': 'error',
-                        'error': result.get('message', 'Unknown error')
-                    })
+                results.append(date_results)
             
-            results.append(date_results)
-        
-        return {
-            'status': 'success' if error_count == 0 else 'partial',
-            'total_dates': len(target_dates),
-            'total_facilities': len(self.SCRAPERS),
-            'success_count': success_count,
-            'error_count': error_count,
-            'results': results
-        }
+            return {
+                'status': 'success' if error_count == 0 else 'partial',
+                'total_dates': len(target_dates),
+                'total_facilities': len(self.SCRAPERS),
+                'success_count': success_count,
+                'error_count': error_count,
+                'results': results
+            }
     
     def scrape_with_dates(
         self,
@@ -151,6 +208,7 @@ class ScrapeService:
     ) -> Dict:
         """
         指定された日付リストでスクレイピング
+        複数日付の場合は効率的なscrape_multiple_datesメソッドを使用
         
         Args:
             dates: YYYY-MM-DD形式の日付リスト
@@ -160,23 +218,36 @@ class ScrapeService:
             結果を含む辞書
         """
         if facility:
-            # 特定施設の複数日付スクレイピング
-            results = []
-            for date in dates:
-                result = self.scrape_facility(facility, date)
-                results.append(result)
+            # 特定施設のスクレイピング
+            scraper_class = self._get_scraper_class(facility)
+            if not scraper_class:
+                return {
+                    'status': 'error',
+                    'message': f'Unknown facility: {facility}',
+                    'error_type': 'INVALID_FACILITY'
+                }
             
-            success_count = sum(1 for r in results if r.get('status') == 'success')
-            error_count = len(results) - success_count
-            
-            return {
-                'status': 'success' if error_count == 0 else 'partial',
-                'facility': facility,
-                'total_dates': len(dates),
-                'success_count': success_count,
-                'error_count': error_count,
-                'results': results
-            }
+            # 複数日付の場合は効率的なメソッドを使用
+            if len(dates) > 1:
+                try:
+                    print(f"\n[ScrapeService] Using multiple dates scraping for {facility}: {dates}")
+                    scraper = scraper_class()
+                    result = scraper.scrape_multiple_dates(dates)
+                    
+                    # 結果にfacility情報を追加
+                    result['facility'] = facility
+                    return result
+                    
+                except Exception as e:
+                    return {
+                        'status': 'error',
+                        'message': f'Multiple dates scraping failed for {facility}',
+                        'error_type': 'SCRAPING_ERROR',
+                        'details': str(e)
+                    }
+            else:
+                # 単一日付の場合は従来の方法
+                return self.scrape_facility(facility, dates[0] if dates else None)
         else:
             # 全施設の複数日付スクレイピング
             return self.scrape_all_facilities(dates)

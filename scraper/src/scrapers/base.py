@@ -465,3 +465,150 @@ class BaseScraper(ABC):
                 "error_type": "SCRAPING_ERROR",
                 "details": str(e)
             }
+    
+    def _save_to_cosmos_immediately(self, date: str, facilities: List[Dict]) -> bool:
+        """
+        取得成功したデータを即座にCosmos DBに保存
+        
+        Args:
+            date: "YYYY-MM-DD"形式の日付文字列
+            facilities: 施設データのリスト
+        
+        Returns:
+            保存に成功した場合True、失敗した場合False
+        """
+        try:
+            from src.repositories.cosmos_repository import CosmosWriter
+            writer = CosmosWriter()
+            if writer.save_availability(date, facilities):
+                self.log_info(f"✅ Data saved to Cosmos DB for {date}")
+                return True
+            else:
+                self.log_error(f"Failed to save to Cosmos DB for {date}")
+                return False
+        except ImportError as e:
+            self.log_error(f"Cosmos DB module not found: {e}")
+            return False
+        except Exception as e:
+            self.log_error(f"DB save error for {date}: {e}")
+            return False
+    
+    def _group_dates_by_month(self, dates: List[str]) -> Dict[str, List[str]]:
+        """
+        日付リストを年月でグループ化
+        
+        Args:
+            dates: ["YYYY-MM-DD", ...]形式の日付リスト
+        
+        Returns:
+            {"YYYY-MM": ["YYYY-MM-DD", ...], ...}
+        """
+        from collections import defaultdict
+        grouped = defaultdict(list)
+        
+        for date_str in dates:
+            try:
+                # 日付を正規化
+                normalized_date = None
+                for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
+                    try:
+                        parsed = datetime.strptime(date_str, fmt)
+                        normalized_date = parsed.strftime('%Y-%m-%d')
+                        break
+                    except ValueError:
+                        continue
+                
+                if normalized_date:
+                    year_month = normalized_date[:7]  # "YYYY-MM"
+                    grouped[year_month].append(normalized_date)
+                else:
+                    self.log_warning(f"Invalid date format: {date_str}")
+            except Exception as e:
+                self.log_error(f"Error processing date {date_str}: {e}")
+        
+        # 年月でソート
+        sorted_grouped = dict(sorted(grouped.items()))
+        return sorted_grouped
+    
+    def _summarize_results(self, results: Dict[str, Dict]) -> Dict:
+        """
+        複数日付の処理結果をサマリー化
+        
+        Args:
+            results: 各日付の処理結果
+        
+        Returns:
+            結果サマリーを含む辞書
+        """
+        success_count = sum(1 for r in results.values() if r.get("status") == "success")
+        failed_count = len(results) - success_count
+        
+        return {
+            "results": results,
+            "summary": {
+                "total": len(results),
+                "success": success_count,
+                "failed": failed_count
+            }
+        }
+    
+    def scrape_multiple_dates(self, dates: List[str]) -> Dict:
+        """
+        複数日付の空き状況をスクレイピング（デフォルト実装）
+        各施設でオーバーライド可能
+        
+        Args:
+            dates: ["YYYY-MM-DD", ...]形式の日付リスト
+        
+        Returns:
+            {
+                "results": {
+                    "2025-01-30": {"status": "success", "data": [...]},
+                    "2025-01-31": {"status": "error", "message": "...", "error_type": "..."}
+                },
+                "summary": {
+                    "total": 2,
+                    "success": 1,
+                    "failed": 1
+                }
+            }
+        """
+        self.log_info(f"\n=== Starting multiple dates scraping for {len(dates)} dates ===")
+        self.log_info(f"Dates: {', '.join(dates)}")
+        
+        results = {}
+        
+        # デフォルトは単純なループ処理
+        for i, date in enumerate(dates, 1):
+            self.log_info(f"\n--- Processing date {i}/{len(dates)}: {date} ---")
+            
+            try:
+                # 各日付を個別に処理
+                result = self.scrape_and_save(date)
+                results[date] = result
+                
+                if result.get("status") == "success":
+                    self.log_info(f"✅ Successfully processed {date}")
+                else:
+                    self.log_warning(f"⚠️ Failed to process {date}: {result.get('message', 'Unknown error')}")
+                    
+            except Exception as e:
+                self.log_error(f"❌ Error processing {date}: {e}")
+                results[date] = {
+                    "status": "error",
+                    "message": f"Processing failed: {str(e)}",
+                    "error_type": "PROCESSING_ERROR",
+                    "details": str(e)
+                }
+            
+            # 次の日付処理前に少し待機（サーバー負荷軽減）
+            if i < len(dates):
+                time.sleep(2)
+        
+        # 結果をサマリー化
+        summary = self._summarize_results(results)
+        
+        self.log_info(f"\n=== Multiple dates scraping completed ===")
+        self.log_info(f"Success: {summary['summary']['success']}/{summary['summary']['total']}")
+        
+        return summary

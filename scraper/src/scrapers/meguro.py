@@ -1562,3 +1562,67 @@ class MeguroScraper(BaseScraper):
             import traceback
             traceback.print_exc()
             raise
+    
+    def scrape_multiple_dates(self, dates: List[str]) -> Dict:
+        """
+        複数日付の空き状況をスクレイピング（目黒区用）
+        目黒区のサイトは各日付で個別セッションが必要なため、シンプルなループ処理
+        
+        Args:
+            dates: ["YYYY-MM-DD", ...]形式の日付リスト
+        
+        Returns:
+            {
+                "results": {
+                    "2025-01-30": {"status": "success", "data": [...]},
+                    "2025-01-31": {"status": "error", "message": "...", "error_type": "..."}
+                },
+                "summary": {
+                    "total": 2,
+                    "success": 1,
+                    "failed": 1
+                }
+            }
+        """
+        self.log_info(f"\n=== Starting Meguro multiple dates scraping for {len(dates)} dates ===")
+        self.log_info(f"Dates: {', '.join(dates)}")
+        self.log_info("Note: Meguro site requires separate sessions for each date")
+        
+        results = {}
+        
+        # 目黒区は各日付で個別にセッションが必要
+        for i, date in enumerate(dates, 1):
+            self.log_info(f"\n--- Processing date {i}/{len(dates)}: {date} ---")
+            
+            try:
+                # 各日付を個別に処理（完全に独立したセッション）
+                result = self.scrape_and_save(date)
+                results[date] = result
+                
+                if result.get("status") == "success":
+                    self.log_info(f"✅ Successfully processed {date}")
+                else:
+                    self.log_warning(f"⚠️ Failed to process {date}: {result.get('message', 'Unknown error')}")
+                    
+            except Exception as e:
+                self.log_error(f"❌ Error processing {date}: {e}")
+                results[date] = {
+                    "status": "error",
+                    "message": f"Processing failed: {str(e)}",
+                    "error_type": "PROCESSING_ERROR",
+                    "details": str(e)
+                }
+            
+            # 次の日付処理前に少し待機（サーバー負荷軽減とセッション分離）
+            if i < len(dates):
+                self.log_info("Waiting before next date (server load reduction)...")
+                import time
+                time.sleep(3)  # 目黒区サイト用に少し長めの待機
+        
+        # 結果をサマリー化
+        summary = self._summarize_results(results)
+        
+        self.log_info(f"\n=== Meguro multiple dates scraping completed ===")
+        self.log_info(f"Success: {summary['summary']['success']}/{summary['summary']['total']}")
+        
+        return summary
