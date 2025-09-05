@@ -19,11 +19,15 @@ const AvailabilityPage: React.FC = () => {
   const { data: targetDates } = useTargetDates();
   const [isMobile, setIsMobile] = useState(false);
 
-  // 日付とラベルのマッピングを作成
-  const labelMap = useMemo(() => {
-    const map: { [date: string]: string } = {};
+  // 日付とラベル、予約状況、メモのマッピングを作成
+  const targetDateMap = useMemo(() => {
+    const map: { [date: string]: { label: string; isbooked: boolean; memo?: string } } = {};
     targetDates?.forEach(td => {
-      map[td.date] = td.label;
+      map[td.date] = {
+        label: td.label,
+        isbooked: td.isbooked,
+        memo: td.memo
+      };
     });
     return map;
   }, [targetDates]);
@@ -66,16 +70,37 @@ const AvailabilityPage: React.FC = () => {
               data-testid={`date-header-${dateIndex}`}
             >
               {date}
-              {labelMap[date] && (
-                <span className="ml-2 text-lg text-gray-600">
-                  - {labelMap[date]}
-                </span>
+              {targetDateMap[date] && (
+                <>
+                  <span className="ml-2 text-lg text-gray-600">
+                    - {targetDateMap[date].label}
+                  </span>
+                  {targetDateMap[date].isbooked && (
+                    <span className="ml-3 inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
+                      予約済み
+                    </span>
+                  )}
+                </>
               )}
             </h2>
             
             {!data || !data[date] ? (
-              <div className="p-8 text-center bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
-                <p className="text-gray-600 text-lg">空き状況はまだ取得されていません。</p>
+              <div className="p-5 text-center bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+                {targetDateMap[date]?.isbooked ? (
+                  <>
+                    <p className="text-gray-800 text-lg font-semibold mb-2">
+                      🎵 この日は予約済みです
+                    </p>
+                    {targetDateMap[date].memo && (
+                      <div className="mt-4 p-4 bg-white rounded-lg border border-gray-300 text-left">
+                        <p className="text-sm text-gray-600 mb-1">メモ:</p>
+                        <p className="text-gray-700">{targetDateMap[date].memo}</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-gray-600 text-lg">空き状況はまだ取得されていません。</p>
+                )}
               </div>
             ) : isMobile ? (
               <div className="space-y-4">

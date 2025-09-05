@@ -66,7 +66,7 @@ const CollapsibleCategorySection: React.FC<CollapsibleCategorySectionProps> = ({
               <span className={`transform transition-transform text-sm ${isExpanded ? 'rotate-90' : ''}`}>
                 ▶
               </span>
-              <span className="font-semibold text-sm">【{centerName}】</span>
+              <span className="font-semibold text-sm">{centerName}</span>
               {categoryStatus.message && (
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}>
                   {categoryStatus.message}

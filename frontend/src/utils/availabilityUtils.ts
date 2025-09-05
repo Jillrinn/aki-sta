@@ -17,7 +17,7 @@ export const areAllFacilitiesBooked = (facilities: Facility[]): boolean => {
 };
 
 /**
- * 指定した時間帯が全て空き無かチェック
+ * 指定した時間帯が全て空きなしかチェック
  */
 export const areTimeSlotsFull = (
   facilities: Facility[], 
@@ -85,22 +85,22 @@ export const getCategoryStatus = (
     getFacilityStatus(facility, preferredTimeSlots)
   );
   
-  // 全ての施設が「全て空き無」の場合
+  // 全ての施設が「全て空きなし」の場合
   if (facilityStatuses.every(status => status === 'all-booked')) {
     return {
       status: 'all-booked',
-      message: '全て空き無',
+      message: '全て空きなし',
       shouldExpand: false
     };
   }
   
-  // 全ての施設が「全て空き無」または「希望時間は空き無」の場合
+  // 全ての施設が「全て空きなし」または「希望時間は空きなし」の場合
   if (facilityStatuses.every(status => 
     status === 'all-booked' || status === 'preferred-booked'
   )) {
     return {
       status: 'preferred-booked',
-      message: '希望時間は空き無',
+      message: '希望時間は空きなし',
       shouldExpand: false
     };
   }

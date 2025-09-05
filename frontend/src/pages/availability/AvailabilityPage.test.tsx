@@ -722,7 +722,7 @@ describe('AvailabilityPage', () => {
         expect(screen.getByText('午前')).toBeInTheDocument();
         
         // First facility (和) should show collapsed message (13-17 is booked)
-        expect(screen.getByText('希望時間は空き無')).toBeInTheDocument();
+        expect(screen.getByText('希望時間は空きなし')).toBeInTheDocument();
       });
     });
 

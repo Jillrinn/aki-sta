@@ -104,8 +104,8 @@ describe('MobileCardView', () => {
       />
     );
     
-    // Should show "希望時間は空き無" since afternoon is booked
-    expect(screen.getByText('希望時間は空き無')).toBeInTheDocument();
+    // Should show "希望時間は空きなし" since afternoon is booked
+    expect(screen.getByText('希望時間は空きなし')).toBeInTheDocument();
     
     // Should not show time slots since it's collapsed
     expect(screen.queryByText('午前')).not.toBeInTheDocument();
@@ -252,8 +252,8 @@ describe('MobileCardView', () => {
     const header = container.querySelector('[class*="from-primary"]');
     expect(header).toBeInTheDocument();
     
-    // Should show "全て空き無" message
-    expect(screen.getByText('全て空き無')).toBeInTheDocument();
+    // Should show "全て空きなし" message
+    expect(screen.getByText('全て空きなし')).toBeInTheDocument();
   });
 
   it('handles lottery status correctly', () => {
@@ -344,8 +344,8 @@ describe('MobileCardView', () => {
     // Should be collapsed even though there are available slots
     expect(screen.queryByText('午前')).not.toBeInTheDocument();
     
-    // Should show "希望時間は空き無" message
-    expect(screen.getByText('希望時間は空き無')).toBeInTheDocument();
+    // Should show "希望時間は空きなし" message
+    expect(screen.getByText('希望時間は空きなし')).toBeInTheDocument();
   });
 
   it('toggles expansion when header is clicked', () => {

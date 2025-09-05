@@ -105,7 +105,19 @@ const TargetDatesPage: React.FC = () => {
   };
 
   const handleReservationSubmit = async (id: string, isbooked: boolean, memo: string) => {
+    // ターゲット日付を更新
     await targetDatesApi.updateTargetDate(id, { isbooked, memo });
+    
+    // 予約済みに変更した場合、該当日付のavailabilityデータを削除
+    if (isbooked && reservationTarget) {
+      try {
+        const { availabilityApi } = await import('../../services/api');
+        await availabilityApi.deleteAvailabilityByDate(reservationTarget.date);
+      } catch (error) {
+        console.error('Failed to delete availability data:', error);
+      }
+    }
+    
     await refetch();
   };
 
