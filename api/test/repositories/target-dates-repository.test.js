@@ -197,4 +197,139 @@ describe('target-dates-repository', () => {
         .toThrow('Failed to insert target date to Cosmos DB after retries: Cosmos DB error');
     });
   });
+
+  describe('updateTargetDate', () => {
+    it('should update target date booking status to true', async () => {
+      const existingItem = {
+        id: '2025-11-15',
+        date: '2025-11-15',
+        label: '本番ライブ',
+        isbooked: false,
+        updatedAt: '2025-08-19T10:00:00Z'
+      };
+
+      const updatedItem = {
+        ...existingItem,
+        isbooked: true,
+        updatedAt: '2025-08-20T10:00:00Z'
+      };
+
+      const mockItem = {
+        read: jest.fn().mockResolvedValue({ resource: existingItem }),
+        replace: jest.fn().mockResolvedValue({ resource: updatedItem })
+      };
+      mockContainer.item.mockReturnValue(mockItem);
+
+      const result = await targetDatesRepository.updateTargetDate('2025-11-15', true);
+
+      expect(cosmosClient.initializeWithRetry).toHaveBeenCalled();
+      expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
+      expect(mockContainer.item).toHaveBeenCalledWith('2025-11-15', '2025-11-15');
+      expect(mockItem.read).toHaveBeenCalled();
+      expect(mockItem.replace).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: '2025-11-15',
+          date: '2025-11-15',
+          label: '本番ライブ',
+          isbooked: true,
+          updatedAt: expect.any(String)
+        })
+      );
+      expect(result).toEqual(updatedItem);
+    });
+
+    it('should update target date booking status to false', async () => {
+      const existingItem = {
+        id: '2025-11-15',
+        date: '2025-11-15',
+        label: '本番ライブ',
+        isbooked: true,
+        updatedAt: '2025-08-19T10:00:00Z'
+      };
+
+      const updatedItem = {
+        ...existingItem,
+        isbooked: false,
+        updatedAt: '2025-08-20T10:00:00Z'
+      };
+
+      const mockItem = {
+        read: jest.fn().mockResolvedValue({ resource: existingItem }),
+        replace: jest.fn().mockResolvedValue({ resource: updatedItem })
+      };
+      mockContainer.item.mockReturnValue(mockItem);
+
+      const result = await targetDatesRepository.updateTargetDate('2025-11-15', false);
+
+      expect(result.isbooked).toBe(false);
+    });
+
+    it('should throw error when ID is missing', async () => {
+      await expect(targetDatesRepository.updateTargetDate(null, true))
+        .rejects
+        .toThrow('ID is required');
+
+      await expect(targetDatesRepository.updateTargetDate('', true))
+        .rejects
+        .toThrow('ID is required');
+
+      await expect(targetDatesRepository.updateTargetDate(undefined, true))
+        .rejects
+        .toThrow('ID is required');
+    });
+
+    it('should throw error when isbooked is not a boolean', async () => {
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', 'yes'))
+        .rejects
+        .toThrow('isbooked must be a boolean value');
+
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', 1))
+        .rejects
+        .toThrow('isbooked must be a boolean value');
+
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', null))
+        .rejects
+        .toThrow('isbooked must be a boolean value');
+
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', undefined))
+        .rejects
+        .toThrow('isbooked must be a boolean value');
+    });
+
+    it('should throw error when target date not found', async () => {
+      const mockItem = {
+        read: jest.fn().mockResolvedValue({ resource: null })
+      };
+      mockContainer.item.mockReturnValue(mockItem);
+
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', true))
+        .rejects
+        .toThrow('Target date 2025-11-15 not found');
+    });
+
+    it('should throw error when read returns 404', async () => {
+      const error = new Error('Not found');
+      error.code = 404;
+      const mockItem = {
+        read: jest.fn().mockRejectedValue(error)
+      };
+      mockContainer.item.mockReturnValue(mockItem);
+
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', true))
+        .rejects
+        .toThrow('Target date 2025-11-15 not found');
+    });
+
+    it('should throw error on Cosmos DB failure', async () => {
+      const error = new Error('Cosmos DB error');
+      const mockItem = {
+        read: jest.fn().mockRejectedValue(error)
+      };
+      mockContainer.item.mockReturnValue(mockItem);
+
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', true))
+        .rejects
+        .toThrow('Failed to update target date in Cosmos DB after retries: Cosmos DB error');
+    });
+  });
 });

@@ -143,6 +143,78 @@ async function deleteTargetDateHandler(request, context) {
   }
 }
 
+// PATCH: 対象日付の予約状況を更新
+async function updateTargetDateHandler(request, context) {
+  const id = request.params.id;
+  
+  if (!id) {
+    return {
+      status: 400,
+      jsonBody: {
+        error: 'Bad Request',
+        message: 'ID is required'
+      }
+    };
+  }
+  
+  try {
+    const body = await request.json();
+    const { isbooked } = body;
+    
+    // バリデーション
+    if (typeof isbooked !== 'boolean') {
+      return {
+        status: 400,
+        jsonBody: {
+          error: 'Bad Request',
+          message: 'isbooked must be a boolean value'
+        }
+      };
+    }
+    
+    // 対象日付を更新
+    const result = await targetDatesRepository.updateTargetDate(id, isbooked);
+    
+    return {
+      status: 200,
+      jsonBody: result
+    };
+  } catch (error) {
+    context.log.error(`Failed to update target date: ${error.message}`);
+    
+    // 存在しない場合
+    if (error.message.includes('not found')) {
+      return {
+        status: 404,
+        jsonBody: {
+          error: 'Not Found',
+          message: error.message
+        }
+      };
+    }
+    
+    // バリデーションエラー
+    if (error.message.includes('required') || error.message.includes('boolean')) {
+      return {
+        status: 400,
+        jsonBody: {
+          error: 'Bad Request',
+          message: error.message
+        }
+      };
+    }
+    
+    // その他のエラー
+    return {
+      status: 503,
+      jsonBody: {
+        error: 'Service temporarily unavailable',
+        details: error.message
+      }
+    };
+  }
+}
+
 // 関数登録
 app.http('target-dates-get', {
   methods: ['GET'],
@@ -165,9 +237,17 @@ app.http('target-dates-delete', {
   handler: deleteTargetDateHandler
 });
 
+app.http('target-dates-update', {
+  methods: ['PATCH'],
+  route: 'target-dates/{id}',
+  authLevel: 'anonymous',
+  handler: updateTargetDateHandler
+});
+
 // テスト用にハンドラーをエクスポート
 module.exports = {
   getTargetDatesHandler,
   createTargetDateHandler,
-  deleteTargetDateHandler
+  deleteTargetDateHandler,
+  updateTargetDateHandler
 };

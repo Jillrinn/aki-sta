@@ -359,6 +359,35 @@ GET /api/availability
 - **パラメータ**: なし
 - **レスポンス**: 日付をキーとしたデータのオブジェクト
 
+#### 練習日程一覧取得
+```
+GET /api/target-dates
+```
+- **パラメータ**: なし
+- **レスポンス**: 登録済み日程の配列
+
+#### 練習日程追加
+```
+POST /api/target-dates
+```
+- **リクエストボディ**: 
+  - date: string (YYYY-MM-DD形式)
+  - label: string (日程の説明)
+
+#### 練習日程削除
+```
+DELETE /api/target-dates/{id}
+```
+- **パラメータ**: id (日付、YYYY-MM-DD形式)
+
+#### 練習日程の予約状況更新
+```
+PATCH /api/target-dates/{id}
+```
+- **パラメータ**: id (日付、YYYY-MM-DD形式)
+- **リクエストボディ**: 
+  - isbooked: boolean (true: 予約済み, false: 未予約)
+
 ### レスポンス形式
 ```typescript
 interface AvailabilityResponse {

@@ -1,14 +1,16 @@
 const { 
   getTargetDatesHandler, 
   createTargetDateHandler, 
-  deleteTargetDateHandler 
+  deleteTargetDateHandler,
+  updateTargetDateHandler 
 } = require('../../src/functions/target-dates');
 
 // target-dates-repositoryをモック化
 jest.mock('../../src/repositories/target-dates-repository', () => ({
   getAllTargetDates: jest.fn(),
   insertTargetDate: jest.fn(),
-  deleteTargetDate: jest.fn()
+  deleteTargetDate: jest.fn(),
+  updateTargetDate: jest.fn()
 }));
 
 const targetDatesRepository = require('../../src/repositories/target-dates-repository');
@@ -223,6 +225,116 @@ describe('Target Dates API', () => {
       );
       
       const response = await deleteTargetDateHandler(request, context);
+      
+      expect(response.status).toBe(503);
+      expect(response.jsonBody.error).toBe('Service temporarily unavailable');
+      expect(context.log.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('PATCH /api/target-dates/{id}', () => {
+    test('should update target date booking status to true', async () => {
+      request.params.id = '2025-11-15';
+      request.json.mockResolvedValue({ isbooked: true });
+      
+      const mockResult = {
+        id: '2025-11-15',
+        date: '2025-11-15',
+        label: '本番ライブ',
+        isbooked: true,
+        updatedAt: '2025-08-19T10:00:00Z'
+      };
+      
+      targetDatesRepository.updateTargetDate.mockResolvedValue(mockResult);
+      
+      const response = await updateTargetDateHandler(request, context);
+      
+      expect(response.status).toBe(200);
+      expect(response.jsonBody).toEqual(mockResult);
+      expect(targetDatesRepository.updateTargetDate).toHaveBeenCalledWith('2025-11-15', true);
+    });
+
+    test('should update target date booking status to false', async () => {
+      request.params.id = '2025-11-15';
+      request.json.mockResolvedValue({ isbooked: false });
+      
+      const mockResult = {
+        id: '2025-11-15',
+        date: '2025-11-15',
+        label: '本番ライブ',
+        isbooked: false,
+        updatedAt: '2025-08-19T10:00:00Z'
+      };
+      
+      targetDatesRepository.updateTargetDate.mockResolvedValue(mockResult);
+      
+      const response = await updateTargetDateHandler(request, context);
+      
+      expect(response.status).toBe(200);
+      expect(response.jsonBody).toEqual(mockResult);
+      expect(targetDatesRepository.updateTargetDate).toHaveBeenCalledWith('2025-11-15', false);
+    });
+
+    test('should return 400 when id is missing', async () => {
+      request.params.id = undefined;
+      request.json.mockResolvedValue({ isbooked: true });
+      
+      const response = await updateTargetDateHandler(request, context);
+      
+      expect(response.status).toBe(400);
+      expect(response.jsonBody.error).toBe('Bad Request');
+      expect(response.jsonBody.message).toBe('ID is required');
+      expect(targetDatesRepository.updateTargetDate).not.toHaveBeenCalled();
+    });
+
+    test('should return 400 when isbooked is not boolean', async () => {
+      request.params.id = '2025-11-15';
+      request.json.mockResolvedValue({ isbooked: 'yes' });
+      
+      const response = await updateTargetDateHandler(request, context);
+      
+      expect(response.status).toBe(400);
+      expect(response.jsonBody.error).toBe('Bad Request');
+      expect(response.jsonBody.message).toBe('isbooked must be a boolean value');
+      expect(targetDatesRepository.updateTargetDate).not.toHaveBeenCalled();
+    });
+
+    test('should return 400 when isbooked is missing', async () => {
+      request.params.id = '2025-11-15';
+      request.json.mockResolvedValue({});
+      
+      const response = await updateTargetDateHandler(request, context);
+      
+      expect(response.status).toBe(400);
+      expect(response.jsonBody.error).toBe('Bad Request');
+      expect(response.jsonBody.message).toBe('isbooked must be a boolean value');
+      expect(targetDatesRepository.updateTargetDate).not.toHaveBeenCalled();
+    });
+
+    test('should return 404 when target date not found', async () => {
+      request.params.id = '2025-11-15';
+      request.json.mockResolvedValue({ isbooked: true });
+      
+      targetDatesRepository.updateTargetDate.mockRejectedValue(
+        new Error('Target date 2025-11-15 not found')
+      );
+      
+      const response = await updateTargetDateHandler(request, context);
+      
+      expect(response.status).toBe(404);
+      expect(response.jsonBody.error).toBe('Not Found');
+      expect(response.jsonBody.message).toBe('Target date 2025-11-15 not found');
+    });
+
+    test('should return 503 for other errors', async () => {
+      request.params.id = '2025-11-15';
+      request.json.mockResolvedValue({ isbooked: true });
+      
+      targetDatesRepository.updateTargetDate.mockRejectedValue(
+        new Error('Cosmos DB error')
+      );
+      
+      const response = await updateTargetDateHandler(request, context);
       
       expect(response.status).toBe(503);
       expect(response.jsonBody.error).toBe('Service temporarily unavailable');

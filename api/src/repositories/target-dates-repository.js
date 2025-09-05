@@ -105,5 +105,55 @@ module.exports = {
     } catch (error) {
       throw new Error(`Failed to insert target date to Cosmos DB after retries: ${error.message}`);
     }
+  },
+
+  updateTargetDate: async (id, isbooked) => {
+    const operation = async () => {
+      try {
+        // バリデーション
+        if (id === undefined || id === null || id === '') {
+          throw new Error('ID is required');
+        }
+        
+        if (typeof isbooked !== 'boolean') {
+          throw new Error('isbooked must be a boolean value');
+        }
+        
+        await cosmosClient.initializeWithRetry();
+        const container = cosmosClient.getContainer('target_dates');
+        
+        // 既存の項目を取得
+        const { resource: existingItem } = await container.item(id, id).read();
+        
+        if (!existingItem) {
+          throw new Error(`Target date ${id} not found`);
+        }
+        
+        // isbookedを更新
+        const updatedItem = {
+          ...existingItem,
+          isbooked,
+          updatedAt: new Date().toISOString()
+        };
+        
+        // 更新を実行
+        const { resource } = await container.item(id, id).replace(updatedItem);
+        
+        return resource;
+      } catch (error) {
+        if (error.code === 404 || error.message?.includes('not found')) {
+          console.warn(`Target date not found: ${id}`);
+          throw new Error(`Target date ${id} not found`);
+        }
+        console.error('Failed to update target date:', error);
+        throw error;
+      }
+    };
+
+    try {
+      return await retryWithBackoff(operation);
+    } catch (error) {
+      throw new Error(`Failed to update target date in Cosmos DB after retries: ${error.message}`);
+    }
   }
 };
