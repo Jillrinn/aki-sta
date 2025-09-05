@@ -3,7 +3,9 @@ import {
   TargetDatesResponse, 
   CreateTargetDateRequest, 
   CreateTargetDateResponse,
-  DeleteTargetDateResponse 
+  DeleteTargetDateResponse,
+  UpdateTargetDateRequest,
+  UpdateTargetDateResponse 
 } from '../types/targetDates';
 import { ScraperResponse, ScrapeBatchResponse } from '../types/scraper';
 import { RateLimitResponse } from '../types/rateLimits';
@@ -81,6 +83,19 @@ export const targetDatesApi = {
       return response.data;
     } catch (error) {
       console.error('Failed to delete target date:', error);
+      throw error;
+    }
+  },
+  
+  async updateTargetDate(id: string, data: UpdateTargetDateRequest): Promise<UpdateTargetDateResponse> {
+    try {
+      const response = await httpClient.patch<UpdateTargetDateResponse>(
+        `/target-dates/${id}`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update target date:', error);
       throw error;
     }
   }

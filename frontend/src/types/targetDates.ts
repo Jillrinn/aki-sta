@@ -27,3 +27,15 @@ export interface DeleteTargetDateResponse {
   success: boolean;
   message: string;
 }
+
+export interface UpdateTargetDateRequest {
+  isbooked: boolean;
+}
+
+export interface UpdateTargetDateResponse {
+  id: string;
+  date: string;
+  label: string;
+  isbooked: boolean;
+  updatedAt: string;
+}

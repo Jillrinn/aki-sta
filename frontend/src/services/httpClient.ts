@@ -81,6 +81,14 @@ export class HttpClient {
     return this.axiosInstance.delete<T>(url, config);
   }
 
+  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.axiosInstance.put<T>(url, data, config);
+  }
+
+  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.axiosInstance.patch<T>(url, data, config);
+  }
+
   // axiosエラーかどうか判定するヘルパーメソッド
   static isAxiosError(error: any): error is AxiosError {
     return axios.isAxiosError(error);
