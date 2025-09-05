@@ -17,7 +17,7 @@ class ScrapeService:
     SCRAPERS = {
         'ensemble': EnsembleStudioScraper,
         'ensemble_studio': EnsembleStudioScraper,
-        'あんさんぶるスタジオ': EnsembleStudioScraper,
+        'あんさんぶるStudio': EnsembleStudioScraper,
         'meguro': MeguroScraper,
         '目黒区': MeguroScraper,
         '目黒': MeguroScraper,
@@ -115,7 +115,7 @@ class ScrapeService:
             
             for facility_key in self.SCRAPERS.keys():
                 # ensemble系は重複するので最初の1つだけ実行
-                if facility_key in ['ensemble_studio', 'あんさんぶるスタジオ']:
+                if facility_key in ['ensemble_studio', 'あんさんぶるStudio']:
                     continue
                 
                 result = self.scrape_facility(facility_key, date)
@@ -214,5 +214,5 @@ class ScrapeService:
         """
         # 重複を除いた施設名リスト
         return list(set([
-            'ensemble'  # 現在はあんさんぶるスタジオのみ
+            'ensemble'  # 現在はあんさんぶるStudioのみ
         ]))

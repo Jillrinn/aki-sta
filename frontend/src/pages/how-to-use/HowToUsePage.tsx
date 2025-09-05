@@ -72,7 +72,7 @@ const HowToUsePage: React.FC = () => {
               📍 対応施設（順次拡大中！）
             </h3>
             <div className="space-y-1">
-              <p className="text-sm sm:text-base text-gray-700">・あんさんぶるスタジオ</p>
+              <p className="text-sm sm:text-base text-gray-700">・あんさんぶるStudio</p>
               <p className="text-sm sm:text-base text-gray-700">・目黒区民センター</p>
             </div>
           </div>

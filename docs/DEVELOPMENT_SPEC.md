@@ -63,7 +63,7 @@ Frontend (React + Azure Static Web Apps)
 ```yaml
 実装スコープ:
   - 固定日付（2025-11-15）の空き状況表示
-  - あんさんぶるスタジオのみ対応（本郷・初台）
+  - あんさんぶるStudioのみ対応（本郷・初台）
   - 時間帯: 13-17のみ表示
   - ダミーデータでの動作
 
@@ -78,7 +78,7 @@ Frontend (React + Azure Static Web Apps)
 
 ```yaml
 機能追加:
-  - あんさんぶるスタジオの実スクレイピング
+  - あんさんぶるStudioの実スクレイピング
   - 3時間帯表示（9-12, 13-17, 18-21）
   - JSONファイルベースでのデータ永続化
   - エラーハンドリング強化
@@ -175,7 +175,7 @@ studio-reservation-checker/
 npx claude-code "Azure Functions HTTPトリガーでダミー空き状況データを返すAPIを作成。
 以下の仕様で実装:
 - エンドポイント: GET /api/availability/2025-11-15
-- レスポンス: あんさんぶるスタジオ本郷・初台の13-17時間帯データ
+- レスポンス: あんさんぶるStudio本郷・初台の13-17時間帯データ
 - テスト込みのTDD実装"
 ```
 
@@ -433,7 +433,7 @@ npx claude-code "MVP v1.0の仕上げ実装。
 ### Day 1-2: スクレイピング実装
 **Claude Codeコマンド例**:
 ```bash
-npx claude-code "Playwrightであんさんぶるスタジオをスクレイピング実装。
+npx claude-code "PlaywrightであんさんぶるStudioをスクレイピング実装。
 仕様:
 - URL: https://ensemble-studio.com/schedule/
 - 対象: 本郷・初台の2スタジオ
@@ -599,7 +599,7 @@ npx claude-code "実データで3時間帯表示にReactコンポーネント更
 ```
 
 **✅ MVP v2.0 完了判定基準**
-- [ ] 実際のあんさんぶるスタジオデータ取得成功
+- [ ] 実際のあんさんぶるStudioデータ取得成功
 - [ ] 3時間帯正しく表示
 - [ ] ファイルベースでのデータ永続化動作
 - [ ] エラー時の適切な表示

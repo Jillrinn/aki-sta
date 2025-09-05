@@ -13,7 +13,7 @@ describe('HowToUsePage', () => {
   it('should display facilities section', () => {
     render(<HowToUsePage />);
     expect(screen.getByText('📍 対応施設（順次拡大中！）')).toBeInTheDocument();
-    expect(screen.getByText('・あんさんぶるスタジオ')).toBeInTheDocument();
+    expect(screen.getByText('・あんさんぶるStudio')).toBeInTheDocument();
     expect(screen.getByText('・目黒区民センター')).toBeInTheDocument();
   });
 

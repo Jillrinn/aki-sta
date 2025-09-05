@@ -227,7 +227,7 @@ class TestScrapeService:
         facilities = service.get_available_facilities()
         
         assert 'ensemble' in facilities
-        # 現在はあんさんぶるスタジオのみ
+        # 現在はあんさんぶるStudioのみ
         assert len(facilities) == 1
 
 

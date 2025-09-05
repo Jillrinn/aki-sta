@@ -1,6 +1,6 @@
-# あんさんぶるスタジオ スクレイパー
+# あんさんぶるStudio スクレイパー
 
-Playwright + BeautifulSoup4を使用してあんさんぶるスタジオ（本郷・初台）の予約状況をスクレイピングするPythonアプリケーション。
+Playwright + BeautifulSoup4を使用してあんさんぶるStudio（本郷・初台）の予約状況をスクレイピングするPythonアプリケーション。
 
 ## 機能
 

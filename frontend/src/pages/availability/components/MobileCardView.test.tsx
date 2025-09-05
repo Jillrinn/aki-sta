@@ -17,7 +17,7 @@ describe('MobileCardView', () => {
   };
 
   const mockFacility: Facility = {
-    centerName: 'あんさんぶるスタジオ',
+    centerName: 'あんさんぶるStudio',
     facilityName: 'あんさんぶるStudio和(本郷)',
     roomName: '練習室',
     timeSlots: {
@@ -418,7 +418,7 @@ describe('MobileCardView', () => {
 
   it('calls openBookingUrl with correct center name for different facilities', () => {
     const ensembleFacility: Facility = {
-      centerName: 'あんさんぶるスタジオ',
+      centerName: 'あんさんぶるStudio',
       facilityName: 'あんさんぶるStudio和(本郷)',
       roomName: '練習室',
       timeSlots: {
@@ -439,6 +439,6 @@ describe('MobileCardView', () => {
     const afternoonSlot = screen.getByText('午後').closest('div');
     fireEvent.click(afternoonSlot!);
     
-    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるスタジオ');
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるStudio');
   });
 });

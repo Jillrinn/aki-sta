@@ -168,7 +168,7 @@ def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility
 
 def async_ensemble_scraping_task(date, record_id, record_date, use_rate_limits):
     """
-    あんさんぶるスタジオ専用の非同期スクレイピングタスク
+    あんさんぶるStudio専用の非同期スクレイピングタスク
     """
     rate_limits_repo = None
     
@@ -382,7 +382,7 @@ def scrape():
 @app.route('/scrape/ensemble', methods=['POST'])
 def scrape_ensemble():
     """
-    あんさんぶるスタジオ専用エンドポイント
+    あんさんぶるStudio専用エンドポイント
     
     POST: 指定日付でスクレイピング
     """

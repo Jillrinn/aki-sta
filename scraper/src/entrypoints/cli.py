@@ -40,7 +40,7 @@ def main():
         type=str,
         default='ensemble',
         choices=['ensemble', 'meguro'],
-        help='スクレイピング対象施設 (ensemble: あんさんぶるスタジオ, meguro: 目黒区施設)'
+        help='スクレイピング対象施設 (ensemble: あんさんぶるStudio, meguro: 目黒区施設)'
     )
     
     args = parser.parse_args()
@@ -79,7 +79,7 @@ def main():
         print("対象施設: 目黒区施設")
         scraper = MeguroScraper()
     else:
-        print("対象施設: あんさんぶるスタジオ")
+        print("対象施設: あんさんぶるStudio")
         scraper = EnsembleStudioScraper()
     
     try:

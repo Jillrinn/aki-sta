@@ -129,7 +129,7 @@ case "$1" in
         echo "  exec [cmd]    - Execute arbitrary command in container"
         echo ""
         echo "Facilities:"
-        echo "  ensemble      - あんさんぶるスタジオ (default)"
+        echo "  ensemble      - あんさんぶるStudio (default)"
         echo "  meguro        - 目黒区施設"
         echo ""
         echo "Environment:"

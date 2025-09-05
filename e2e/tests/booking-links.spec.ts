@@ -25,13 +25,13 @@ test.describe('予約サイトへのリンク機能', () => {
     const categoryCount = await categoryButtons.count();
     
     if (categoryCount > 0) {
-      // あんさんぶるスタジオのカテゴリーを探す
+      // あんさんぶるStudioのカテゴリーを探す
       let ensembleFound = false;
       for (let i = 0; i < categoryCount; i++) {
         const category = categoryButtons.nth(i);
         const categoryText = await category.textContent();
         
-        if (categoryText?.includes('あんさんぶるスタジオ')) {
+        if (categoryText?.includes('あんさんぶるStudio')) {
           ensembleFound = true;
           await category.click();
           await page.waitForTimeout(500);

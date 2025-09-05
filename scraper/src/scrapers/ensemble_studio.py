@@ -1,5 +1,5 @@
 """
-あんさんぶるスタジオの予約状況をスクレイピング
+あんさんぶるStudioの予約状況をスクレイピング
 人間の操作に近い方法でPlaywrightのlocatorを使用してDOM要素を探索
 """
 import re
@@ -26,10 +26,10 @@ class EnsembleStudioScraper(BaseScraper):
     
     def get_center_name(self) -> str:
         """センター名を返す"""
-        return "あんさんぶるスタジオ"
+        return "あんさんぶるStudio"
     
     def get_room_name(self, facility_name: str) -> str:
-        """部屋名を返す（あんさんぶるスタジオは練習室で固定）"""
+        """部屋名を返す（あんさんぶるStudioは練習室で固定）"""
         return "練習室"
     
     def find_studio_calendars(self, page: Page) -> List[Tuple[str, Locator]]:

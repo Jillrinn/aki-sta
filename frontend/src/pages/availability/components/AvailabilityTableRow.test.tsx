@@ -11,7 +11,7 @@ jest.mock('../../../utils/availabilityUtils', () => ({
 
 describe('AvailabilityTableRow', () => {
   const mockFacility: Facility = {
-    centerName: 'あんさんぶるスタジオ',
+    centerName: 'あんさんぶるStudio',
     facilityName: 'あんさんぶるStudio和(本郷)',
     roomName: '練習室',
     timeSlots: {
@@ -101,7 +101,7 @@ describe('AvailabilityTableRow', () => {
 
     // openBookingUrlが呼ばれることを確認
     expect(availabilityUtils.openBookingUrl).toHaveBeenCalledTimes(1);
-    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるスタジオ');
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるStudio');
   });
 
   it('should call openBookingUrl when any part of the row is clicked', () => {
@@ -134,7 +134,7 @@ describe('AvailabilityTableRow', () => {
     expect(availabilityUtils.openBookingUrl).toHaveBeenCalledTimes(1);
     
     // すべてのクリックで同じセンター名が渡される
-    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるスタジオ');
+    expect(availabilityUtils.openBookingUrl).toHaveBeenCalledWith('あんさんぶるStudio');
   });
 
   it('should handle facilities from different centers', () => {

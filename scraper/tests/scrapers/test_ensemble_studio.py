@@ -1,5 +1,5 @@
 """
-あんさんぶるスタジオスクレイパーのテスト（施設固有の処理）
+あんさんぶるStudioスクレイパーのテスト（施設固有の処理）
 """
 import pytest
 from unittest.mock import Mock

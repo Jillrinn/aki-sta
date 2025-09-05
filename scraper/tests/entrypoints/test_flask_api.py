@@ -500,7 +500,7 @@ class TestRateLimitErrors:
 
 
 class TestEnsembleEndpoint:
-    """あんさんぶるスタジオ専用エンドポイントのテスト"""
+    """あんさんぶるStudio専用エンドポイントのテスト"""
     
     def test_post_ensemble_with_date(self, client):
         """POSTリクエストで日付指定するテスト（非同期処理）"""
