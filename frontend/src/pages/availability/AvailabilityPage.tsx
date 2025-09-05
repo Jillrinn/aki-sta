@@ -260,8 +260,9 @@ const AvailabilityPage: React.FC = () => {
         <ScrapeResultModal
           isOpen={!!scrapeResult}
           onClose={() => setScrapeResult(null)}
-          success={scrapeResult.success}
           message={scrapeResult.message}
+          isLoading={false}
+          isError={!scrapeResult.success}
         />
       )}
     </div>

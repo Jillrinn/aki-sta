@@ -3,6 +3,8 @@ import Modal from 'react-modal';
 
 interface CheckingModalProps {
   isOpen: boolean;
+  onClose?: () => void;
+  taskDescription?: string;
 }
 
 const customStyles: Modal.Styles = {
@@ -26,7 +28,7 @@ const customStyles: Modal.Styles = {
   },
 };
 
-const CheckingModal: React.FC<CheckingModalProps> = ({ isOpen }) => {
+const CheckingModal: React.FC<CheckingModalProps> = ({ isOpen, taskDescription }) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -58,7 +60,7 @@ const CheckingModal: React.FC<CheckingModalProps> = ({ isOpen }) => {
           </svg>
         </div>
         <p className="text-gray-700 font-medium text-center">
-          実行状況を確認中...
+          {taskDescription || '実行状況を確認中...'}
         </p>
         <p className="text-sm text-gray-500 mt-2 text-center">
           少々お待ちください
