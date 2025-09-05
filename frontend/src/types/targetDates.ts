@@ -3,12 +3,14 @@ export interface TargetDate {
   date: string;
   label: string;
   isbooked: boolean;
+  memo?: string;
   updatedAt: string;
 }
 
 export interface CreateTargetDateRequest {
   date: string;
   label: string;
+  memo?: string;
 }
 
 export interface TargetDatesResponse {
@@ -20,6 +22,7 @@ export interface CreateTargetDateResponse {
   date: string;
   label: string;
   isbooked: boolean;
+  memo?: string;
   updatedAt: string;
 }
 
@@ -29,7 +32,8 @@ export interface DeleteTargetDateResponse {
 }
 
 export interface UpdateTargetDateRequest {
-  isbooked: boolean;
+  isbooked?: boolean;
+  memo?: string;
 }
 
 export interface UpdateTargetDateResponse {
@@ -37,5 +41,6 @@ export interface UpdateTargetDateResponse {
   date: string;
   label: string;
   isbooked: boolean;
+  memo?: string;
   updatedAt: string;
 }

@@ -7,9 +7,10 @@ interface ReservationStatusModalProps {
     date: string;
     label: string;
     isbooked: boolean;
+    memo?: string;
   } | null;
   onClose: () => void;
-  onSubmit: (id: string, isbooked: boolean) => Promise<void>;
+  onSubmit: (id: string, isbooked: boolean, memo: string) => Promise<void>;
 }
 
 const ReservationStatusModal: React.FC<ReservationStatusModalProps> = ({
@@ -19,12 +20,14 @@ const ReservationStatusModal: React.FC<ReservationStatusModalProps> = ({
   onSubmit
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<boolean>(false);
+  const [memo, setMemo] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>('');
 
   React.useEffect(() => {
     if (targetDate) {
       setSelectedStatus(targetDate.isbooked);
+      setMemo(targetDate.memo || '');
       setError('');
     }
   }, [targetDate]);
@@ -40,11 +43,16 @@ const ReservationStatusModal: React.FC<ReservationStatusModalProps> = ({
   const handleSubmit = async () => {
     if (!targetDate) return;
     
+    if (memo && memo.length > 500) {
+      setError('メモは500文字以内で入力してください');
+      return;
+    }
+    
     setIsSubmitting(true);
     setError('');
     
     try {
-      await onSubmit(targetDate.id, selectedStatus);
+      await onSubmit(targetDate.id, selectedStatus, memo);
       onClose();
     } catch (err) {
       setError('予約状況の更新に失敗しました。しばらくしてから再度お試しください。');
@@ -75,6 +83,25 @@ const ReservationStatusModal: React.FC<ReservationStatusModalProps> = ({
           <p className="font-medium text-gray-800">{formatDate(targetDate.date)}</p>
           <p className="text-sm text-gray-600 mt-2 mb-1">ラベル</p>
           <p className="font-medium text-gray-800">{targetDate.label}</p>
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="memo" className="block text-sm text-gray-700 mb-2">
+            メモ <span className="text-gray-500 text-xs">（任意）</span>
+          </label>
+          <textarea
+            id="memo"
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="メモを入力（最大500文字）"
+            rows={3}
+            maxLength={500}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            disabled={isSubmitting}
+          />
+          <div className="text-right text-xs text-gray-500 mt-1">
+            {memo.length}/500
+          </div>
         </div>
 
         <div className="mb-6">

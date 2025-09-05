@@ -99,7 +99,8 @@ describe('Target Dates API', () => {
       expect(response.jsonBody).toEqual(mockResult);
       expect(targetDatesRepository.insertTargetDate).toHaveBeenCalledWith(
         '2025-12-01',
-        'クリスマスライブ'
+        'クリスマスライブ',
+        undefined
       );
     });
 
@@ -251,7 +252,7 @@ describe('Target Dates API', () => {
       
       expect(response.status).toBe(200);
       expect(response.jsonBody).toEqual(mockResult);
-      expect(targetDatesRepository.updateTargetDate).toHaveBeenCalledWith('2025-11-15', true);
+      expect(targetDatesRepository.updateTargetDate).toHaveBeenCalledWith('2025-11-15', { isbooked: true });
     });
 
     test('should update target date booking status to false', async () => {
@@ -272,7 +273,7 @@ describe('Target Dates API', () => {
       
       expect(response.status).toBe(200);
       expect(response.jsonBody).toEqual(mockResult);
-      expect(targetDatesRepository.updateTargetDate).toHaveBeenCalledWith('2025-11-15', false);
+      expect(targetDatesRepository.updateTargetDate).toHaveBeenCalledWith('2025-11-15', { isbooked: false });
     });
 
     test('should return 400 when id is missing', async () => {
@@ -299,7 +300,7 @@ describe('Target Dates API', () => {
       expect(targetDatesRepository.updateTargetDate).not.toHaveBeenCalled();
     });
 
-    test('should return 400 when isbooked is missing', async () => {
+    test('should return 400 when both isbooked and memo are missing', async () => {
       request.params.id = '2025-11-15';
       request.json.mockResolvedValue({});
       
@@ -307,7 +308,7 @@ describe('Target Dates API', () => {
       
       expect(response.status).toBe(400);
       expect(response.jsonBody.error).toBe('Bad Request');
-      expect(response.jsonBody.message).toBe('isbooked must be a boolean value');
+      expect(response.jsonBody.message).toBe('At least one field (isbooked or memo) must be provided');
       expect(targetDatesRepository.updateTargetDate).not.toHaveBeenCalled();
     });
 

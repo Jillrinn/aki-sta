@@ -12,10 +12,10 @@ describe('RateLimitWarningModal', () => {
       />
     );
 
-    expect(screen.getByText('現在、情報取得処理が実行中です')).toBeInTheDocument();
-    expect(screen.getByText('スクレイピング実行中')).toBeInTheDocument();
-    expect(screen.getByText('既に別の処理が実行中です')).toBeInTheDocument();
+    expect(screen.getByText('しばらくお待ちください')).toBeInTheDocument();
+    expect(screen.getByText('情報取得処理は実行中です')).toBeInTheDocument();
     expect(screen.getByText('完了するまでしばらくお待ちください')).toBeInTheDocument();
+    expect(screen.getByText('ブラウザを更新すると順次最新の情報が表示されます')).toBeInTheDocument();
   });
 
   it('モーダルが閉じているときは何も表示されない', () => {

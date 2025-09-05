@@ -123,6 +123,36 @@ describe('target-dates-repository', () => {
   });
 
   describe('insertTargetDate', () => {
+    it('should insert target date with memo successfully', async () => {
+      const mockDate = '2025-11-15';
+      const mockLabel = 'イベント';
+      const mockMemo = 'Important notes';
+      const mockResource = {
+        id: mockDate,
+        date: mockDate,
+        label: mockLabel,
+        isbooked: false,
+        memo: mockMemo,
+        updatedAt: '2025-08-19T10:00:00Z'
+      };
+
+      mockItems.create.mockResolvedValue({ resource: mockResource });
+
+      const result = await targetDatesRepository.insertTargetDate(mockDate, mockLabel, mockMemo);
+
+      expect(mockItems.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: mockDate,
+          date: mockDate,
+          label: mockLabel,
+          isbooked: false,
+          memo: mockMemo,
+          updatedAt: expect.any(String)
+        })
+      );
+      expect(result).toEqual(mockResource);
+    });
+
     it('should insert target date successfully', async () => {
       const mockDate = '2025-11-15';
       const mockLabel = '本番ライブ';
@@ -136,7 +166,7 @@ describe('target-dates-repository', () => {
 
       mockItems.create.mockResolvedValue({ resource: mockResource });
 
-      const result = await targetDatesRepository.insertTargetDate(mockDate, mockLabel);
+      const result = await targetDatesRepository.insertTargetDate(mockDate, mockLabel, '');
 
       expect(cosmosClient.initializeWithRetry).toHaveBeenCalled();
       expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
@@ -146,6 +176,7 @@ describe('target-dates-repository', () => {
           date: mockDate,
           label: mockLabel,
           isbooked: false,
+          memo: '',
           updatedAt: expect.any(String)
         })
       );
@@ -220,7 +251,7 @@ describe('target-dates-repository', () => {
       };
       mockContainer.item.mockReturnValue(mockItem);
 
-      const result = await targetDatesRepository.updateTargetDate('2025-11-15', true);
+      const result = await targetDatesRepository.updateTargetDate('2025-11-15', { isbooked: true });
 
       expect(cosmosClient.initializeWithRetry).toHaveBeenCalled();
       expect(cosmosClient.getContainer).toHaveBeenCalledWith('target_dates');
@@ -259,41 +290,41 @@ describe('target-dates-repository', () => {
       };
       mockContainer.item.mockReturnValue(mockItem);
 
-      const result = await targetDatesRepository.updateTargetDate('2025-11-15', false);
+      const result = await targetDatesRepository.updateTargetDate('2025-11-15', { isbooked: false });
 
       expect(result.isbooked).toBe(false);
     });
 
     it('should throw error when ID is missing', async () => {
-      await expect(targetDatesRepository.updateTargetDate(null, true))
+      await expect(targetDatesRepository.updateTargetDate(null, { isbooked: true }))
         .rejects
         .toThrow('ID is required');
 
-      await expect(targetDatesRepository.updateTargetDate('', true))
+      await expect(targetDatesRepository.updateTargetDate('', { isbooked: true }))
         .rejects
         .toThrow('ID is required');
 
-      await expect(targetDatesRepository.updateTargetDate(undefined, true))
+      await expect(targetDatesRepository.updateTargetDate(undefined, { isbooked: true }))
         .rejects
         .toThrow('ID is required');
     });
 
     it('should throw error when isbooked is not a boolean', async () => {
-      await expect(targetDatesRepository.updateTargetDate('2025-11-15', 'yes'))
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', { isbooked: 'yes' }))
         .rejects
         .toThrow('isbooked must be a boolean value');
 
-      await expect(targetDatesRepository.updateTargetDate('2025-11-15', 1))
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', { isbooked: 1 }))
         .rejects
         .toThrow('isbooked must be a boolean value');
 
-      await expect(targetDatesRepository.updateTargetDate('2025-11-15', null))
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', { isbooked: null }))
         .rejects
         .toThrow('isbooked must be a boolean value');
 
-      await expect(targetDatesRepository.updateTargetDate('2025-11-15', undefined))
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', {}))
         .rejects
-        .toThrow('isbooked must be a boolean value');
+        .toThrow('At least one field (isbooked or memo) must be provided');
     });
 
     it('should throw error when target date not found', async () => {
@@ -302,7 +333,7 @@ describe('target-dates-repository', () => {
       };
       mockContainer.item.mockReturnValue(mockItem);
 
-      await expect(targetDatesRepository.updateTargetDate('2025-11-15', true))
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', { isbooked: true }))
         .rejects
         .toThrow('Target date 2025-11-15 not found');
     });
@@ -315,7 +346,7 @@ describe('target-dates-repository', () => {
       };
       mockContainer.item.mockReturnValue(mockItem);
 
-      await expect(targetDatesRepository.updateTargetDate('2025-11-15', true))
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', { isbooked: true }))
         .rejects
         .toThrow('Target date 2025-11-15 not found');
     });
@@ -327,9 +358,83 @@ describe('target-dates-repository', () => {
       };
       mockContainer.item.mockReturnValue(mockItem);
 
-      await expect(targetDatesRepository.updateTargetDate('2025-11-15', true))
+      await expect(targetDatesRepository.updateTargetDate('2025-11-15', { isbooked: true }))
         .rejects
         .toThrow('Failed to update target date in Cosmos DB after retries: Cosmos DB error');
+    });
+
+    it('should update target date memo', async () => {
+      const existingItem = {
+        id: '2025-11-15',
+        date: '2025-11-15',
+        label: '本番ライブ',
+        isbooked: false,
+        memo: '',
+        updatedAt: '2024-08-31T10:00:00Z'
+      };
+      
+      const updatedItem = {
+        ...existingItem,
+        memo: 'New memo text',
+        updatedAt: expect.any(String)
+      };
+      
+      const mockItem = {
+        read: jest.fn().mockResolvedValue({ resource: existingItem }),
+        replace: jest.fn().mockResolvedValue({ resource: updatedItem })
+      };
+      mockContainer.item.mockReturnValue(mockItem);
+
+      const result = await targetDatesRepository.updateTargetDate('2025-11-15', { memo: 'New memo text' });
+
+      expect(mockItem.replace).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: '2025-11-15',
+          memo: 'New memo text',
+          isbooked: false,
+          updatedAt: expect.any(String)
+        })
+      );
+      expect(result).toEqual(updatedItem);
+    });
+
+    it('should update both isbooked and memo together', async () => {
+      const existingItem = {
+        id: '2025-11-15',
+        date: '2025-11-15',
+        label: '本番ライブ',
+        isbooked: false,
+        memo: 'Old memo',
+        updatedAt: '2024-08-31T10:00:00Z'
+      };
+      
+      const updatedItem = {
+        ...existingItem,
+        isbooked: true,
+        memo: 'Updated memo',
+        updatedAt: expect.any(String)
+      };
+      
+      const mockItem = {
+        read: jest.fn().mockResolvedValue({ resource: existingItem }),
+        replace: jest.fn().mockResolvedValue({ resource: updatedItem })
+      };
+      mockContainer.item.mockReturnValue(mockItem);
+
+      const result = await targetDatesRepository.updateTargetDate('2025-11-15', { 
+        isbooked: true, 
+        memo: 'Updated memo' 
+      });
+
+      expect(mockItem.replace).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: '2025-11-15',
+          isbooked: true,
+          memo: 'Updated memo',
+          updatedAt: expect.any(String)
+        })
+      );
+      expect(result).toEqual(updatedItem);
     });
   });
 });

@@ -42,7 +42,7 @@ const RateLimitWarningModal: React.FC<RateLimitWarningModalProps> = ({
       <div>
         <div className="mb-6">
           <h3 className="text-xl font-bold text-gray-900 mb-2">
-            現在、情報取得処理が実行中です
+            しばらくお待ちください
           </h3>
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div className="flex items-start">
@@ -53,20 +53,17 @@ const RateLimitWarningModal: React.FC<RateLimitWarningModalProps> = ({
               </div>
               <div className="ml-3 flex-1">
                 <h4 className="text-sm font-medium text-amber-900 mb-2">
-                  スクレイピング実行中
+                  情報取得処理は実行中です
                 </h4>
                 <ul className="text-sm text-amber-700 space-y-1.5">
-                  <li className="flex items-start">
-                    <span className="text-amber-400 mr-2">•</span>
-                    <span>既に別の処理が実行中です</span>
-                  </li>
+
                   <li className="flex items-start">
                     <span className="text-amber-400 mr-2">•</span>
                     <span>完了するまでしばらくお待ちください</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-amber-400 mr-2">•</span>
-                    <span>ブラウザを更新すると最新の情報が表示されます</span>
+                    <span>ブラウザを更新すると順次最新の情報が表示されます</span>
                   </li>
                 </ul>
               </div>

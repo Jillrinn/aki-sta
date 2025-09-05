@@ -10,6 +10,7 @@ interface TargetDateModalProps {
 const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) => {
   const [date, setDate] = useState('');
   const [label, setLabel] = useState('');
+  const [memo, setMemo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -25,15 +26,25 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
       return;
     }
 
+    if (memo && memo.length > 500) {
+      setError('メモは500文字以内で入力してください');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const data: CreateTargetDateRequest = { date, label };
+      const data: CreateTargetDateRequest = { 
+        date, 
+        label,
+        ...(memo && { memo })
+      };
       await targetDatesApi.createTargetDate(data);
       
       setSuccessMessage('登録しました');
       setDate('');
       setLabel('');
+      setMemo('');
       
       // 成功メッセージを表示してからモーダルを閉じる
       setTimeout(() => {
@@ -56,6 +67,7 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
   const handleClose = () => {
     setDate('');
     setLabel('');
+    setMemo('');
     setError('');
     setSuccessMessage('');
     onClose();
@@ -107,6 +119,25 @@ const TargetDateModal: React.FC<TargetDateModalProps> = ({ isOpen, onClose }) =>
               disabled={isLoading}
               required
             />
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="memo" className="block text-base font-semibold text-gray-900 mb-2">
+              メモ <span className="text-gray-500 text-sm">（任意）</span>
+            </label>
+            <textarea
+              id="memo"
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="メモを入力（最大500文字）"
+              rows={3}
+              maxLength={500}
+              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              disabled={isLoading}
+            />
+            <div className="text-right text-sm text-gray-500 mt-1">
+              {memo.length}/500
+            </div>
           </div>
 
           {/* エラーメッセージ */}

@@ -104,8 +104,8 @@ const TargetDatesPage: React.FC = () => {
     setReservationTarget(targetDate);
   };
 
-  const handleReservationSubmit = async (id: string, isbooked: boolean) => {
-    await targetDatesApi.updateTargetDate(id, { isbooked });
+  const handleReservationSubmit = async (id: string, isbooked: boolean, memo: string) => {
+    await targetDatesApi.updateTargetDate(id, { isbooked, memo });
     await refetch();
   };
 
@@ -164,7 +164,7 @@ const TargetDatesPage: React.FC = () => {
                 key={targetDate.id}
                 className="bg-white shadow-lg rounded-lg border border-gray-200 p-4"
               >
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2 mb-2">
                   <div className="col-span-1">
                     <p className="text-xs text-gray-600 mb-1">日付</p>
                     <p className="font-medium text-sm">{formatDate(targetDate.date)}</p>
@@ -192,6 +192,12 @@ const TargetDatesPage: React.FC = () => {
                     )}
                   </div>
                 </div>
+                {targetDate.memo && (
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <p className="text-xs text-gray-600 mb-1">メモ</p>
+                    <p className="text-sm text-gray-700 break-words">{targetDate.memo}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -201,13 +207,16 @@ const TargetDatesPage: React.FC = () => {
             <table className="w-full border-collapse bg-white">
               <thead className="bg-gradient-to-r from-primary-400 to-primary-700 text-white">
                 <tr>
-                  <th className="w-1/4 p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
+                  <th className="w-1/6 p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
                     日付
                   </th>
-                  <th className="w-2/5 p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
+                  <th className="w-1/4 p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
                     ラベル
                   </th>
                   <th className="w-1/3 p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
+                    メモ
+                  </th>
+                  <th className="w-1/4 p-4 text-left border-b border-gray-200 font-semibold uppercase text-sm tracking-wider">
                     予約状況
                   </th>
                 </tr>
@@ -219,13 +228,18 @@ const TargetDatesPage: React.FC = () => {
                     className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100 transition-colors cursor-pointer`}
                     onClick={() => handleDeleteClick(targetDate)}
                   >
-                    <td className="w-1/4 p-4 border-b border-gray-200 font-medium">
+                    <td className="w-1/6 p-4 border-b border-gray-200 font-medium">
                       {formatDate(targetDate.date)}
                     </td>
-                    <td className="w-2/5 p-4 border-b border-gray-200">
+                    <td className="w-1/4 p-4 border-b border-gray-200">
                       {targetDate.label}
                     </td>
                     <td className="w-1/3 p-4 border-b border-gray-200">
+                      <div className="max-w-xs truncate" title={targetDate.memo || ''}>
+                        {targetDate.memo || '-'}
+                      </div>
+                    </td>
+                    <td className="w-1/4 p-4 border-b border-gray-200">
                       {targetDate.isbooked ? (
                         <button 
                           className="inline-flex px-3 py-1.5 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-300 hover:bg-green-200 transition-colors cursor-pointer"

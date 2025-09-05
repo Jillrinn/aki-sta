@@ -29,7 +29,7 @@ async function getTargetDatesHandler(request, context) {
 async function createTargetDateHandler(request, context) {
   try {
     const body = await request.json();
-    const { date, label } = body;
+    const { date, label, memo } = body;
     
     // バリデーション
     if (!date || !label) {
@@ -54,8 +54,19 @@ async function createTargetDateHandler(request, context) {
       };
     }
     
+    // メモの長さ制限（オプショナル）
+    if (memo && memo.length > 500) {
+      return {
+        status: 400,
+        jsonBody: {
+          error: 'Bad Request',
+          message: 'Memo must be 500 characters or less'
+        }
+      };
+    }
+    
     // 対象日付を追加
-    const result = await targetDatesRepository.insertTargetDate(date, label);
+    const result = await targetDatesRepository.insertTargetDate(date, label, memo);
     
     return {
       status: 201,
@@ -143,7 +154,7 @@ async function deleteTargetDateHandler(request, context) {
   }
 }
 
-// PATCH: 対象日付の予約状況を更新
+// PATCH: 対象日付の予約状況とメモを更新
 async function updateTargetDateHandler(request, context) {
   const id = request.params.id;
   
@@ -159,10 +170,21 @@ async function updateTargetDateHandler(request, context) {
   
   try {
     const body = await request.json();
-    const { isbooked } = body;
+    const { isbooked, memo } = body;
     
-    // バリデーション
-    if (typeof isbooked !== 'boolean') {
+    // 少なくとも一つのフィールドが必要
+    if (isbooked === undefined && memo === undefined) {
+      return {
+        status: 400,
+        jsonBody: {
+          error: 'Bad Request',
+          message: 'At least one field (isbooked or memo) must be provided'
+        }
+      };
+    }
+    
+    // isbookedのバリデーション
+    if (isbooked !== undefined && typeof isbooked !== 'boolean') {
       return {
         status: 400,
         jsonBody: {
@@ -172,8 +194,34 @@ async function updateTargetDateHandler(request, context) {
       };
     }
     
+    // memoのバリデーション
+    if (memo !== undefined && typeof memo !== 'string') {
+      return {
+        status: 400,
+        jsonBody: {
+          error: 'Bad Request',
+          message: 'memo must be a string value'
+        }
+      };
+    }
+    
+    // メモの長さ制限
+    if (memo && memo.length > 500) {
+      return {
+        status: 400,
+        jsonBody: {
+          error: 'Bad Request',
+          message: 'Memo must be 500 characters or less'
+        }
+      };
+    }
+    
     // 対象日付を更新
-    const result = await targetDatesRepository.updateTargetDate(id, isbooked);
+    const updateData = {};
+    if (isbooked !== undefined) updateData.isbooked = isbooked;
+    if (memo !== undefined) updateData.memo = memo;
+    
+    const result = await targetDatesRepository.updateTargetDate(id, updateData);
     
     return {
       status: 200,
@@ -194,7 +242,7 @@ async function updateTargetDateHandler(request, context) {
     }
     
     // バリデーションエラー
-    if (error.message.includes('required') || error.message.includes('boolean')) {
+    if (error.message.includes('required') || error.message.includes('boolean') || error.message.includes('string')) {
       return {
         status: 400,
         jsonBody: {

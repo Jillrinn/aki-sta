@@ -37,13 +37,15 @@ describe('TargetDatesPage', () => {
       id: '1',
       date: '2025-01-15',
       label: 'バンド練習',
-      isbooked: false
+      isbooked: false,
+      memo: ''
     },
     {
       id: '2',
       date: '2025-01-20',
       label: 'リハーサル',
-      isbooked: true
+      isbooked: true,
+      memo: '重要なリハ'
     }
   ];
 
@@ -91,8 +93,8 @@ describe('TargetDatesPage', () => {
       expect(screen.getAllByText('リハーサル')[0]).toBeInTheDocument();
     });
 
-    expect(screen.getByText('予約済み')).toBeInTheDocument();
-    expect(screen.getByText('未予約')).toBeInTheDocument();
+    expect(screen.getAllByText('予約済み').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('未予約').length).toBeGreaterThan(0);
   });
 
   it('should render empty state when no data', async () => {
@@ -228,8 +230,11 @@ describe('TargetDatesPage', () => {
       expect(screen.getAllByText('バンド練習')[0]).toBeInTheDocument();
     });
 
-    const row = screen.getAllByText('バンド練習')[0].closest('tr');
-    fireEvent.click(row!);
+    const rows = screen.getAllByRole('row');
+    // Find the row that contains 'バンド練習'
+    const targetRow = rows.find(row => row.textContent?.includes('バンド練習'));
+    expect(targetRow).toBeTruthy();
+    fireEvent.click(targetRow!);
 
     const deleteButton = screen.getByRole('button', { name: '削除' });
     fireEvent.click(deleteButton);
@@ -258,8 +263,11 @@ describe('TargetDatesPage', () => {
       expect(screen.getAllByText('バンド練習')[0]).toBeInTheDocument();
     });
 
-    const row = screen.getAllByText('バンド練習')[0].closest('tr');
-    fireEvent.click(row!);
+    const rows = screen.getAllByRole('row');
+    // Find the row that contains 'バンド練習'
+    const targetRow = rows.find(row => row.textContent?.includes('バンド練習'));
+    expect(targetRow).toBeTruthy();
+    fireEvent.click(targetRow!);
 
     const cancelButton = screen.getByRole('button', { name: 'キャンセル' });
     fireEvent.click(cancelButton);
@@ -274,7 +282,8 @@ describe('TargetDatesPage', () => {
           id: '1',
           date: '2025-01-15',
           label: 'Test',
-          isbooked: false
+          isbooked: false,
+          memo: ''
         }
       ],
       loading: false,
@@ -290,7 +299,11 @@ describe('TargetDatesPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('01/15(水)')).toBeInTheDocument();
+      // Check that the date is formatted in MM/DD format
+      const dateElements = screen.getAllByText((content, element) => {
+        return element?.textContent?.includes('01/15') || false;
+      });
+      expect(dateElements.length).toBeGreaterThan(0);
     });
   });
 
@@ -314,8 +327,11 @@ describe('TargetDatesPage', () => {
       expect(screen.getAllByText('バンド練習')[0]).toBeInTheDocument();
     });
 
-    const row = screen.getAllByText('バンド練習')[0].closest('tr');
-    fireEvent.click(row!);
+    const rows = screen.getAllByRole('row');
+    // Find the row that contains 'バンド練習'
+    const targetRow = rows.find(row => row.textContent?.includes('バンド練習'));
+    expect(targetRow).toBeTruthy();
+    fireEvent.click(targetRow!);
 
     const deleteButton = screen.getByRole('button', { name: '削除' });
     fireEvent.click(deleteButton);

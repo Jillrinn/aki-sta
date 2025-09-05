@@ -100,7 +100,7 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
             <span>{formatUpdateTime(facility.lastUpdated)} 更新</span>
           </div>
           {!isExpanded && (
-            <span className={`font-medium px-2 py-1 rounded whitespace-nowrap ${
+            <span className={`font-medium px-2 py-1 rounded whitespace-nowrap text-xs ${
               allBooked ? 'bg-red-100 text-red-700' : 
               allUnknown ? 'bg-gray-100 text-gray-700' : 
               afternoonBooked ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'

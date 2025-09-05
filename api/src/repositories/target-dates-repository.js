@@ -61,7 +61,7 @@ module.exports = {
     }
   },
 
-  insertTargetDate: async (date, label) => {
+  insertTargetDate: async (date, label, memo = '') => {
     const operation = async () => {
       try {
         // バリデーション
@@ -83,6 +83,7 @@ module.exports = {
           date,
           label,
           isbooked: false,
+          memo: memo || '',
           updatedAt: new Date().toISOString()
         };
         
@@ -107,7 +108,7 @@ module.exports = {
     }
   },
 
-  updateTargetDate: async (id, isbooked) => {
+  updateTargetDate: async (id, updateData) => {
     const operation = async () => {
       try {
         // バリデーション
@@ -115,8 +116,25 @@ module.exports = {
           throw new Error('ID is required');
         }
         
-        if (typeof isbooked !== 'boolean') {
+        if (!updateData || typeof updateData !== 'object') {
+          throw new Error('Update data is required');
+        }
+        
+        const { isbooked, memo } = updateData;
+        
+        // 少なくとも一つのフィールドが提供されているか確認
+        if (isbooked === undefined && memo === undefined) {
+          throw new Error('At least one field (isbooked or memo) must be provided');
+        }
+        
+        // isbookedが提供された場合、boolean型かチェック
+        if (isbooked !== undefined && typeof isbooked !== 'boolean') {
           throw new Error('isbooked must be a boolean value');
+        }
+        
+        // memoが提供された場合、string型かチェック
+        if (memo !== undefined && typeof memo !== 'string') {
+          throw new Error('memo must be a string value');
         }
         
         await cosmosClient.initializeWithRetry();
@@ -129,12 +147,19 @@ module.exports = {
           throw new Error(`Target date ${id} not found`);
         }
         
-        // isbookedを更新
+        // 更新する項目を作成
         const updatedItem = {
           ...existingItem,
-          isbooked,
           updatedAt: new Date().toISOString()
         };
+        
+        // 提供されたフィールドのみ更新
+        if (isbooked !== undefined) {
+          updatedItem.isbooked = isbooked;
+        }
+        if (memo !== undefined) {
+          updatedItem.memo = memo;
+        }
         
         // 更新を実行
         const { resource } = await container.item(id, id).replace(updatedItem);
