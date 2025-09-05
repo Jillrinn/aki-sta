@@ -19,7 +19,7 @@ test.describe('カテゴリーセクション機能', () => {
       expect(categoryText).toContain('】');
       
       // ステータスバッジが表示される場合がある
-      const badges = ['全て予約済み', '希望時間は予約済み', '空きあり'];
+      const badges = ['全て空き無', '希望時間は空き無', '空きあり'];
       let hasBadge = false;
       for (const badge of badges) {
         if (categoryText?.includes(badge)) {
@@ -117,15 +117,15 @@ test.describe('カテゴリーセクション機能', () => {
       // 各カテゴリーのバッジを確認
       for (let i = 0; i < Math.min(categoryCount, 3); i++) {
         const category = categoryButtons.nth(i);
-        const badge = category.locator('span').filter({ hasText: /全て予約済み|希望時間は予約済み|空きあり/ });
+        const badge = category.locator('span').filter({ hasText: /全て空き無|希望時間は空き無|空きあり/ });
         
         if (await badge.count() > 0) {
           const badgeText = await badge.textContent();
           const badgeClass = await badge.getAttribute('class');
           
-          if (badgeText?.includes('全て予約済み')) {
+          if (badgeText?.includes('全て空き無')) {
             expect(badgeClass).toContain('bg-red');
-          } else if (badgeText?.includes('希望時間は予約済み')) {
+          } else if (badgeText?.includes('希望時間は空き無')) {
             expect(badgeClass).toContain('bg-orange');
           } else if (badgeText?.includes('空きあり')) {
             expect(badgeClass).toContain('bg-green');
