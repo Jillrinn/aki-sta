@@ -11,24 +11,30 @@ interface ReservationStatusModalProps {
   } | null;
   onClose: () => void;
   onSubmit: (id: string, isbooked: boolean, memo: string) => Promise<void>;
+  onDelete?: (id: string, date: string) => Promise<boolean>;
 }
 
 const ReservationStatusModal: React.FC<ReservationStatusModalProps> = ({
   isOpen,
   targetDate,
   onClose,
-  onSubmit
+  onSubmit,
+  onDelete
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<boolean>(false);
   const [memo, setMemo] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   React.useEffect(() => {
     if (targetDate) {
       setSelectedStatus(targetDate.isbooked);
       setMemo(targetDate.memo || '');
       setError('');
+      setShowDeleteConfirm(false);
+      setIsDeleting(false);
     }
   }, [targetDate]);
 
@@ -63,7 +69,37 @@ const ReservationStatusModal: React.FC<ReservationStatusModalProps> = ({
 
   const handleCancel = () => {
     setError('');
+    setShowDeleteConfirm(false);
     onClose();
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!targetDate || !onDelete) return;
+    
+    setIsDeleting(true);
+    setError('');
+    
+    try {
+      const success = await onDelete(targetDate.id, targetDate.date);
+      if (success) {
+        onClose();
+      } else {
+        setError('削除に失敗しました。しばらくしてから再度お試しください。');
+      }
+    } catch (err) {
+      setError('削除に失敗しました。しばらくしてから再度お試しください。');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
   };
 
   if (!isOpen || !targetDate) return null;
@@ -138,23 +174,70 @@ const ReservationStatusModal: React.FC<ReservationStatusModalProps> = ({
           </div>
         )}
 
-        <div className="flex gap-3 justify-end">
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
-            disabled={isSubmitting}
-          >
-            キャンセル
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 text-white bg-brand-blue rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? '更新中...' : '更新'}
-          </button>
+        <div className="flex justify-between">
+          {onDelete && (
+            <button
+              onClick={handleDeleteClick}
+              className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || isDeleting}
+            >
+              削除
+            </button>
+          )}
+          <div className={`flex gap-3 ${!onDelete ? 'w-full' : ''} justify-end`}>
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+              disabled={isSubmitting || isDeleting}
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-4 py-2 text-white bg-brand-blue rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || isDeleting}
+            >
+              {isSubmitting ? '更新中...' : '更新'}
+            </button>
+          </div>
         </div>
       </div>
+      
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 z-60 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={handleDeleteCancel}
+            aria-hidden="true"
+          />
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">削除確認</h3>
+            <p className="text-gray-600 mb-4">
+              以下の日程を削除してもよろしいですか？
+            </p>
+            <div className="bg-gray-50 p-3 rounded mb-4">
+              <p className="font-medium text-gray-800">{formatDate(targetDate.date)}</p>
+              <p className="text-gray-600">{targetDate.label}</p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                disabled={isDeleting}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isDeleting}
+              >
+                {isDeleting ? '削除中...' : '削除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

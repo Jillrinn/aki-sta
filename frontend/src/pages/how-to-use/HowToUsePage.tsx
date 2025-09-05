@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import AppTitle from '../../components/common/AppTitle';
+import Copyright from '../../components/common/Copyright';
 
 interface Step {
   icon: string;
@@ -28,7 +29,7 @@ const HowToUsePage: React.FC = () => {
       title: '自動でチェック',
       description: (
         <>
-          <span className="block sm:inline">毎日3回（深夜1時、朝8時・夕方5時）</span>
+          <span className="block sm:inline">毎日3回（深夜1時、朝8時・夕方4時）</span>
           <span className="block sm:inline">最新の空き状況を更新</span>
         </>
       ),
@@ -129,6 +130,7 @@ const HowToUsePage: React.FC = () => {
           </div>
         </div>
       </div>
+      <Copyright />
     </div>
   </div>
   );

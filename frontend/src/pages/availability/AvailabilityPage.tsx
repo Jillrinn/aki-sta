@@ -13,6 +13,7 @@ import LegendSection from './components/LegendSection';
 import CollapsibleCategorySection from './components/CollapsibleCategorySection';
 import PageHeader from './components/PageHeader';
 import PageFooter from './components/PageFooter';
+import Copyright from '../../components/common/Copyright';
 
 const AvailabilityPage: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
@@ -193,6 +194,7 @@ const AvailabilityPage: React.FC = () => {
         isRefreshing={isRefreshing}
         disabled={loading}
       />
+      <Copyright />
     </div>
   );
 };

@@ -19,8 +19,35 @@ jest.mock('./components/TargetDateModal', () => {
 });
 
 jest.mock('./components/ReservationStatusModal', () => {
-  return function MockReservationStatusModal({ isOpen, targetDate, onClose, onSubmit }: any) {
-    return isOpen ? <div data-testid="reservation-status-modal">Reservation Modal</div> : null;
+  const React = require('react');
+  return function MockReservationStatusModal({ isOpen, targetDate, onClose, onSubmit, onDelete }: any) {
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+    const [error, setError] = React.useState('');
+    
+    if (!isOpen) return null;
+    
+    return (
+      <div data-testid="reservation-status-modal">
+        <h3>予約状況の更新</h3>
+        {onDelete && (
+          <button onClick={() => setShowDeleteConfirm(true)}>削除</button>
+        )}
+        <button onClick={onClose}>キャンセル</button>
+        {showDeleteConfirm && (
+          <div>
+            <p>削除確認</p>
+            <button onClick={() => setShowDeleteConfirm(false)}>キャンセル</button>
+            <button onClick={async () => {
+              const success = await onDelete(targetDate.id, targetDate.date);
+              if (!success) {
+                setError('削除に失敗しました。しばらくしてから再度お試しください。');
+              }
+            }}>削除</button>
+          </div>
+        )}
+        {error && <div>{error}</div>}
+      </div>
+    );
   };
 });
 
@@ -180,7 +207,7 @@ describe('TargetDatesPage', () => {
     });
   });
 
-  it('should show delete confirmation when row is clicked', async () => {
+  it('should show reservation status modal when row is clicked', async () => {
     (useTargetDates as jest.Mock).mockReturnValue({
       data: mockTargetDates,
       loading: false,
@@ -205,8 +232,7 @@ describe('TargetDatesPage', () => {
     const dataRow = rows.find(row => row.textContent?.includes('バンド練習'));
     if (dataRow) {
       fireEvent.click(dataRow);
-      expect(screen.getByText('削除確認')).toBeInTheDocument();
-      expect(screen.getByText('以下の日程を削除してもよろしいですか？')).toBeInTheDocument();
+      expect(screen.getByText('予約状況の更新')).toBeInTheDocument();
     }
   });
 
@@ -236,8 +262,24 @@ describe('TargetDatesPage', () => {
     expect(targetRow).toBeTruthy();
     fireEvent.click(targetRow!);
 
+    // Wait for ReservationStatusModal to appear
+    await waitFor(() => {
+      expect(screen.getByText('予約状況の更新')).toBeInTheDocument();
+    });
+
+    // Click the delete button in the modal
     const deleteButton = screen.getByRole('button', { name: '削除' });
     fireEvent.click(deleteButton);
+
+    // Wait for delete confirmation dialog
+    await waitFor(() => {
+      expect(screen.getByText('削除確認')).toBeInTheDocument();
+    });
+
+    // Confirm deletion
+    const confirmButtons = screen.getAllByRole('button', { name: '削除' });
+    const confirmDeleteButton = confirmButtons[confirmButtons.length - 1];
+    fireEvent.click(confirmDeleteButton);
 
     await waitFor(() => {
       expect(mockDeleteTargetDate).toHaveBeenCalledWith('1', '2025-01-15');
@@ -269,10 +311,28 @@ describe('TargetDatesPage', () => {
     expect(targetRow).toBeTruthy();
     fireEvent.click(targetRow!);
 
-    const cancelButton = screen.getByRole('button', { name: 'キャンセル' });
-    fireEvent.click(cancelButton);
+    // Wait for ReservationStatusModal
+    await waitFor(() => {
+      expect(screen.getByText('予約状況の更新')).toBeInTheDocument();
+    });
 
+    // Click delete to show confirmation
+    const deleteButton = screen.getByRole('button', { name: '削除' });
+    fireEvent.click(deleteButton);
+
+    // Wait for delete confirmation
+    await waitFor(() => {
+      expect(screen.getByText('削除確認')).toBeInTheDocument();
+    });
+
+    // Click cancel in the confirmation dialog
+    const cancelButtons = screen.getAllByRole('button', { name: 'キャンセル' });
+    const confirmCancelButton = cancelButtons[cancelButtons.length - 1];
+    fireEvent.click(confirmCancelButton);
+
+    // Confirmation should be closed but modal should still be open
     expect(screen.queryByText('削除確認')).not.toBeInTheDocument();
+    expect(screen.getByText('予約状況の更新')).toBeInTheDocument();
   });
 
   it('should format dates correctly', async () => {
@@ -333,8 +393,24 @@ describe('TargetDatesPage', () => {
     expect(targetRow).toBeTruthy();
     fireEvent.click(targetRow!);
 
+    // Wait for ReservationStatusModal
+    await waitFor(() => {
+      expect(screen.getByText('予約状況の更新')).toBeInTheDocument();
+    });
+
+    // Click delete button
     const deleteButton = screen.getByRole('button', { name: '削除' });
     fireEvent.click(deleteButton);
+
+    // Wait for delete confirmation
+    await waitFor(() => {
+      expect(screen.getByText('削除確認')).toBeInTheDocument();
+    });
+
+    // Confirm deletion
+    const confirmButtons = screen.getAllByRole('button', { name: '削除' });
+    const confirmDeleteButton = confirmButtons[confirmButtons.length - 1];
+    fireEvent.click(confirmDeleteButton);
 
     await waitFor(() => {
       expect(screen.getByText('削除に失敗しました。しばらくしてから再度お試しください。')).toBeInTheDocument();

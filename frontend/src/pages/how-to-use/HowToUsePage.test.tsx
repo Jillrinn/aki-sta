@@ -27,7 +27,7 @@ describe('HowToUsePage', () => {
     expect(screen.getByText('「新規登録」から希望の日時を登録！')).toBeInTheDocument();
     
     expect(screen.getByText('自動でチェック')).toBeInTheDocument();
-    expect(screen.getByText('毎日3回（深夜1時、朝8時・夕方5時）')).toBeInTheDocument();
+    expect(screen.getByText('毎日3回（深夜1時、朝8時・夕方4時）')).toBeInTheDocument();
     expect(screen.getByText('最新の空き状況を更新')).toBeInTheDocument();
     
     expect(screen.getByText('結果を確認')).toBeInTheDocument();
