@@ -902,7 +902,7 @@ describe('AvailabilityPage', () => {
       });
     });
 
-    it('triggers scraping when clicking on empty date', async () => {
+    it('triggers scraping when clicking on empty date with confirmation', async () => {
       // Setup mocks
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue({});
       (scraperApi.triggerScrapingByDate as jest.Mock).mockResolvedValue({
@@ -929,9 +929,22 @@ describe('AvailabilityPage', () => {
         screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/)
       );
 
-      // クリックする
+      // クリックして確認モーダルを表示
       await act(async () => {
         fireEvent.click(clickableText);
+      });
+
+      // 確認モーダルが表示されることを確認
+      await waitFor(() => {
+        expect(screen.getByText(/2025-09-20の空き状況を取得しますか？/)).toBeInTheDocument();
+        expect(screen.getByText('処理について')).toBeInTheDocument();
+        expect(screen.getByText('実行する')).toBeInTheDocument();
+      });
+
+      // 実行ボタンをクリック
+      const confirmButton = screen.getByRole('button', { name: '実行する' });
+      await act(async () => {
+        fireEvent.click(confirmButton);
       });
 
       // API呼び出しを確認
@@ -943,7 +956,7 @@ describe('AvailabilityPage', () => {
       });
     });
 
-    it('shows error modal when scraping fails', async () => {
+    it('shows error modal when scraping fails after confirmation', async () => {
       // Setup mocks
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue({});
       (scraperApi.triggerScrapingByDate as jest.Mock).mockResolvedValue({
@@ -970,14 +983,77 @@ describe('AvailabilityPage', () => {
         screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/)
       );
 
-      // クリックする
+      // クリックして確認モーダルを表示
       await act(async () => {
         fireEvent.click(clickableText);
+      });
+
+      // 確認モーダルが表示されることを確認
+      await waitFor(() => {
+        expect(screen.getByText(/2025-09-20の空き状況を取得しますか？/)).toBeInTheDocument();
+      });
+
+      // 実行ボタンをクリック
+      const confirmButton = screen.getByRole('button', { name: '実行する' });
+      await act(async () => {
+        fireEvent.click(confirmButton);
       });
 
       // エラーメッセージが表示されることを確認
       await waitFor(() => {
         expect(screen.getByText(/現在スクレイピング処理が実行中です/)).toBeInTheDocument();
+      });
+    });
+
+    it('cancels scraping when clicking cancel in confirmation modal', async () => {
+      // Setup mocks
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue({});
+      (scraperApi.triggerScrapingByDate as jest.Mock).mockResolvedValue({
+        success: true,
+        message: '2025-09-20の空き状況取得を開始しました'
+      });
+
+      // useTargetDatesモジュールをモック
+      const useTargetDatesModule = require('../../hooks/useTargetDates');
+      useTargetDatesModule.useTargetDates = jest.fn().mockReturnValue({
+        data: mockTargetDatesWithEmptyDate,
+        loading: false,
+        error: null,
+        refetch: jest.fn(),
+        deleteTargetDate: jest.fn()
+      });
+      
+      await act(async () => {
+        render(<AvailabilityPage />);
+      });
+
+      // クリック可能なテキストを取得
+      const clickableText = await waitFor(() => 
+        screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/)
+      );
+
+      // クリックして確認モーダルを表示
+      await act(async () => {
+        fireEvent.click(clickableText);
+      });
+
+      // 確認モーダルが表示されることを確認
+      await waitFor(() => {
+        expect(screen.getByText(/2025-09-20の空き状況を取得しますか？/)).toBeInTheDocument();
+      });
+
+      // キャンセルボタンをクリック
+      const cancelButton = screen.getByRole('button', { name: 'キャンセル' });
+      await act(async () => {
+        fireEvent.click(cancelButton);
+      });
+
+      // API呼び出しがされていないことを確認
+      expect(scraperApi.triggerScrapingByDate).not.toHaveBeenCalled();
+      
+      // 確認モーダルが閉じられたことを確認
+      await waitFor(() => {
+        expect(screen.queryByText(/2025-09-20の空き状況を取得しますか？/)).not.toBeInTheDocument();
       });
     });
   });

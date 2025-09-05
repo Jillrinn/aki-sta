@@ -17,6 +17,7 @@ import PageFooter from './components/PageFooter';
 import Copyright from '../../components/common/Copyright';
 import CheckingModal from '../../components/common/modals/CheckingModal';
 import ScrapeResultModal from '../../components/common/modals/ScrapeResultModal';
+import ConfirmationModal from '../../components/common/modals/ConfirmationModal';
 
 const AvailabilityPage: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
@@ -27,6 +28,10 @@ const AvailabilityPage: React.FC = () => {
   const [isScrapingForDate, setIsScrapingForDate] = useState<string | null>(null);
   const [showCheckingModal, setShowCheckingModal] = useState(false);
   const [scrapeResult, setScrapeResult] = useState<{ success: boolean; message: string } | null>(null);
+  
+  // 確認モーダル関連の状態
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [pendingDate, setPendingDate] = useState<string | null>(null);
 
   // 日付とラベル、予約状況、メモのマッピングを作成
   const targetDateMap = useMemo(() => {
@@ -60,14 +65,23 @@ const AvailabilityPage: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 日付指定スクレイピングを実行
-  const handleScrapeDateClick = async (date: string) => {
-    setIsScrapingForDate(date);
+  // 確認モーダルを表示
+  const handleScrapeDateClick = (date: string) => {
+    setPendingDate(date);
+    setShowConfirmationModal(true);
+  };
+
+  // 確認後、実際にスクレイピングを実行
+  const handleConfirmScraping = async () => {
+    if (!pendingDate) return;
+    
+    setShowConfirmationModal(false);
+    setIsScrapingForDate(pendingDate);
     setShowCheckingModal(true);
     setScrapeResult(null);
 
     try {
-      const response = await scraperApi.triggerScrapingByDate(date);
+      const response = await scraperApi.triggerScrapingByDate(pendingDate);
       
       if (response.success) {
         setScrapeResult({
@@ -91,7 +105,14 @@ const AvailabilityPage: React.FC = () => {
       });
     } finally {
       setShowCheckingModal(false);
+      setPendingDate(null);
     }
+  };
+
+  // 確認モーダルをキャンセル
+  const handleCancelScraping = () => {
+    setShowConfirmationModal(false);
+    setPendingDate(null);
   };
 
   return (
@@ -248,6 +269,15 @@ const AvailabilityPage: React.FC = () => {
       <Copyright />
       
       {/* モーダル */}
+      {showConfirmationModal && (
+        <ConfirmationModal
+          isOpen={showConfirmationModal}
+          onConfirm={handleConfirmScraping}
+          onCancel={handleCancelScraping}
+          date={pendingDate || undefined}
+        />
+      )}
+      
       {showCheckingModal && (
         <CheckingModal 
           isOpen={showCheckingModal}

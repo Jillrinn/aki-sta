@@ -5,6 +5,7 @@ interface ConfirmationModalProps {
   isOpen: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  date?: string;
 }
 
 const customStyles: Modal.Styles = {
@@ -31,7 +32,8 @@ const customStyles: Modal.Styles = {
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ 
   isOpen, 
   onConfirm, 
-  onCancel 
+  onCancel,
+  date 
 }) => {
   return (
     <Modal
@@ -44,7 +46,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       <div>
         <div className="mb-6">
           <h3 className="text-xl font-bold text-gray-900 mb-2">
-            空き状況の取得を開始しますか？
+            {date ? `${date}の空き状況を取得しますか？` : '空き状況の取得を開始しますか？'}
           </h3>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start">
