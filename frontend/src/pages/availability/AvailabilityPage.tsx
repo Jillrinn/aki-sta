@@ -4,6 +4,7 @@ import { useAvailabilityData } from '../../hooks/useAvailabilityData';
 import { useTargetDates } from '../../hooks/useTargetDates';
 import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../constants/availability';
 import { sortGroupedFacilities } from '../../utils/sortingUtils';
+import { scraperApi } from '../../services/api';
 import {
   CommonLoadingState,
   CommonErrorState,
@@ -14,11 +15,18 @@ import CollapsibleCategorySection from './components/CollapsibleCategorySection'
 import PageHeader from './components/PageHeader';
 import PageFooter from './components/PageFooter';
 import Copyright from '../../components/common/Copyright';
+import CheckingModal from '../../components/common/modals/CheckingModal';
+import ScrapeResultModal from '../../components/common/modals/ScrapeResultModal';
 
 const AvailabilityPage: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
   const { data: targetDates } = useTargetDates();
   const [isMobile, setIsMobile] = useState(false);
+  
+  // スクレイピング実行関連の状態
+  const [isScrapingForDate, setIsScrapingForDate] = useState<string | null>(null);
+  const [showCheckingModal, setShowCheckingModal] = useState(false);
+  const [scrapeResult, setScrapeResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // 日付とラベル、予約状況、メモのマッピングを作成
   const targetDateMap = useMemo(() => {
@@ -51,6 +59,40 @@ const AvailabilityPage: React.FC = () => {
 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // 日付指定スクレイピングを実行
+  const handleScrapeDateClick = async (date: string) => {
+    setIsScrapingForDate(date);
+    setShowCheckingModal(true);
+    setScrapeResult(null);
+
+    try {
+      const response = await scraperApi.triggerScrapingByDate(date);
+      
+      if (response.success) {
+        setScrapeResult({
+          success: true,
+          message: response.message
+        });
+        // 成功したら5秒後にデータを再取得
+        setTimeout(() => {
+          refetch();
+        }, 5000);
+      } else {
+        setScrapeResult({
+          success: false,
+          message: response.message
+        });
+      }
+    } catch (error) {
+      setScrapeResult({
+        success: false,
+        message: 'スクレイピングの実行中にエラーが発生しました'
+      });
+    } finally {
+      setShowCheckingModal(false);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-5 font-sans">
@@ -104,7 +146,12 @@ const AvailabilityPage: React.FC = () => {
                     )}
                   </>
                 ) : (
-                  <p className="text-gray-600 text-lg">空き状況はまだ取得されていません。</p>
+                  <button
+                    onClick={() => handleScrapeDateClick(date)}
+                    className="text-gray-600 text-lg hover:text-blue-600 hover:underline transition-colors duration-200 cursor-pointer"
+                  >
+                    空き状況はまだ取得されていません。（クリックで取得）
+                  </button>
                 )}
               </div>
             ) : isMobile ? (
@@ -199,6 +246,24 @@ const AvailabilityPage: React.FC = () => {
         disabled={loading}
       />
       <Copyright />
+      
+      {/* モーダル */}
+      {showCheckingModal && (
+        <CheckingModal 
+          isOpen={showCheckingModal}
+          onClose={() => setShowCheckingModal(false)}
+          taskDescription={`${isScrapingForDate}の空き状況を取得中...`}
+        />
+      )}
+      
+      {scrapeResult && (
+        <ScrapeResultModal
+          isOpen={!!scrapeResult}
+          onClose={() => setScrapeResult(null)}
+          success={scrapeResult.success}
+          message={scrapeResult.message}
+        />
+      )}
     </div>
   );
 };

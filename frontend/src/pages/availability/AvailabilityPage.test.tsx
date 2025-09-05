@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AvailabilityPage from './AvailabilityPage';
-import { availabilityApi } from '../../services/api';
+import { availabilityApi, scraperApi } from '../../services/api';
 
 jest.mock('../../services/api');
 
@@ -859,6 +859,126 @@ describe('AvailabilityPage', () => {
 
       expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
       removeEventListenerSpy.mockRestore();
+    });
+  });
+
+  describe('Date-specific scraping', () => {
+    const mockTargetDatesWithEmptyDate = [
+      { id: '1', date: '2025-09-20', label: '練習日', isbooked: false }
+    ];
+    
+    beforeEach(() => {
+      jest.clearAllMocks();
+      // Reset window size to desktop by default
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1024
+      });
+    });
+
+    it('shows clickable text when no data is available for a date', async () => {
+      // 空のデータでモック
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue({});
+
+      // useTargetDatesモジュールをモック
+      const useTargetDatesModule = require('../../hooks/useTargetDates');
+      useTargetDatesModule.useTargetDates = jest.fn().mockReturnValue({
+        data: mockTargetDatesWithEmptyDate,
+        loading: false,
+        error: null,
+        refetch: jest.fn(),
+        deleteTargetDate: jest.fn()
+      });
+      
+      await act(async () => {
+        render(<AvailabilityPage />);
+      });
+
+      await waitFor(() => {
+        const clickableText = screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/);
+        expect(clickableText).toBeInTheDocument();
+        expect(clickableText.tagName).toBe('BUTTON');
+      });
+    });
+
+    it('triggers scraping when clicking on empty date', async () => {
+      // Setup mocks
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue({});
+      (scraperApi.triggerScrapingByDate as jest.Mock).mockResolvedValue({
+        success: true,
+        message: '2025-09-20の空き状況取得を開始しました'
+      });
+
+      // useTargetDatesモジュールをモック
+      const useTargetDatesModule = require('../../hooks/useTargetDates');
+      useTargetDatesModule.useTargetDates = jest.fn().mockReturnValue({
+        data: mockTargetDatesWithEmptyDate,
+        loading: false,
+        error: null,
+        refetch: jest.fn(),
+        deleteTargetDate: jest.fn()
+      });
+      
+      await act(async () => {
+        render(<AvailabilityPage />);
+      });
+
+      // クリック可能なテキストを取得
+      const clickableText = await waitFor(() => 
+        screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/)
+      );
+
+      // クリックする
+      await act(async () => {
+        fireEvent.click(clickableText);
+      });
+
+      // API呼び出しを確認
+      expect(scraperApi.triggerScrapingByDate).toHaveBeenCalledWith('2025-09-20');
+      
+      // 結果モーダルが表示されることを確認
+      await waitFor(() => {
+        expect(screen.getByText(/2025-09-20の空き状況取得を開始しました/)).toBeInTheDocument();
+      });
+    });
+
+    it('shows error modal when scraping fails', async () => {
+      // Setup mocks
+      (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue({});
+      (scraperApi.triggerScrapingByDate as jest.Mock).mockResolvedValue({
+        success: false,
+        message: '現在スクレイピング処理が実行中です'
+      });
+
+      // useTargetDatesモジュールをモック
+      const useTargetDatesModule = require('../../hooks/useTargetDates');
+      useTargetDatesModule.useTargetDates = jest.fn().mockReturnValue({
+        data: mockTargetDatesWithEmptyDate,
+        loading: false,
+        error: null,
+        refetch: jest.fn(),
+        deleteTargetDate: jest.fn()
+      });
+      
+      await act(async () => {
+        render(<AvailabilityPage />);
+      });
+
+      // クリック可能なテキストを取得
+      const clickableText = await waitFor(() => 
+        screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/)
+      );
+
+      // クリックする
+      await act(async () => {
+        fireEvent.click(clickableText);
+      });
+
+      // エラーメッセージが表示されることを確認
+      await waitFor(() => {
+        expect(screen.getByText(/現在スクレイピング処理が実行中です/)).toBeInTheDocument();
+      });
     });
   });
 });
