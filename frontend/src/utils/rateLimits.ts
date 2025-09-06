@@ -18,6 +18,13 @@ export function isActuallyRunning(record: RateLimitResponse | null): boolean {
 
   try {
     const updatedAt = new Date(record.updatedAt);
+    
+    // Invalid Dateチェック
+    if (isNaN(updatedAt.getTime())) {
+      console.error('Failed to parse updatedAt:', new Error('Invalid date format'));
+      return true;
+    }
+    
     const currentTime = new Date();
     
     // 30分経過していなければtrue
