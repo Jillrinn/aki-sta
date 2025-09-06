@@ -74,6 +74,7 @@ const HowToUsePage: React.FC = () => {
             <div className="space-y-1">
               <p className="text-sm sm:text-base text-gray-700">・あんさんぶるStudio</p>
               <p className="text-sm sm:text-base text-gray-700">・目黒区民センター</p>
+              <p className="text-sm sm:text-base text-gray-700">・渋谷区民センター（大和田のみ）</p>
             </div>
           </div>
 
