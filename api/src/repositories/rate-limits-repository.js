@@ -6,6 +6,33 @@ class RateLimitsRepository {
     this.container = cosmosClient.getContainer('rate_limits');
   }
 
+  isActuallyRunning(record) {
+    // statusがrunningでない場合はfalse
+    if (record.status !== 'running') {
+      return false;
+    }
+
+    // updatedAtが存在しない場合は安全側に倒してtrue
+    if (!record.updatedAt) {
+      return true;
+    }
+
+    try {
+      const updatedAt = new Date(record.updatedAt);
+      const currentTime = new Date();
+      
+      // 30分経過していなければtrue
+      const timeDiffMs = currentTime - updatedAt;
+      const thirtyMinutesMs = 30 * 60 * 1000;
+      
+      return timeDiffMs < thirtyMinutesMs;
+    } catch (error) {
+      // パースエラーの場合は安全側に倒してtrue
+      console.error('Failed to parse updatedAt:', error);
+      return true;
+    }
+  }
+
   async getTodayRecord() {
     const today = new Date().toISOString().split('T')[0];
     
@@ -30,7 +57,7 @@ class RateLimitsRepository {
 
     if (existingRecord) {
       // 既存レコードがある場合
-      if (existingRecord.status === 'pending' || existingRecord.status === 'running') {
+      if (existingRecord.status === 'pending' || this.isActuallyRunning(existingRecord)) {
         // すでに実行中の場合はそのまま返す
         return {
           isAlreadyRunning: true,

@@ -925,9 +925,7 @@ describe('AvailabilityPage', () => {
       });
 
       // クリック可能なテキストを取得
-      const clickableText = await waitFor(() => 
-        screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/)
-      );
+      const clickableText = await screen.findByText(/空き状況はまだ取得されていません。（クリックで取得）/);
 
       // クリックして確認モーダルを表示
       await act(async () => {
@@ -979,9 +977,7 @@ describe('AvailabilityPage', () => {
       });
 
       // クリック可能なテキストを取得
-      const clickableText = await waitFor(() => 
-        screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/)
-      );
+      const clickableText = await screen.findByText(/空き状況はまだ取得されていません。（クリックで取得）/);
 
       // クリックして確認モーダルを表示
       await act(async () => {
@@ -1028,9 +1024,7 @@ describe('AvailabilityPage', () => {
       });
 
       // クリック可能なテキストを取得
-      const clickableText = await waitFor(() => 
-        screen.getByText(/空き状況はまだ取得されていません。（クリックで取得）/)
-      );
+      const clickableText = await screen.findByText(/空き状況はまだ取得されていません。（クリックで取得）/);
 
       // クリックして確認モーダルを表示
       await act(async () => {

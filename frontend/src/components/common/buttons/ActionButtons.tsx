@@ -4,6 +4,7 @@ import ScrapeResultModal from '../modals/ScrapeResultModal';
 import ConfirmationModal from '../modals/ConfirmationModal';
 import RateLimitWarningModal from '../modals/RateLimitWarningModal';
 import CheckingModal from '../modals/CheckingModal';
+import { isActuallyRunning } from '../../../utils/rateLimits';
 
 const ActionButtons: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -23,7 +24,7 @@ const ActionButtons: React.FC = () => {
       
       setIsCheckingModalOpen(false);
       
-      if (rateLimitRecord && rateLimitRecord.status === 'running') {
+      if (isActuallyRunning(rateLimitRecord)) {
         setIsRateLimitWarningOpen(true);
       } else {
         setIsConfirmModalOpen(true);

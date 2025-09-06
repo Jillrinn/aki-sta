@@ -3,10 +3,13 @@
 React + Ant Design SPAサイト対応
 """
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Literal
 from playwright.sync_api import Page, Locator, sync_playwright
 from .base import BaseScraper
 from ..types.time_slots import TimeSlots, validate_time_slots
+
+# フロントエンドの定義に合わせた型定義
+StatusValue = Literal['available', 'booked', 'booked_1', 'booked_2', 'lottery', 'unknown']
 
 
 class ShibuyaScraper(BaseScraper):
@@ -183,9 +186,7 @@ class ShibuyaScraper(BaseScraper):
                         if i < 5:
                             self.log_info(f"Dropdown option {i}: '{text_stripped}'")
                     
-                    # 「器楽」を探す、見つからない場合は最初のオプション（100010に相当）を選択
-                    # ただし、実際のドロップダウンでは「会議・会合・研修」が最初なので、
-                    # パターンを変更する必要がある
+                    # まず表示されているオプションから「器楽」を探す
                     for i, text in enumerate(all_options_text):
                         if "器楽" in text:
                             target_index = i
@@ -193,12 +194,31 @@ class ShibuyaScraper(BaseScraper):
                             break
                     
                     # 「器楽」が見つからない場合、「演奏会・発表会」を選択（音楽練習に適している）
+                    # 注：11番目のオプションに「器楽」があるが、タイムアウトの問題で現実的には選択困難
                     if target_index < 0:
+                        self.log_info("'器楽' not in visible options, looking for '演奏会・発表会'...")
                         for i, text in enumerate(all_options_text):
                             if "演奏会" in text or "発表会" in text:
                                 target_index = i
                                 self.log_info(f"Found alternative music option '演奏会・発表会' at index {target_index}")
                                 break
+                    
+                    # 器楽が11番目にもない場合、「演奏会・発表会」を選択（音楽練習に適している）
+                    if target_index == -1:  # -2の場合は器楽が選択済み
+                        # ドロップダウンを再度開く
+                        purpose_select.click()
+                        page.wait_for_timeout(1000)
+                        
+                        # 再度オプションを取得
+                        dropdown = page.locator(".ant-select-dropdown:not(.ant-select-dropdown-hidden)")
+                        if dropdown.count() > 0:
+                            options = dropdown.locator(".ant-select-item-option").all()
+                            for i, opt in enumerate(options):
+                                text = opt.text_content()
+                                if "演奏会" in text or "発表会" in text:
+                                    target_index = i
+                                    self.log_info(f"Found alternative music option '演奏会・発表会' at index {target_index}")
+                                    break
                     
                     # それでも見つからない場合は「楽屋」を探す
                     if target_index < 0:
@@ -209,7 +229,7 @@ class ShibuyaScraper(BaseScraper):
                                 break
                     
                     # それでも見つからない場合は最初のオプションを選択
-                    if target_index < 0:
+                    if target_index < 0 and len(all_options_text) > 0:
                         target_index = 0
                         self.log_warning(f"Music option not found, using first option: '{all_options_text[0]}')")
                     
@@ -225,8 +245,11 @@ class ShibuyaScraper(BaseScraper):
                         
                         self.log_info(f"Successfully selected option at index {target_index}")
                         option_found = True
+                    elif target_index == -2:
+                        # 器楽が11番目で選択済み
+                        option_found = True
                     else:
-                        self.log_error("Target option not found in dropdown (looking for '器楽' or '100010')")
+                        self.log_error("Target option not found in dropdown (looking for '器楽')")
                 else:
                     self.log_error("Dropdown not visible")
             except Exception as e:
@@ -805,16 +828,16 @@ class ShibuyaScraper(BaseScraper):
                     # 日付を選択
                     if not self.navigate_to_date(page, target_date):
                         self.log_warning(f"Date {target_date.day} is not available")
-                        # 丸がない日は予約不可
+                        # 丸がない日は予約済み（bookedで統一）
                         return [{
                             "centerName": self.get_center_name(),
                             "facilityName": self.studios[0],
                             "roomName": self.get_room_name(self.studios[0]),
                             "date": date,
                             "timeSlots": {
-                                "morning": "unavailable",
-                                "afternoon": "unavailable",
-                                "evening": "unavailable"
+                                "morning": "booked",
+                                "afternoon": "booked",
+                                "evening": "booked"
                             },
                             "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
                         }]

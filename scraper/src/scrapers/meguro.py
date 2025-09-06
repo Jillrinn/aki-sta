@@ -1286,13 +1286,13 @@ class MeguroScraper(BaseScraper):
                 if facility_name not in results:
                     results[facility_name] = {}
                 
-                # 休館の部屋は直接unavailableとして処理
+                # 休館の部屋は直接bookedとして処理
                 if room_info.get('is_closed'):
-                    self.log_debug("  Room is closed (休館) - setting all slots to unavailable")
+                    self.log_debug("  Room is closed (休館) - setting all slots to booked")
                     results[facility_name][room_name] = {
-                        "morning": "unavailable",
-                        "afternoon": "unavailable",
-                        "evening": "unavailable"
+                        "morning": "booked",
+                        "afternoon": "booked",
+                        "evening": "booked"
                     }
                     continue
                 

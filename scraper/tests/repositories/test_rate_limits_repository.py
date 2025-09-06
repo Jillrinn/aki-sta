@@ -3,7 +3,7 @@ rate_limits_repositoryのテスト
 """
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import sys
 import os
 
@@ -244,3 +244,106 @@ class TestRateLimitsRepository:
             
             with pytest.raises(ValueError, match="Record not found"):
                 repo.update_status('non-existent', '2025-01-09', 'completed')
+    
+    @patch('src.repositories.rate_limits_repository.CosmosClient')
+    def test_is_actually_running_with_running_status_within_30min(self, mock_cosmos_client):
+        """runningステータスで30分以内の場合のテスト"""
+        with patch.dict(os.environ, {
+            'COSMOS_ENDPOINT': 'https://test.documents.azure.com:443/',
+            'COSMOS_KEY': 'test-key'
+        }):
+            # モックの設定
+            mock_container = Mock()
+            mock_cosmos_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
+            
+            repo = RateLimitsRepository()
+            
+            # 現在時刻から10分前のupdatedAt
+            current_time = datetime.now(timezone.utc)
+            ten_minutes_ago = current_time - timedelta(minutes=10)
+            
+            record = {
+                'status': 'running',
+                'updatedAt': ten_minutes_ago.isoformat()
+            }
+            
+            # テスト実行
+            result = repo.is_actually_running(record)
+            
+            # 検証
+            assert result is True
+    
+    @patch('src.repositories.rate_limits_repository.CosmosClient')
+    def test_is_actually_running_with_running_status_after_30min(self, mock_cosmos_client):
+        """runningステータスで30分を超えた場合のテスト"""
+        with patch.dict(os.environ, {
+            'COSMOS_ENDPOINT': 'https://test.documents.azure.com:443/',
+            'COSMOS_KEY': 'test-key'
+        }):
+            # モックの設定
+            mock_container = Mock()
+            mock_cosmos_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
+            
+            repo = RateLimitsRepository()
+            
+            # 現在時刻から35分前のupdatedAt
+            current_time = datetime.now(timezone.utc)
+            thirty_five_minutes_ago = current_time - timedelta(minutes=35)
+            
+            record = {
+                'status': 'running',
+                'updatedAt': thirty_five_minutes_ago.isoformat()
+            }
+            
+            # テスト実行
+            result = repo.is_actually_running(record)
+            
+            # 検証
+            assert result is False
+    
+    @patch('src.repositories.rate_limits_repository.CosmosClient')
+    def test_is_actually_running_with_non_running_status(self, mock_cosmos_client):
+        """runningステータスでない場合のテスト"""
+        with patch.dict(os.environ, {
+            'COSMOS_ENDPOINT': 'https://test.documents.azure.com:443/',
+            'COSMOS_KEY': 'test-key'
+        }):
+            # モックの設定
+            mock_container = Mock()
+            mock_cosmos_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
+            
+            repo = RateLimitsRepository()
+            
+            record = {
+                'status': 'completed',
+                'updatedAt': datetime.now(timezone.utc).isoformat()
+            }
+            
+            # テスト実行
+            result = repo.is_actually_running(record)
+            
+            # 検証
+            assert result is False
+    
+    @patch('src.repositories.rate_limits_repository.CosmosClient')
+    def test_is_actually_running_without_updatedAt(self, mock_cosmos_client):
+        """updatedAtがない場合のテスト"""
+        with patch.dict(os.environ, {
+            'COSMOS_ENDPOINT': 'https://test.documents.azure.com:443/',
+            'COSMOS_KEY': 'test-key'
+        }):
+            # モックの設定
+            mock_container = Mock()
+            mock_cosmos_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
+            
+            repo = RateLimitsRepository()
+            
+            record = {
+                'status': 'running'
+            }
+            
+            # テスト実行
+            result = repo.is_actually_running(record)
+            
+            # 検証（安全側に倒してTrue）
+            assert result is True

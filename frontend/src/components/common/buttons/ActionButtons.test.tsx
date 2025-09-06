@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ActionButtons from './ActionButtons';
 import { scraperApi, rateLimitsApi } from '../../../services/api';
 
@@ -99,6 +99,7 @@ describe('ActionButtons', () => {
       count: 1,
       lastRequestedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
+      updatedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10分前
     });
 
     render(<ActionButtons />);
@@ -112,6 +113,30 @@ describe('ActionButtons', () => {
     });
     
     expect(screen.queryByTestId('confirmation-modal')).not.toBeInTheDocument();
+  });
+
+  test('does not show rate limit warning when status is running but over 30 minutes', async () => {
+    const today = new Date().toISOString().split('T')[0];
+    (rateLimitsApi.getRateLimitByDate as jest.Mock).mockResolvedValue({
+      id: `rate-limit-${today}`,
+      date: today,
+      status: 'running',
+      count: 1,
+      lastRequestedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(), // 35分前
+    });
+
+    render(<ActionButtons />);
+    
+    const fetchButton = screen.getByLabelText('今すぐ情報を取得');
+    fireEvent.click(fetchButton);
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+    });
+    
+    expect(screen.queryByTestId('rate-limit-warning-modal')).not.toBeInTheDocument();
   });
 
   test('triggers batch scraping when confirmed', async () => {

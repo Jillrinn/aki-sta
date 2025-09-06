@@ -2,7 +2,7 @@
 rate_limitsコンテナへのアクセス管理
 """
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Optional, Any
 from azure.cosmos import CosmosClient, exceptions
 from pathlib import Path
@@ -30,6 +30,43 @@ class RateLimitsRepository:
         self.client = CosmosClient(endpoint, key)
         self.database = self.client.get_database_client(database_name)
         self.container = self.database.get_container_client('rate_limits')
+    
+    def is_actually_running(self, record: Dict[str, Any]) -> bool:
+        """
+        レコードが実際に実行中かどうかを判定
+        
+        Args:
+            record: 判定対象のレコード
+        
+        Returns:
+            実行中の場合True、そうでない場合False
+        """
+        # statusがrunningでない場合はFalse
+        if record.get('status') != 'running':
+            return False
+        
+        # updatedAtが存在しない場合は安全側に倒してTrue
+        updated_at = record.get('updatedAt')
+        if not updated_at:
+            return True
+        
+        # ISO形式の文字列から datetime オブジェクトに変換
+        # 'Z'を'+00:00'に置換してPythonが理解できる形式にする
+        if updated_at.endswith('Z'):
+            updated_at = updated_at[:-1] + '+00:00'
+        
+        try:
+            updated_datetime = datetime.fromisoformat(updated_at)
+            # UTCタイムゾーンを持つ現在時刻を取得
+            current_datetime = datetime.now(updated_datetime.tzinfo)
+            
+            # 30分経過していなければTrue
+            time_diff = current_datetime - updated_datetime
+            return time_diff < timedelta(minutes=30)
+        except (ValueError, TypeError) as e:
+            # パースエラーの場合は安全側に倒してTrue
+            print(f"Failed to parse updatedAt: {e}")
+            return True
     
     def get_today_record(self) -> Optional[Dict[str, Any]]:
         """
@@ -79,7 +116,7 @@ class RateLimitsRepository:
             
             if existing_record:
                 # 既存レコードがある場合
-                if existing_record.get('status') == 'running':
+                if self.is_actually_running(existing_record):
                     # すでに実行中の場合はそのまま返す
                     return {
                         'is_already_running': True,

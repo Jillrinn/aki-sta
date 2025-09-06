@@ -231,4 +231,65 @@ describe('RateLimitsRepository', () => {
       ).rejects.toThrow(`Record not found: ${recordId}`);
     });
   });
+
+  describe('isActuallyRunning', () => {
+    it('should return true if status is running and updatedAt is within 30 minutes', async () => {
+      await rateLimitsRepository.initialize();
+      
+      const record = {
+        status: 'running',
+        updatedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString() // 10分前
+      };
+      
+      const result = rateLimitsRepository.isActuallyRunning(record);
+      expect(result).toBe(true);
+    });
+
+    it('should return false if status is running and updatedAt is over 30 minutes ago', async () => {
+      await rateLimitsRepository.initialize();
+      
+      const record = {
+        status: 'running',
+        updatedAt: new Date(Date.now() - 35 * 60 * 1000).toISOString() // 35分前
+      };
+      
+      const result = rateLimitsRepository.isActuallyRunning(record);
+      expect(result).toBe(false);
+    });
+
+    it('should return false if status is not running', async () => {
+      await rateLimitsRepository.initialize();
+      
+      const record = {
+        status: 'completed',
+        updatedAt: new Date().toISOString()
+      };
+      
+      const result = rateLimitsRepository.isActuallyRunning(record);
+      expect(result).toBe(false);
+    });
+
+    it('should return true if status is running but updatedAt is missing', async () => {
+      await rateLimitsRepository.initialize();
+      
+      const record = {
+        status: 'running'
+      };
+      
+      const result = rateLimitsRepository.isActuallyRunning(record);
+      expect(result).toBe(true);
+    });
+
+    it('should return true if updatedAt cannot be parsed', async () => {
+      await rateLimitsRepository.initialize();
+      
+      const record = {
+        status: 'running',
+        updatedAt: 'invalid-date'
+      };
+      
+      const result = rateLimitsRepository.isActuallyRunning(record);
+      expect(result).toBe(true);
+    });
+  });
 });
