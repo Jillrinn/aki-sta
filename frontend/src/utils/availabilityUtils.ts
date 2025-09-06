@@ -98,13 +98,13 @@ export const getCategoryStatus = (
     };
   }
   
-  // 全ての施設が「全て空きなし」または「希望時間は予約済み」の場合
+  // 全ての施設が「全て空きなし」または「希望時間は空きなし」の場合
   if (facilityStatuses.every(status => 
     status === 'all-booked' || status === 'preferred-booked'
   )) {
     return {
       status: 'preferred-booked',
-      message: '希望時間は予約済み',
+      message: '希望時間は空きなし',
       shouldExpand: false
     };
   }

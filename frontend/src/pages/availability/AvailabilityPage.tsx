@@ -151,25 +151,26 @@ const AvailabilityPage: React.FC = () => {
       {!loading && !error && sortedDates.length > 0 && (
         <div className={`${isRefreshing ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-300`}>
           {sortedDates.map((date, dateIndex) => (
-          <div key={date} className="mb-8">
-            <h2 
-              className="text-xl text-gray-700 mb-3 font-semibold"
-              data-testid={`date-header-${dateIndex}`}
-            >
-              {date}
-              {targetDateMap[date] && (
-                <>
-                  <span className="ml-2 text-lg text-gray-600">
-                    - {targetDateMap[date].label}
-                  </span>
-                  {targetDateMap[date].isbooked && (
-                    <span className="ml-3 inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
-                      予約済み
+          <div key={date}>
+            <div className="mb-6">
+              <h2 
+                className="text-xl text-gray-700 mb-3 font-semibold"
+                data-testid={`date-header-${dateIndex}`}
+              >
+                {date}
+                {targetDateMap[date] && (
+                  <>
+                    <span className="ml-2 text-lg text-gray-600">
+                      - {targetDateMap[date].label}
                     </span>
-                  )}
-                </>
-              )}
-            </h2>
+                    {targetDateMap[date].isbooked && (
+                      <span className="ml-3 inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
+                        予約済み
+                      </span>
+                    )}
+                  </>
+                )}
+              </h2>
             
             {!data || !data[date] ? (
               targetDateMap[date]?.isbooked ? (
@@ -287,6 +288,12 @@ const AvailabilityPage: React.FC = () => {
               </table>
             </div>
           )}
+            </div>
+            
+            {/* モバイル版で最後の日付でない場合に区切り線を追加 */}
+            {isMobile && dateIndex < sortedDates.length - 1 && (
+              <hr className="mt-2 mb-2 border-t-2 border-gray-300" />
+            )}
           </div>
           ))}
         </div>

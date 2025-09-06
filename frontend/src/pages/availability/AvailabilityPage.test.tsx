@@ -786,7 +786,7 @@ describe('AvailabilityPage', () => {
       
       // First facility (和) should show collapsed message (13-17 is booked)
       await waitFor(() => {
-        expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
+        expect(screen.getByText('希望時間は空きなし')).toBeInTheDocument();
       });
     });
 

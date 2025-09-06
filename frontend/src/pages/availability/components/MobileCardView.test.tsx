@@ -105,8 +105,8 @@ describe('MobileCardView', () => {
       />
     );
     
-    // Should show "希望時間は予約済み" since afternoon is booked
-    expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
+    // Should show "希望時間は空きなし" since afternoon is booked
+    expect(screen.getByText('希望時間は空きなし')).toBeInTheDocument();
     
     // Should not show time slots since it's collapsed
     expect(screen.queryByText('午前')).not.toBeInTheDocument();
@@ -322,7 +322,7 @@ describe('MobileCardView', () => {
     expect(screen.queryByText('全て不明')).not.toBeInTheDocument();
     // No status message should be shown for all unknown
     expect(screen.queryByText('全て空きなし')).not.toBeInTheDocument();
-    expect(screen.queryByText('希望時間は予約済み')).not.toBeInTheDocument();
+    expect(screen.queryByText('希望時間は空きなし')).not.toBeInTheDocument();
     expect(screen.queryByText('空きあり')).not.toBeInTheDocument();
   });
 
@@ -349,8 +349,8 @@ describe('MobileCardView', () => {
     // Should be collapsed even though there are available slots
     expect(screen.queryByText('午前')).not.toBeInTheDocument();
     
-    // Should show "希望時間は予約済み" message
-    expect(screen.getByText('希望時間は予約済み')).toBeInTheDocument();
+    // Should show "希望時間は空きなし" message
+    expect(screen.getByText('希望時間は空きなし')).toBeInTheDocument();
   });
 
   it('toggles expansion when header is clicked', () => {

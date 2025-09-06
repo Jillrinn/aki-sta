@@ -117,7 +117,7 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
               (afternoonBooked || afternoonPartiallyBooked) ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
             }`}>
               {allBooked ? '全て空きなし' : 
-               (afternoonBooked || afternoonPartiallyBooked) ? '希望時間は予約済み' : '空きあり'}
+               (afternoonBooked || afternoonPartiallyBooked) ? '希望時間は空きなし' : '空きあり'}
             </span>
           )}
         </div>
