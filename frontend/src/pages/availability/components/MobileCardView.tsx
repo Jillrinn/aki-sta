@@ -37,18 +37,26 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
     return 'bg-gradient-to-r from-primary-400 to-primary-700';
   };
 
-  // 初期状態：空きがある場合のみ展開（ただし13-17が予約済みの場合は折りたたむ）
-  const [isExpanded, setIsExpanded] = useState(hasAvailable && !afternoonBooked);
+  // 2つのフラグで展開状態を管理
+  const [isExpandedRoom, setIsExpandedRoom] = useState(hasAvailable && !afternoonBooked);
+  const [isExpandedCenterName, setIsExpandedCenterName] = useState(false);
 
   useEffect(() => {
-    setIsExpanded(hasAvailable && !afternoonBooked);
-  }, [hasAvailable, afternoonBooked]);
+    // ユーザーが手動操作していない場合のみ自動制御
+    if (!isExpandedCenterName) {
+      // 空きがある場合のみ展開（ただし13-17が予約済みの場合は折りたたむ）
+      setIsExpandedRoom(hasAvailable && !afternoonBooked);
+    }
+  }, [hasAvailable, afternoonBooked, isExpandedCenterName]);
 
   return (
     <div className="bg-white rounded-lg shadow-md mb-4 overflow-hidden border border-gray-200">
       <div 
         className={`${getHeaderColorClass()} text-white p-4 cursor-pointer`}
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          setIsExpandedRoom(!isExpandedRoom);
+          setIsExpandedCenterName(true);
+        }}
       >
         <div className="flex justify-between items-center">
           <div className="flex-1 mr-2">
@@ -57,11 +65,11 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
             </h3>
             <div className="text-sm opacity-90">{facility.roomName}</div>
           </div>
-          <span className="text-2xl flex-shrink-0">{isExpanded ? '−' : '＋'}</span>
+          <span className="text-2xl flex-shrink-0">{isExpandedRoom ? '−' : '＋'}</span>
         </div>
       </div>
       
-      {isExpanded && (
+      {isExpandedRoom && (
         <div className="p-4 space-y-3">
           {TIME_SLOTS.map((timeSlot) => {
             const status = facility.timeSlots[timeSlot];
@@ -99,7 +107,7 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
             <span className="mr-2">🕐</span>
             <span>{formatUpdateTime(facility.lastUpdated)} 更新</span>
           </div>
-          {!isExpanded && (
+          {!isExpandedRoom && (
             <span className={`font-medium px-2 py-1 rounded whitespace-nowrap text-xs ${
               allBooked ? 'bg-red-100 text-red-700' : 
               allUnknown ? 'bg-gray-100 text-gray-700' : 

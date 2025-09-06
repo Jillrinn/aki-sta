@@ -30,9 +30,10 @@ const CollapsibleCategorySection: React.FC<CollapsibleCategorySectionProps> = ({
   useEffect(() => {
     // ユーザーが手動操作していない場合のみ自動制御
     if (!userHasInteracted) {
-      setIsExpanded(categoryStatus.shouldExpand);
+      // デフォルトは畳んだ状態（falseで固定）
+      setIsExpanded(false);
     }
-  }, [categoryStatus.shouldExpand, userHasInteracted]);
+  }, [userHasInteracted]);
 
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
