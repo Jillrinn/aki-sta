@@ -237,7 +237,6 @@ describe('AvailabilityPage', () => {
       expect(screen.getByText('💡 使い方')).toBeInTheDocument();
       expect(screen.getByText('📅 練習日程一覧')).toBeInTheDocument();
       expect(screen.getByText('今すぐ情報を取得')).toBeInTheDocument();
-      expect(screen.getByText('更新')).toBeInTheDocument();
     });
     
     consoleErrorSpy.mockRestore();
@@ -328,7 +327,6 @@ describe('AvailabilityPage', () => {
       expect(screen.getByText('💡 使い方')).toBeInTheDocument();
       expect(screen.getByText('📅 練習日程一覧')).toBeInTheDocument();
       expect(screen.getByText('今すぐ情報を取得')).toBeInTheDocument();
-      expect(screen.getByText('更新')).toBeInTheDocument();
     });
   });
 

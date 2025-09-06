@@ -39,5 +39,6 @@ export const STATUS_LABELS: Record<StatusValue, string> = {
 
 export const BOOKING_URLS: Record<string, string> = {
   'あんさんぶるStudio': 'https://ensemble-studio.com/schedule/',
-  '目黒区民センター': 'https://resv.city.meguro.tokyo.jp/Web/Home/WgR_ModeSelect'
+  '目黒区民センター': 'https://resv.city.meguro.tokyo.jp/Web/Home/WgR_ModeSelect',
+  '渋谷区民センター': 'https://www.yoyaku.city.shibuya.tokyo.jp/'
 };

@@ -301,11 +301,7 @@ const AvailabilityPage: React.FC = () => {
       
       <LegendSection />
       
-      <PageFooter 
-        onRefresh={refetch}
-        isRefreshing={isRefreshing}
-        disabled={loading}
-      />
+      <PageFooter />
       <Copyright />
       
       {/* モーダル */}
