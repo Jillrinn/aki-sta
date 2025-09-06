@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.scrapers.ensemble_studio import EnsembleStudioScraper
 from src.scrapers.meguro import MeguroScraper
+from src.scrapers.shibuya import ShibuyaScraper
 from src.services.scrape_service import ScrapeService
 from src.services.target_date_service import TargetDateService
 
@@ -132,13 +133,14 @@ def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility
     """
     非同期でスクレイピングを実行するタスク
     別スレッドで実行される
+    複数日付の場合は各スクレイパーのscrape_multiple_datesメソッドを使用
     
     Args:
         dates: 日付リスト
         record_id: Rate limit record ID
         record_date: Rate limit record date
         use_rate_limits: Rate limits使用フラグ
-        facility: 施設名（'ensemble', 'meguro', or 'both'）
+        facility: 施設名（'ensemble', 'meguro', 'shibuya', or 'both'）
     """
     rate_limits_repo = None
     has_error = False
@@ -153,39 +155,86 @@ def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility
                 logger.warning(f"Rate limits repo unavailable in async task: {str(e)}")
                 use_rate_limits = False
         
-        # サービスを取得
-        _, scraping_service = get_services()
-        
-        # スクレイピング対象施設の決定
-        facilities_to_scrape = ['ensemble', 'meguro', 'shibuya'] if facility == 'both' else [facility]
-        
-        # 各施設と各日付に対してスクレイピングを実行
-        for current_facility in facilities_to_scrape:
-            for date in dates:
+        # 日付フォーマットの正規化
+        normalized_dates = []
+        for date in dates:
+            normalized_date = None
+            for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
                 try:
-                    # 日付フォーマット検証と正規化
-                    normalized_date = None
-                    for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
-                        try:
-                            parsed_date = datetime.strptime(date, fmt)
-                            normalized_date = parsed_date.strftime('%Y-%m-%d')
-                            break
-                        except ValueError:
-                            continue
-                    
-                    if normalized_date is None:
-                        raise ValueError(f"Invalid date format: {date}")
-                    
-                    logger.info(f"[Async] Scraping {current_facility} for date: {normalized_date}")
-                    result = scraping_service.scrape_facility(current_facility, normalized_date)
-                    
-                    if not result or result.get('status') != 'success':
+                    parsed_date = datetime.strptime(date, fmt)
+                    normalized_date = parsed_date.strftime('%Y-%m-%d')
+                    break
+                except ValueError:
+                    continue
+            
+            if normalized_date is None:
+                logger.error(f"Invalid date format: {date}")
+                has_error = True
+                continue
+            
+            normalized_dates.append(normalized_date)
+        
+        if not normalized_dates:
+            logger.error("[Async] No valid dates to process")
+            has_error = True
+        else:
+            # スクレイピング対象施設の決定
+            facilities_to_scrape = ['ensemble', 'meguro', 'shibuya'] if facility == 'both' else [facility]
+            
+            # スクレイパーマッピング
+            scrapers = {
+                'ensemble': EnsembleStudioScraper,
+                'meguro': MeguroScraper,
+                'shibuya': ShibuyaScraper
+            }
+            
+            # 各施設に対して複数日付を一括スクレイピング
+            for current_facility in facilities_to_scrape:
+                try:
+                    scraper_class = scrapers.get(current_facility)
+                    if not scraper_class:
+                        logger.error(f"[Async] Unknown facility: {current_facility}")
                         has_error = True
-                        logger.error(f"[Async] Failed to scrape {current_facility} for {normalized_date}")
+                        continue
+                    
+                    logger.info(f"[Async] Starting {current_facility} scraping for {len(normalized_dates)} dates")
+                    
+                    # 複数日付の場合はscrape_multiple_datesを使用
+                    if len(normalized_dates) > 1:
+                        scraper = scraper_class()
+                        result = scraper.scrape_multiple_dates(normalized_dates)
                         
+                        # 結果の評価
+                        if result and 'summary' in result:
+                            success_count = result['summary'].get('success', 0)
+                            failed_count = result['summary'].get('failed', 0)
+                            logger.info(f"[Async] {current_facility} completed: {success_count} success, {failed_count} failed")
+                            
+                            if failed_count > 0:
+                                has_error = True
+                                # 失敗した日付をログ出力
+                                if 'results' in result:
+                                    failed_dates = [d for d, r in result['results'].items() 
+                                                  if r.get('status') != 'success']
+                                    if failed_dates:
+                                        logger.error(f"[Async] {current_facility} failed dates: {failed_dates}")
+                        else:
+                            has_error = True
+                            logger.error(f"[Async] Failed to scrape {current_facility}")
+                    else:
+                        # 単一日付の場合は従来のscrape_and_saveを使用
+                        scraper = scraper_class()
+                        result = scraper.scrape_and_save(normalized_dates[0])
+                        
+                        if not result or result.get('status') != 'success':
+                            has_error = True
+                            logger.error(f"[Async] Failed to scrape {current_facility} for {normalized_dates[0]}")
+                        else:
+                            logger.info(f"[Async] {current_facility} completed successfully for {normalized_dates[0]}")
+                            
                 except Exception as e:
                     has_error = True
-                    logger.error(f"[Async] Error scraping {date}: {str(e)}")
+                    logger.error(f"[Async] Error scraping {current_facility}: {str(e)}")
                     logger.error(f"[Async] Traceback: {traceback.format_exc()}")
         
         # Rate limitsステータス更新
