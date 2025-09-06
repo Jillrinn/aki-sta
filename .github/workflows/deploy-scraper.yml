@@ -97,6 +97,9 @@ jobs:
         DEBUG=true
         PYTHONUNBUFFERED=1
         PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+        # Warmup設定（テスト環境では短い間隔）
+        WARMUP_ENABLED=true
+        WARMUP_INTERVAL_MINUTES=5
         EOF
     
     - name: Start Docker container
