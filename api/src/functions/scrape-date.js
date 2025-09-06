@@ -67,7 +67,7 @@ async function scrapeByDateHandler(request, context) {
         jsonBody: {
           success: true,
           message: `${date}の空き状況取得を開始しました`,
-          date: date
+          date
         }
       };
     } else if (scraperResponse.statusCode === 409) {
