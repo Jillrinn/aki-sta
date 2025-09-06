@@ -1,3 +1,6 @@
+// 環境変数を先に設定
+process.env.SCRAPER_API_URL = 'http://localhost:8000';
+
 const scrapeService = require('../../src/services/scrape-service');
 const targetDatesRepository = require('../../src/repositories/target-dates-repository');
 const https = require('https');
@@ -10,11 +13,12 @@ jest.mock('http');
 describe('scrape-service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.SCRAPER_API_URL = 'http://localhost:8000';
+    // scraperApiUrlを再設定（念のため）
+    scrapeService.scraperApiUrl = 'http://localhost:8000';
   });
 
   afterEach(() => {
-    delete process.env.SCRAPER_API_URL;
+    // テスト後もそのまま維持（他のテストに影響しないように）
   });
 
   describe('executeBatchScraping', () => {

@@ -15,10 +15,10 @@ def test_purpose_selection():
     print("=" * 60)
     
     with sync_playwright() as p:
-        # ブラウザを起動（ヘッドレスモードOFF）
+        # ブラウザを起動（ヘッドレスモード）
         browser = p.chromium.launch(
-            headless=False,  # 画面を表示
-            slow_mo=1000,    # 動作を遅くして観察しやすくする
+            headless=True,  # CI環境でも動作するようにヘッドレスモード
+            slow_mo=100,    # 動作を少し遅くする
         )
         
         context = browser.new_context(
@@ -196,9 +196,9 @@ def test_purpose_selection():
             page.screenshot(path=screenshot_path)
             print(f"   ✓ スクリーンショット保存: {screenshot_path}")
             
-            # 終了前に少し待機（観察用）
-            print("\n12. 観察のため10秒待機...")
-            time.sleep(10)
+            # 終了前に少し待機（CI環境用に短縮）
+            print("\n12. 待機中...")
+            time.sleep(1)
             
         except Exception as e:
             print(f"\n✗ エラーが発生しました: {e}")
