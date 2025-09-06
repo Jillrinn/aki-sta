@@ -157,7 +157,7 @@ def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility
         _, scraping_service = get_services()
         
         # スクレイピング対象施設の決定
-        facilities_to_scrape = ['ensemble', 'meguro'] if facility == 'both' else [facility]
+        facilities_to_scrape = ['ensemble', 'meguro', 'shibuya'] if facility == 'both' else [facility]
         
         # 各施設と各日付に対してスクレイピングを実行
         for current_facility in facilities_to_scrape:
@@ -297,6 +297,51 @@ def async_meguro_scraping_task(date, record_id, record_date, use_rate_limits):
             try:
                 rate_limits_repo.update_status(record_id, record_date, 'failed')
                 logger.info("[Async Meguro] Rate limit status updated to: failed")
+            except:
+                pass
+
+
+def async_shibuya_scraping_task(date, record_id, record_date, use_rate_limits):
+    """
+    渋谷区施設専用の非同期スクレイピングタスク
+    """
+    rate_limits_repo = None
+    
+    try:
+        # Rate limitsリポジトリの初期化
+        if use_rate_limits:
+            try:
+                from src.repositories.rate_limits_repository import RateLimitsRepository
+                rate_limits_repo = RateLimitsRepository()
+            except Exception as e:
+                logger.warning(f"Rate limits repo unavailable in async shibuya task: {str(e)}")
+                use_rate_limits = False
+        
+        logger.info(f"[Async Shibuya] Scraping date: {date}")
+        
+        # サービスを取得してスクレイピング実行
+        _, scraping_service = get_services()
+        result = scraping_service.scrape_facility('shibuya', date)
+        
+        # Rate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                final_status = 'completed' if result.get('status') == 'success' else 'failed'
+                rate_limits_repo.update_status(record_id, record_date, final_status)
+                logger.info(f"[Async Shibuya] Rate limit status updated to: {final_status}")
+            except Exception as e:
+                logger.error(f"[Async Shibuya] Failed to update rate limit status: {str(e)}")
+        
+        logger.info(f"[Async Shibuya] Scraping completed for {date}")
+        
+    except Exception as e:
+        logger.error(f"[Async Shibuya] Fatal error: {str(e)}")
+        
+        # エラー時のrate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                rate_limits_repo.update_status(record_id, record_date, 'failed')
+                logger.info("[Async Shibuya] Rate limit status updated to: failed")
             except:
                 pass
 
@@ -623,6 +668,113 @@ def scrape_meguro():
                 pass  # ステータス更新失敗は無視
         
         logger.error(f"Error in scrape_meguro endpoint: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@app.route('/scrape/shibuya', methods=['POST'])
+def scrape_shibuya():
+    """
+    渋谷区施設専用エンドポイント
+    
+    POST: 指定日付でスクレイピング
+    """
+    # Rate limits制御の初期化
+    use_rate_limits = False
+    record_id = None
+    record_date = None
+    rate_limits_repo = None
+    
+    try:
+        # 環境変数でRate Limitsが無効化されているかチェック
+        disable_rate_limits = os.environ.get('DISABLE_RATE_LIMITS', '').lower() == 'true'
+        
+        if disable_rate_limits:
+            logger.info("Rate limits are disabled by environment variable (shibuya)")
+            use_rate_limits = False
+        else:
+            # Rate limits制御を試みる
+            try:
+                from src.repositories.rate_limits_repository import RateLimitsRepository
+                rate_limits_repo = RateLimitsRepository()
+                rate_result = rate_limits_repo.create_or_update_record('running')
+                
+                if rate_result.get('is_already_running'):
+                    return jsonify({
+                        'success': False,
+                        'message': '空き状況取得は実行中の可能性があります'
+                    }), 409
+                
+                record_id = rate_result['record']['id']
+                record_date = rate_result['record']['date']
+                use_rate_limits = True
+                logger.info(f"Rate limit check passed for shibuya. Record ID: {record_id}")
+                
+            except Exception as e:
+                # Cosmos DB接続失敗時はrate_limits無効で続行
+                logger.warning(f"Rate limits unavailable for shibuya, continuing without rate limit control: {str(e)}")
+                use_rate_limits = False
+        
+        # リクエストから日付を取得
+        date = request.args.get('date')
+        if not date:
+            data = request.get_json() or {}
+            date = data.get('date')
+        
+        if not date:
+            return jsonify({
+                'status': 'error',
+                'message': 'Date is required. Use ?date=YYYY-MM-DD or JSON body {"date": "YYYY-MM-DD"}',
+                'timestamp': datetime.now().isoformat()
+            }), 400
+        
+        # 日付フォーマット検証
+        try:
+            parsed_date = datetime.strptime(date, '%Y-%m-%d')
+            if parsed_date.date() < datetime.now().date():
+                return jsonify({
+                    'status': 'error',
+                    'message': f'過去の日付は指定できません: {date}',
+                    'timestamp': datetime.now().isoformat()
+                }), 400
+        except ValueError:
+            return jsonify({
+                'status': 'error',
+                'message': f'Invalid date format: {date}. Use YYYY-MM-DD',
+                'timestamp': datetime.now().isoformat()
+            }), 400
+        
+        logger.info(f"Scraping shibuya with specified date: {date}")
+        
+        # スクレイピングタスクを別スレッドで実行（fire and forget）
+        scraping_thread = threading.Thread(
+            target=async_shibuya_scraping_task,
+            args=(date, record_id, record_date, use_rate_limits),
+            daemon=True
+        )
+        scraping_thread.start()
+        
+        logger.info(f"Shibuya scraping task started asynchronously for {date}")
+        
+        # 即座にシンプルなレスポンスを返す
+        return jsonify({
+            'success': True,
+            'message': '空き状況取得を開始しました'
+        }), 202
+            
+    except Exception as e:
+        # エラー時のrate limitsステータス更新
+        if use_rate_limits and record_id and rate_limits_repo:
+            try:
+                rate_limits_repo.update_status(record_id, record_date, 'failed')
+                logger.info("Rate limit status updated to: failed for shibuya (due to exception)")
+            except:
+                pass  # ステータス更新失敗は無視
+        
+        logger.error(f"Error in scrape_shibuya endpoint: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e),

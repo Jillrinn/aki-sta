@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Type
 from ..scrapers.base import BaseScraper
 from ..scrapers.ensemble_studio import EnsembleStudioScraper
 from ..scrapers.meguro import MeguroScraper
+from ..scrapers.shibuya import ShibuyaScraper
 from ..repositories.cosmos_repository import CosmosWriter
 from .target_date_service import TargetDateService
 
@@ -21,6 +22,9 @@ class ScrapeService:
         'meguro': MeguroScraper,
         '目黒区': MeguroScraper,
         '目黒': MeguroScraper,
+        'shibuya': ShibuyaScraper,
+        '渋谷区': ShibuyaScraper,
+        '渋谷': ShibuyaScraper,
     }
     
     def __init__(
@@ -108,7 +112,7 @@ class ScrapeService:
             all_results = {}
             
             # 重複を除いた施設リスト
-            unique_facilities = ['ensemble', 'meguro']
+            unique_facilities = ['ensemble', 'meguro', 'shibuya']
             
             for facility_key in unique_facilities:
                 scraper_class = self._get_scraper_class(facility_key)
@@ -285,5 +289,7 @@ class ScrapeService:
         """
         # 重複を除いた施設名リスト
         return list(set([
-            'ensemble'  # 現在はあんさんぶるStudioのみ
+            'ensemble',
+            'meguro',
+            'shibuya'
         ]))

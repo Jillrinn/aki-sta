@@ -602,5 +602,51 @@ class TestEnsembleEndpoint:
         assert '過去の日付' in data['message']
 
 
+class TestShibuyaEndpoint:
+    """渋谷区施設専用エンドポイントのテスト"""
+    
+    def test_post_shibuya_with_date(self, client):
+        """POSTリクエストで日付指定するテスト（非同期処理）"""
+        # get_services関数をモック化
+        with patch('src.entrypoints.flask_api.get_services') as mock_get_services:
+            # モックサービスを作成
+            mock_scrape_service = Mock()
+            mock_scrape_service.scrape_facility.return_value = {
+                'status': 'success',
+                'data': {'2025-11-15': [{'facilityName': 'shibuya', 'timeSlots': {}}]}
+            }
+            mock_get_services.return_value = (Mock(), mock_scrape_service)
+            
+            response = client.post('/scrape/shibuya?date=2025-11-15')
+            data = json.loads(response.data)
+            
+            # 非同期処理のため、即座に202を返す
+            assert response.status_code == 202
+            assert data['success'] == True
+            assert data['message'] == '空き状況取得を開始しました'
+    
+    def test_post_shibuya_without_date(self, client):
+        """POSTリクエストで日付なしエラーテスト"""
+        response = client.post('/scrape/shibuya', 
+                                content_type='application/json',
+                                data='{}')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 400
+        assert data['status'] == 'error'
+        assert 'Date is required' in data['message']
+    
+    def test_post_shibuya_with_past_date(self, client):
+        """POSTリクエストで過去日付エラーテスト"""
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        
+        response = client.post(f'/scrape/shibuya?date={yesterday}')
+        data = json.loads(response.data)
+        
+        assert response.status_code == 400
+        assert data['status'] == 'error'
+        assert '過去の日付' in data['message']
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

@@ -265,8 +265,10 @@ class TestScrapeService:
         facilities = service.get_available_facilities()
         
         assert 'ensemble' in facilities
-        # 現在はあんさんぶるStudioのみ
-        assert len(facilities) == 1
+        assert 'meguro' in facilities
+        assert 'shibuya' in facilities
+        # 現在は3つの施設に対応
+        assert len(facilities) == 3
 
 
 if __name__ == '__main__':
