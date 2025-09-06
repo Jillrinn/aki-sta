@@ -22,6 +22,7 @@ from src.scrapers.meguro import MeguroScraper
 from src.scrapers.shibuya import ShibuyaScraper
 from src.services.scrape_service import ScrapeService
 from src.services.target_date_service import TargetDateService
+from src.services.warmup_scheduler import get_scheduler
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -107,14 +108,17 @@ def warm_up():
                 'status': 'success',
                 'timestamp': timestamp,
                 'message': result['message'],
-                'items_found': result.get('items_found', 0)
+                'items_found': result.get('items_found', 0),
+                'scheduler_running': warmup_scheduler.running,
+                'scheduler_interval_minutes': warmup_scheduler.interval_seconds // 60
             })
         else:
             logger.error(f"Warm-up failed: {result['message']}")
             return jsonify({
                 'status': 'error',
                 'timestamp': timestamp,
-                'message': result['message']
+                'message': result['message'],
+                'scheduler_running': warmup_scheduler.running
             }), 500
             
     except Exception as e:
@@ -125,8 +129,23 @@ def warm_up():
         return jsonify({
             'status': 'error',
             'timestamp': timestamp,
-            'message': error_message
+            'message': error_message,
+            'scheduler_running': warmup_scheduler.running if 'warmup_scheduler' in globals() else False
         }), 500
+
+
+@app.route('/warm-up/status')
+def warmup_status():
+    """
+    Check the status of the warmup scheduler
+    """
+    return jsonify({
+        'status': 'success',
+        'scheduler_enabled': warmup_scheduler.enabled,
+        'scheduler_running': warmup_scheduler.running,
+        'interval_minutes': warmup_scheduler.interval_seconds // 60,
+        'timestamp': datetime.now().isoformat()
+    })
 
 
 def async_scraping_task(dates, record_id, record_date, use_rate_limits, facility='both'):
@@ -850,6 +869,12 @@ def internal_error(error):
         'message': 'Internal server error',
         'timestamp': datetime.now().isoformat()
     }), 500
+
+
+# Start warmup scheduler when the app starts
+warmup_scheduler = get_scheduler()
+warmup_scheduler.start()
+logger.info("Warmup scheduler initialized and started")
 
 
 if __name__ == '__main__':
