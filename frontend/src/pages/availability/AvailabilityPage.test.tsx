@@ -90,6 +90,10 @@ describe('AvailabilityPage', () => {
     await waitFor(() => {
       expect(screen.getByText('空きスタサーチくん')).toBeInTheDocument();
     });
+    
+    // カテゴリーセクションを展開
+    const categoryButtons = screen.getAllByText(/【.*】/);
+    categoryButtons.forEach(button => fireEvent.click(button));
 
     // 各日付が表示されていることを確認
     expect(screen.getByText(/2025-11-15/)).toBeInTheDocument();
@@ -527,9 +531,15 @@ describe('AvailabilityPage', () => {
         expect(tables).toHaveLength(0);
       });
 
-      // Check that mobile card elements are rendered
-      // Facility name should be visible
-      expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
+      // モバイルビューでカテゴリーセクションを展開
+      const mobileCategory = screen.getByText('Test Center');
+      fireEvent.click(mobileCategory);
+      
+      await waitFor(() => {
+        // Check that mobile card elements are rendered
+        // Facility name should be visible
+        expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
+      });
     });
 
     it('renders desktop table view when screen width is 640px or more', async () => {
@@ -620,6 +630,19 @@ describe('AvailabilityPage', () => {
       // Should now show mobile cards
       await waitFor(() => {
         expect(screen.queryAllByRole('table')).toHaveLength(0);
+      });
+      
+      // モバイルビューでカテゴリーセクションを展開
+      const mobileCategoryButton = screen.getByText('Test Center');
+      fireEvent.click(mobileCategoryButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('テスト施設')).toBeInTheDocument();
+      });
+      
+      // カードを展開して時間帯を表示
+      // モバイルビューでは、afternoonがavailableなので自動的に展開される
+      await waitFor(() => {
         expect(screen.getByText('午前')).toBeInTheDocument();
       });
     });
@@ -655,6 +678,19 @@ describe('AvailabilityPage', () => {
       // Initially should show mobile cards
       await waitFor(() => {
         expect(screen.queryAllByRole('table')).toHaveLength(0);
+      });
+      
+      // モバイルビューでカテゴリーセクションを展開
+      const mobileCategoryButton = screen.getByText('Test Center');
+      fireEvent.click(mobileCategoryButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('テスト施設')).toBeInTheDocument();
+      });
+      
+      // カードを展開して時間帯を表示
+      // モバイルビューでは、afternoonがavailableなので自動的に展開される
+      await waitFor(() => {
         expect(screen.getByText('午前')).toBeInTheDocument();
       });
 
@@ -671,6 +707,17 @@ describe('AvailabilityPage', () => {
       // Should now show table
       await waitFor(() => {
         expect(screen.getAllByRole('table')).toHaveLength(1);
+      });
+      
+      // デスクトップビューでカテゴリーセクションを展開
+      const categoryRow = screen.getByText('【Test Center】').closest('tr');
+      if (categoryRow) {
+        fireEvent.click(categoryRow);
+      }
+      
+      await waitFor(() => {
+        // Facility should be visible after expanding
+        expect(screen.getByText('テスト施設')).toBeInTheDocument();
         // Time slot headers should be visible in desktop table
         expect(screen.getByText('午前')).toBeInTheDocument();
       });
@@ -713,15 +760,30 @@ describe('AvailabilityPage', () => {
         render(<AvailabilityPage />);
       });
 
+      // カテゴリーセクションを展開
+      await waitFor(() => {
+        expect(screen.getByText('Test Center')).toBeInTheDocument();
+      });
+      
+      const categoryButton = screen.getByText('Test Center');
+      fireEvent.click(categoryButton);
+      
       await waitFor(() => {
         // Both facilities should be visible
         expect(screen.getByText('あんさんぶるStudio和(本郷)')).toBeInTheDocument();
         expect(screen.getByText('あんさんぶるStudio音(初台)')).toBeInTheDocument();
-
-        // Check that the second facility (音) is expanded (13-17 is available)
+      });
+      
+      // Second facility (音) のカードを展開 (13-17 is available)
+      // In mobile view, the card expands automatically when 13-17 is available
+      // So we should be able to see the time slots without clicking
+      await waitFor(() => {
+        // Check that the second facility (音) is expanded automatically
         expect(screen.getByText('午前')).toBeInTheDocument();
-        
-        // First facility (和) should show collapsed message (13-17 is booked)
+      });
+      
+      // First facility (和) should show collapsed message (13-17 is booked)
+      await waitFor(() => {
         expect(screen.getByText('希望時間は空きなし')).toBeInTheDocument();
       });
     });
@@ -753,6 +815,20 @@ describe('AvailabilityPage', () => {
         render(<AvailabilityPage />);
       });
 
+      // カテゴリーセクションを展開
+      await waitFor(() => {
+        expect(screen.getByText('Test Center')).toBeInTheDocument();
+      });
+      
+      const categoryButton = screen.getByText('Test Center');
+      fireEvent.click(categoryButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('テスト施設')).toBeInTheDocument();
+      });
+      
+      // カードを展開して更新時刻を表示
+      // モバイルビューでは、afternoonがavailableなので自動的に展開される
       await waitFor(() => {
         expect(screen.getByText('🕐')).toBeInTheDocument();
         expect(screen.getAllByText(/更新/)[0]).toBeInTheDocument();
@@ -790,6 +866,17 @@ describe('AvailabilityPage', () => {
       await waitFor(() => {
         // At 640px, should show desktop table view
         expect(screen.getAllByRole('table')).toHaveLength(1);
+      });
+      
+      // デスクトップビューでカテゴリーセクションを展開
+      const categoryRow = screen.getByText('【Test Center】').closest('tr');
+      if (categoryRow) {
+        fireEvent.click(categoryRow);
+      }
+      
+      await waitFor(() => {
+        // Facility should be visible after expanding
+        expect(screen.getByText('テスト施設')).toBeInTheDocument();
         // Time slot headers should be visible in desktop table
         expect(screen.getByText('午前')).toBeInTheDocument();
       });
@@ -826,6 +913,19 @@ describe('AvailabilityPage', () => {
       await waitFor(() => {
         // At 639px, should show mobile card view
         expect(screen.queryAllByRole('table')).toHaveLength(0);
+      });
+      
+      // モバイルビューでカテゴリーセクションを展開
+      const mobileCategory = screen.getByText('Test Center');
+      fireEvent.click(mobileCategory);
+      
+      await waitFor(() => {
+        expect(screen.getByText('テスト施設')).toBeInTheDocument();
+      });
+      
+      // カードを展開
+      // モバイルビューでは、afternoonがavailableなので自動的に展開される
+      await waitFor(() => {
         expect(screen.getByText('午前')).toBeInTheDocument();
       });
     });
@@ -882,8 +982,7 @@ describe('AvailabilityPage', () => {
       (availabilityApi.getAllAvailability as jest.Mock).mockResolvedValue({});
 
       // useTargetDatesモジュールをモック
-      const useTargetDatesModule = require('../../hooks/useTargetDates');
-      useTargetDatesModule.useTargetDates = jest.fn().mockReturnValue({
+      jest.spyOn(require('../../hooks/useTargetDates'), 'useTargetDates').mockReturnValue({
         data: mockTargetDatesWithEmptyDate,
         loading: false,
         error: null,
@@ -911,8 +1010,7 @@ describe('AvailabilityPage', () => {
       });
 
       // useTargetDatesモジュールをモック
-      const useTargetDatesModule = require('../../hooks/useTargetDates');
-      useTargetDatesModule.useTargetDates = jest.fn().mockReturnValue({
+      jest.spyOn(require('../../hooks/useTargetDates'), 'useTargetDates').mockReturnValue({
         data: mockTargetDatesWithEmptyDate,
         loading: false,
         error: null,
@@ -963,8 +1061,7 @@ describe('AvailabilityPage', () => {
       });
 
       // useTargetDatesモジュールをモック
-      const useTargetDatesModule = require('../../hooks/useTargetDates');
-      useTargetDatesModule.useTargetDates = jest.fn().mockReturnValue({
+      jest.spyOn(require('../../hooks/useTargetDates'), 'useTargetDates').mockReturnValue({
         data: mockTargetDatesWithEmptyDate,
         loading: false,
         error: null,
@@ -1010,8 +1107,7 @@ describe('AvailabilityPage', () => {
       });
 
       // useTargetDatesモジュールをモック
-      const useTargetDatesModule = require('../../hooks/useTargetDates');
-      useTargetDatesModule.useTargetDates = jest.fn().mockReturnValue({
+      jest.spyOn(require('../../hooks/useTargetDates'), 'useTargetDates').mockReturnValue({
         data: mockTargetDatesWithEmptyDate,
         loading: false,
         error: null,
