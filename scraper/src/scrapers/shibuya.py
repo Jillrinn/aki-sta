@@ -26,6 +26,9 @@ class ShibuyaScraper(BaseScraper):
     
     def __init__(self, log_level=None):
         super().__init__(log_level)
+        # 月変更用のフラグ
+        self.need_month_change = False
+        self.target_month = None
     
     def get_base_url(self) -> str:
         """施設のベースURLを返す"""
@@ -408,113 +411,17 @@ class ShibuyaScraper(BaseScraper):
             
             # ドロップダウンを閉じるため、別の場所をクリック
             page.locator("body").click()
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(2000)  # 施設選択後の更新を待つため待機時間を増やす
             
-            # 3. 利用月を選択 -> 希望月
+            # 3. 月選択はスキップ - デフォルトの月で検索を実行
+            # 検索後に月移動ボタンで目的の月に移動する
             target_year_month = f"{target_date.year}年{target_date.month}月"
-            self.log_info(f"Selecting month: {target_year_month}")
+            self.log_info(f"Will navigate to {target_year_month} after search (skipping month dropdown)")
+            self.need_month_change = True
+            self.target_month = target_year_month
             
-            # 最新のセレクトボックス一覧を取得（施設選択後に更新されている可能性）
-            all_ant_selects = page.locator(".ant-select").all()
-            
-            month_select = None
-            month_index = -1
-            
-            for idx, sel in enumerate(all_ant_selects):
-                sel_text = sel.text_content()
-                if "利用月を選択" in sel_text or (idx == 3 and not sel_text.strip()):
-                    month_select = sel
-                    month_index = idx
-                    self.log_info(f"Identified month select at index {idx}")
-                    break
-            
-            if not month_select and len(all_ant_selects) > 3:
-                # フォールバック: 4番目のセレクトボックスを使用
-                month_select = all_ant_selects[3]
-                month_index = 3
-                self.log_info("Using index 3 as month select (fallback)")
-            
-            if not month_select:
-                self.log_error("Could not find month select element")
-                return False
-            
-            # プレースホルダをクリックしてドロップダウンを開く
-            option_found = False
-            try:
-                # セレクトボックスのセレクター部分をクリック
-                month_selector = month_select.locator(".ant-select-selector").first if month_select.locator(".ant-select-selector").count() > 0 else month_select
-                month_selector.click(timeout=5000)  # クリックのタイムアウトを短くする
-                page.wait_for_timeout(1000)  # ドロップダウンが開くのを待つ
-                
-                # ドロップダウンが開くまで待機（タイムアウトを短くする）
-                try:
-                    page.wait_for_selector(".ant-select-dropdown:not(.ant-select-dropdown-hidden)", timeout=2000)
-                except:
-                    self.log_warning("Dropdown did not appear, continuing anyway")
-                
-                # aria-controlsを使って正しいドロップダウンを取得
-                aria_controls = month_select.get_attribute("aria-controls")
-                if aria_controls:
-                    dropdown = page.locator(f"#{aria_controls}")
-                    self.log_info(f"Using month dropdown with id: {aria_controls}")
-                else:
-                    # フォールバック：最新のドロップダウンを使用
-                    dropdowns = page.locator(".ant-select-dropdown:not(.ant-select-dropdown-hidden)").all()
-                    if len(dropdowns) > 0:
-                        dropdown = dropdowns[-1]
-                        self.log_info(f"Found {len(dropdowns)} dropdown(s) for month, using the last one")
-                    else:
-                        dropdown = None
-                
-                if dropdown and dropdown.count() > 0:
-                    
-                    # オプションをログ出力して確認
-                    options = dropdown.locator(".ant-select-item-option").all()
-                    self.log_info(f"Month dropdown has {len(options)} options")
-                    for i, opt in enumerate(options[:5]):  # 最初の5個を表示
-                        text = opt.text_content()
-                        self.log_info(f"  Month option {i}: {text}")
-                    
-                    # 目標の年月を含むオプションを探す
-                    target_found = False
-                    for i, opt in enumerate(options):
-                        text = opt.text_content()
-                        if target_year_month in text or f"{target_date.year}/{target_date.month:02d}" in text:
-                            self.log_info(f"Found target month at position {i}")
-                            # 矢印キーで移動
-                            for _ in range(i + 1):  # i+1回下矢印キーを押す
-                                page.keyboard.press("ArrowDown")
-                                page.wait_for_timeout(100)
-                            # Enterキーで確定
-                            page.keyboard.press("Enter")
-                            page.wait_for_timeout(500)
-                            target_found = True
-                            break
-                    
-                    if not target_found:
-                        # 見つからない場合は最初のオプションを選択
-                        self.log_warning(f"Target month {target_year_month} not found, selecting first option")
-                        page.keyboard.press("ArrowDown")
-                        page.wait_for_timeout(200)
-                        page.keyboard.press("Enter")
-                        page.wait_for_timeout(500)
-                    
-                    # 選択されたか確認
-                    selected_text = month_select.text_content()
-                    self.log_info(f"Selected month: {selected_text}")
-                    option_found = True
-                else:
-                    # ドロップダウンが開かない場合
-                    self.log_error("No dropdown found after opening month select")
-                    option_found = False
-                    
-            except Exception as e:
-                self.log_error(f"Month keyboard selection failed: {e}")
-                option_found = False
-            
-            if not option_found:
-                self.log_warning(f"Could not select month for {target_year_month}, continuing with default month")
-                # 月選択に失敗しても検索を続行してみる
+            # 施設選択後の待機
+            page.wait_for_timeout(1000)
             
             self.log_info("Successfully selected all search criteria")
             return True
@@ -614,19 +521,89 @@ class ShibuyaScraper(BaseScraper):
             if month_display.count() > 0:
                 month_text = month_display.text_content()
                 self.log_info(f"Current month display: {month_text}")
-                # 月が正しいか確認
-                expected_month = f"{target_date.year}年{target_date.month}月"
-                if expected_month not in month_text:
+                # 月が正しいか確認（ゼロパディングあり/なし両方に対応）
+                expected_month = f"{target_date.year}年{target_date.month:02d}月"
+                expected_month_no_padding = f"{target_date.year}年{target_date.month}月"
+                if expected_month not in month_text and expected_month_no_padding not in month_text:
                     self.log_warning(f"Month mismatch: expected {expected_month}, got {month_text}")
+                    
+                    # 月を変更する試み
+                    if self.need_month_change:
+                        self.log_info(f"Attempting to navigate to correct month... (need_month_change={self.need_month_change})")
+                        # カレンダー上の月移動ボタンを探す
+                        # ユーザーが提供した新しいセレクタを優先
+                        next_month_button = page.locator(
+                            "div.next_month[style*='cursor: pointer'], "
+                            "button[aria-label*='次'], "
+                            "button:has-text('>'), "
+                            ".ant-picker-header-next-btn"
+                        ).first
+                        prev_month_button = page.locator(
+                            "div.prev_month[style*='cursor: pointer'], "
+                            "button[aria-label*='前'], "
+                            "button:has-text('<'), "
+                            ".ant-picker-header-prev-btn"
+                        ).first
+                        
+                        self.log_info(f"Next month button found: {next_month_button.count() > 0}")
+                        self.log_info(f"Prev month button found: {prev_month_button.count() > 0}")
+                        
+                        # ボタンが見つからない場合、テキストベースでも探す
+                        if next_month_button.count() == 0:
+                            next_month_button = page.locator("text='次の月へ移動'").first
+                            if next_month_button.count() > 0:
+                                self.log_info("Found next month button with text selector")
+                        
+                        # 現在の月と目標月を比較
+                        current_year = int(month_text[:4]) if month_text and len(month_text) >= 4 else target_date.year
+                        current_month = int(month_text[5:7].replace('月', '')) if '月' in month_text else 9
+                        
+                        months_diff = (target_date.year - current_year) * 12 + (target_date.month - current_month)
+                        
+                        if months_diff > 0 and next_month_button.count() > 0:
+                            # 先の月に移動
+                            self.log_info(f"Moving {months_diff} months forward")
+                            for _ in range(min(months_diff, 12)):  # 最大12ヶ月まで
+                                next_month_button.click()
+                                page.wait_for_timeout(2000)  # 画面更新を待つ
+                                
+                                # ローディング完了を待つ
+                                self.wait_for_loading_complete(page)
+                                
+                                # 更新された月を確認
+                                new_month_text = month_display.text_content()
+                                self.log_info(f"New month: {new_month_text}")
+                                if expected_month in new_month_text or expected_month_no_padding in new_month_text:
+                                    self.log_info(f"Successfully navigated to {expected_month}")
+                                    break
+                        elif months_diff < 0 and prev_month_button.count() > 0:
+                            # 前の月に移動
+                            self.log_info(f"Moving {abs(months_diff)} months backward")
+                            for _ in range(min(abs(months_diff), 12)):
+                                prev_month_button.click()
+                                page.wait_for_timeout(2000)  # 画面更新を待つ
+                                
+                                # ローディング完了を待つ
+                                self.wait_for_loading_complete(page)
+                                
+                                # 更新された月を確認
+                                new_month_text = month_display.text_content()
+                                self.log_info(f"New month: {new_month_text}")
+                                if expected_month in new_month_text or expected_month_no_padding in new_month_text:
+                                    self.log_info(f"Successfully navigated to {expected_month}")
+                                    break
+                        elif months_diff == 0:
+                            self.log_info("Already at the correct month")
+                        else:
+                            self.log_warning(f"Could not find month navigation buttons (months_diff={months_diff})")
             
             # 日付セルを探す
             date_cell = None
             
             # まず日付のIDで直接探す（例：2025/12/19）
             date_id = target_date.strftime("%Y/%m/%d")
-            # スラッシュをエスケープ
-            escaped_id = date_id.replace("/", "\\/")
-            date_cell = page.locator(f"td#{escaped_id}")
+            # CSS属性セレクタを使用（IDのエスケープ問題を回避）
+            date_cell = page.locator(f'td[id="{date_id}"]')
             
             if date_cell.count() == 0:
                 # IDが見つからない場合は、日付テキストで探す
@@ -712,8 +689,78 @@ class ShibuyaScraper(BaseScraper):
         self.log_info("Extracting room availability...")
         results = []
         
+        # すべての練習室をデフォルトでbookedとして初期化
+        room_availability = {}
+        for room_name in self.PRACTICE_ROOMS:
+            room_availability[room_name] = {
+                "morning": "booked",
+                "afternoon": "booked",
+                "evening": "booked"
+            }
+        
         try:
-            # 部屋の空き状況が表示されるまで待つ
+            # モーダルが表示されるまで待つ
+            try:
+                page.wait_for_selector(".ant-modal-content", timeout=5000)
+                self.log_info("Modal detected, extracting availability from modal")
+                
+                # モーダル内のデータを抽出
+                modal = page.locator(".ant-modal-content").first
+                
+                # 各部屋の情報を抽出
+                room_sections = modal.locator("h3.list-header").all()
+                
+                for i, room_header in enumerate(room_sections):
+                    # 部屋名を取得（例: "文化総合センター大和田（練習室） 練習室２"）
+                    full_room_name = room_header.text_content().strip()
+                    self.log_info(f"Found room: {full_room_name}")
+                    
+                    # 部屋名を抽出（最後のスペース以降を取得）
+                    room_name = full_room_name.split(" ")[-1] if " " in full_room_name else full_room_name
+                    
+                    # この部屋の時間帯情報を取得
+                    # チェックボックスグループを探す
+                    checkbox_group_id = f"frameSelectForm_inputList_{i}_frameIndexes"
+                    checkbox_group = modal.locator(f"#{checkbox_group_id}").first
+                    
+                    if checkbox_group.count() > 0:
+                        # 時間帯情報を取得
+                        time_slots = checkbox_group.locator(".modal_timelist1 p").all()
+                        
+                        for time_slot in time_slots:
+                            time_text = time_slot.text_content().strip()
+                            self.log_info(f"  Time slot: {time_text}")
+                            
+                            # 時間帯を判定
+                            if "9:00" in time_text or "09:00" in time_text:
+                                if room_name in room_availability:
+                                    room_availability[room_name]["morning"] = "available"
+                            elif "13:00" in time_text:
+                                if room_name in room_availability:
+                                    room_availability[room_name]["afternoon"] = "available"
+                            elif "18:00" in time_text:
+                                if room_name in room_availability:
+                                    room_availability[room_name]["evening"] = "available"
+                
+                # 結果を作成
+                for room_name in self.PRACTICE_ROOMS:
+                    results.append({
+                        "centerName": self.get_center_name(),
+                        "facilityName": self.studios[0],
+                        "roomName": room_name,
+                        "date": date,
+                        "timeSlots": room_availability[room_name],
+                        "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                    })
+                
+                self.log_info(f"Extracted {len(results)} room records from modal")
+                return results
+                
+            except Exception as e:
+                self.log_warning(f"Modal not found or error extracting from modal: {e}")
+                # モーダルがない場合は従来の処理を続行
+            
+            # 従来の処理（モーダルがない場合）
             page.wait_for_selector("[class*='room'], [class*='facility'], table", timeout=10000)
             
             # 時間帯の判定用マッピング
@@ -797,19 +844,20 @@ class ShibuyaScraper(BaseScraper):
             
             if not results:
                 self.log_warning("No room availability data found")
-                # デフォルトデータを返す
-                results.append({
-                    "centerName": self.get_center_name(),
-                    "facilityName": self.studios[0],
-                    "roomName": self.get_room_name(self.studios[0]),
-                    "date": date,
-                    "timeSlots": {
-                        "morning": "unknown",
-                        "afternoon": "unknown",
-                        "evening": "unknown"
-                    },
-                    "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-                })
+                # 各練習室のbookedデータを返す
+                for room_name in self.PRACTICE_ROOMS:
+                    results.append({
+                        "centerName": self.get_center_name(),
+                        "facilityName": self.studios[0],
+                        "roomName": room_name,
+                        "date": date,
+                        "timeSlots": {
+                            "morning": "booked",
+                            "afternoon": "booked",
+                            "evening": "booked"
+                        },
+                        "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                    })
             
             return results
             
