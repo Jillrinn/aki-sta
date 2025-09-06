@@ -27,7 +27,7 @@ class WarmupScheduler:
         Initialize the warmup scheduler
         
         Args:
-            interval_minutes: Warmup interval in minutes (default from env or 15)
+            interval_minutes: Warmup interval in minutes (default from env or 10)
         """
         # Get configuration from environment variables
         self.enabled = os.getenv('WARMUP_ENABLED', 'true').lower() == 'true'
@@ -36,12 +36,12 @@ class WarmupScheduler:
         if interval_minutes:
             self.interval_seconds = interval_minutes * 60
         else:
-            env_interval = os.getenv('WARMUP_INTERVAL_MINUTES', '15')
+            env_interval = os.getenv('WARMUP_INTERVAL_MINUTES', '10')
             try:
                 self.interval_seconds = int(env_interval) * 60
             except ValueError:
-                logger.warning(f"Invalid WARMUP_INTERVAL_MINUTES: {env_interval}, using default 15 minutes")
-                self.interval_seconds = 15 * 60
+                logger.warning(f"Invalid WARMUP_INTERVAL_MINUTES: {env_interval}, using default 10 minutes")
+                self.interval_seconds = 10 * 60
         
         self.running = False
         self.thread = None

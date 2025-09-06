@@ -60,7 +60,7 @@ ENV PLATFORM_OVERRIDE=Linux
 # Warmup Scheduler default settings
 # These can be overridden by docker-compose.yml or runtime environment
 ENV WARMUP_ENABLED=true
-ENV WARMUP_INTERVAL_MINUTES=15
+ENV WARMUP_INTERVAL_MINUTES=10
 
 # Install Playwright browsers (Chromium only for size optimization)
 # Install Chromium browser without dependencies (already installed via apt-get)
