@@ -15,6 +15,15 @@ StatusValue = Literal['available', 'booked', 'booked_1', 'booked_2', 'lottery', 
 class ShibuyaScraper(BaseScraper):
     """渋谷区施設予約システム用スクレイパー"""
     
+    # 文化総合センター大和田の練習室定義
+    PRACTICE_ROOMS = [
+        "大練習室",
+        "練習室１",
+        "練習室２",
+        "練習室３",
+        "練習室４"
+    ]
+    
     def __init__(self, log_level=None):
         super().__init__(log_level)
     
@@ -35,6 +44,10 @@ class ShibuyaScraper(BaseScraper):
     def get_room_name(self, facility_name: str) -> str:
         """部屋名を返す"""
         return "練習室"
+    
+    def get_room_names(self) -> List[str]:
+        """文化総合センター大和田の練習室リストを返す"""
+        return self.PRACTICE_ROOMS
     
     def wait_for_react_load(self, page: Page):
         """Reactアプリケーションの読み込みを待つ"""
@@ -828,19 +841,22 @@ class ShibuyaScraper(BaseScraper):
                     # 日付を選択
                     if not self.navigate_to_date(page, target_date):
                         self.log_warning(f"Date {target_date.day} is not available")
-                        # 丸がない日は予約済み（bookedで統一）
-                        return [{
-                            "centerName": self.get_center_name(),
-                            "facilityName": self.studios[0],
-                            "roomName": self.get_room_name(self.studios[0]),
-                            "date": date,
-                            "timeSlots": {
-                                "morning": "booked",
-                                "afternoon": "booked",
-                                "evening": "booked"
-                            },
-                            "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-                        }]
+                        # 全ての練習室について予約済みとして記録
+                        results = []
+                        for room_name in self.get_room_names():
+                            results.append({
+                                "centerName": self.get_center_name(),
+                                "facilityName": self.studios[0],
+                                "roomName": room_name,
+                                "date": date,
+                                "timeSlots": {
+                                    "morning": "booked",
+                                    "afternoon": "booked",
+                                    "evening": "booked"
+                                },
+                                "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                            })
+                        return results
                     
                     # 空き状況を抽出
                     results = self.extract_room_availability(page, date)
