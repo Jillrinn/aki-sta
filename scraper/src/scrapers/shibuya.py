@@ -724,8 +724,8 @@ class ShibuyaScraper(BaseScraper):
                     checkbox_group = modal.locator(f"#{checkbox_group_id}").first
                     
                     if checkbox_group.count() > 0:
-                        # 時間帯情報を取得
-                        time_slots = checkbox_group.locator(".modal_timelist1 p").all()
+                        # 時間帯情報を取得（pタグとlabelタグの両方に対応）
+                        time_slots = checkbox_group.locator(".modal_timelist1 p, .modal_timelist1 label").all()
                         
                         for time_slot in time_slots:
                             time_text = time_slot.text_content().strip()
