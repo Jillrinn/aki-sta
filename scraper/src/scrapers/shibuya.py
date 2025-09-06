@@ -7,6 +7,8 @@ from typing import Dict, List, Optional, Tuple, Literal
 from playwright.sync_api import Page, Locator, sync_playwright
 from .base import BaseScraper
 from ..types.time_slots import TimeSlots, validate_time_slots
+import traceback
+import re
 
 # フロントエンドの定義に合わせた型定義
 StatusValue = Literal['available', 'booked', 'booked_1', 'booked_2', 'lottery', 'unknown']
@@ -670,6 +672,57 @@ class ShibuyaScraper(BaseScraper):
             self.log_error(f"Error navigating to date: {e}")
             return False
     
+    def close_modal(self, page: Page) -> bool:
+        """
+        モーダルを閉じる
+        
+        Returns:
+            成功した場合True
+        """
+        try:
+            # モーダルが表示されているか確認
+            modal = page.locator(".ant-modal-content").first
+            if modal.count() > 0 and modal.is_visible():
+                self.log_info("Closing modal...")
+                
+                # 方法1: ESCキーを押す
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(500)
+                
+                # モーダルが閉じたか確認
+                if modal.count() == 0 or not modal.is_visible():
+                    self.log_info("Modal closed successfully")
+                    return True
+                
+                # 方法2: モーダル外側をクリック
+                self.log_info("ESC didn't work, trying to click outside modal")
+                page.locator(".ant-modal-mask").first.click(position={"x": 10, "y": 10})
+                page.wait_for_timeout(500)
+                
+                # モーダルが閉じたか確認
+                if modal.count() == 0 or not modal.is_visible():
+                    self.log_info("Modal closed successfully")
+                    return True
+                
+                # 方法3: 閉じるボタンをクリック
+                self.log_info("Clicking outside didn't work, looking for close button")
+                close_button = page.locator(".ant-modal-close, .ant-modal-close-x").first
+                if close_button.count() > 0:
+                    close_button.click()
+                    page.wait_for_timeout(500)
+                    self.log_info("Modal closed successfully via close button")
+                    return True
+                
+                self.log_warning("Failed to close modal")
+                return False
+            else:
+                self.log_info("No modal to close")
+                return True
+                
+        except Exception as e:
+            self.log_error(f"Error closing modal: {e}")
+            return False
+    
     def extract_room_availability(self, page: Page, date: str) -> List[Dict]:
         """
         各部屋の空き状況を抽出
@@ -937,7 +990,6 @@ class ShibuyaScraper(BaseScraper):
                     
         except Exception as e:
             self.log_error(f"Error during scraping: {e}")
-            import traceback
             self.log_error(traceback.format_exc())
             raise
     
@@ -962,3 +1014,266 @@ class ShibuyaScraper(BaseScraper):
             "afternoon": "unknown",
             "evening": "unknown"
         }
+    
+    def _calculate_months_difference(self, current_month_text: str, target_month_text: str) -> int:
+        """
+        現在の月と目標月の差を計算
+        
+        Args:
+            current_month_text: 現在の月のテキスト（例: "2025年9月"）
+            target_month_text: 目標月のテキスト（例: "2025年10月"）
+        
+        Returns:
+            月数の差（正の値: 先の月、負の値: 前の月）
+        """
+        try:
+            # 年月を抽出
+            current_match = re.search(r'(\d{4})年(\d{1,2})月', current_month_text)
+            target_match = re.search(r'(\d{4})年(\d{1,2})月', target_month_text)
+            
+            if current_match and target_match:
+                current_year = int(current_match.group(1))
+                current_month = int(current_match.group(2))
+                target_year = int(target_match.group(1))
+                target_month = int(target_match.group(2))
+                
+                return (target_year - current_year) * 12 + (target_month - current_month)
+            
+            return 0
+            
+        except Exception as e:
+            self.log_error(f"Error calculating months difference: {e}")
+            return 0
+    
+    def scrape_multiple_dates(self, dates: List[str]) -> Dict:
+        """
+        複数日付の空き状況を効率的にスクレイピング（渋谷区用）
+        同月内の日付は月移動なしで取得、各日付でモーダルを開閉
+        
+        Args:
+            dates: ["YYYY-MM-DD", ...]形式の日付リスト
+        
+        Returns:
+            {
+                "results": {
+                    "2025-01-30": {"status": "success", "data": [...]},
+                    "2025-01-31": {"status": "error", "message": "...", "error_type": "..."}
+                },
+                "summary": {
+                    "total": 2,
+                    "success": 1,
+                    "failed": 1
+                }
+            }
+        """
+        self.log_info(f"\n=== Starting Shibuya multiple dates scraping for {len(dates)} dates ===")
+        self.log_info(f"Dates: {', '.join(dates)}")
+        
+        # 日付を年月でグループ化（base.pyから継承されたメソッドを使用）
+        grouped_dates = self._group_dates_by_month(dates)
+        self.log_info(f"Grouped into {len(grouped_dates)} month(s)")
+        
+        results = {}
+        
+        try:
+            with sync_playwright() as p:
+                # ブラウザを起動
+                browser = self.setup_browser(p)
+                
+                try:
+                    context = self.create_browser_context(browser)
+                    page = context.new_page()
+                    
+                    # トップページにアクセス
+                    self.log_info(f"Accessing: {self.base_url}")
+                    page.goto(self.base_url, wait_until="networkidle", timeout=60000)
+                    
+                    # 検索画面へ遷移
+                    if not self.navigate_to_search(page):
+                        self.log_error("Failed to navigate to search")
+                        for date in dates:
+                            results[date] = {
+                                "status": "error",
+                                "message": "Failed to navigate to search page",
+                                "error_type": "NAVIGATION_ERROR"
+                            }
+                        return self._summarize_results(results)
+                    
+                    # 検索条件を選択（初回のみ）
+                    first_date = datetime.strptime(dates[0], "%Y-%m-%d")
+                    if not self.select_search_criteria(page, first_date):
+                        self.log_error("Failed to select search criteria")
+                        for date in dates:
+                            results[date] = {
+                                "status": "error",
+                                "message": "Failed to select search criteria",
+                                "error_type": "CRITERIA_ERROR"
+                            }
+                        return self._summarize_results(results)
+                    
+                    # 検索を実行（初回のみ）
+                    if not self.execute_search(page):
+                        self.log_error("Failed to execute search")
+                        for date in dates:
+                            results[date] = {
+                                "status": "error",
+                                "message": "Failed to execute search",
+                                "error_type": "SEARCH_ERROR"
+                            }
+                        return self._summarize_results(results)
+                    
+                    # 月ごとに処理
+                    for year_month, month_dates in grouped_dates.items():
+                        self.log_info(f"\n--- Processing month: {year_month} ({len(month_dates)} dates) ---")
+                        
+                        # 最初の日付を使って月に移動
+                        target_month_date = datetime.strptime(month_dates[0], "%Y-%m-%d")
+                        target_year_month = f"{target_month_date.year}年{target_month_date.month}月"
+                        
+                        # 現在の月を確認
+                        month_display = page.locator("#calendar_month, .calendar_month").first
+                        if month_display.count() > 0:
+                            current_month_text = month_display.text_content()
+                            self.log_info(f"Current month: {current_month_text}")
+                            
+                            # 月が異なる場合は移動
+                            if target_year_month not in current_month_text:
+                                self.log_info(f"Need to navigate to {target_year_month}")
+                                # 月移動ボタンで移動
+                                months_to_move = self._calculate_months_difference(current_month_text, target_year_month)
+                                if months_to_move > 0:
+                                    next_button = page.locator("div.next_month[style*='cursor: pointer']").first
+                                    for _ in range(months_to_move):
+                                        if next_button.count() > 0:
+                                            next_button.click()
+                                            page.wait_for_timeout(2000)
+                                            self.wait_for_loading_complete(page)
+                                elif months_to_move < 0:
+                                    prev_button = page.locator("div.prev_month[style*='cursor: pointer']").first
+                                    for _ in range(abs(months_to_move)):
+                                        if prev_button.count() > 0:
+                                            prev_button.click()
+                                            page.wait_for_timeout(2000)
+                                            self.wait_for_loading_complete(page)
+                        
+                        # この月の各日付を処理
+                        for date_str in month_dates:
+                            target_date = datetime.strptime(date_str, "%Y-%m-%d")
+                            self.log_info(f"\nProcessing date: {date_str}")
+                            
+                            try:
+                                # 日付をクリック（モーダルが開く）
+                                if not self.navigate_to_date(page, target_date):
+                                    self.log_warning(f"Date {date_str} is not available")
+                                    # 全ての練習室について予約済みとして記録
+                                    room_results = []
+                                    for room_name in self.get_room_names():
+                                        room_results.append({
+                                            "centerName": self.get_center_name(),
+                                            "facilityName": self.studios[0],
+                                            "roomName": room_name,
+                                            "date": date_str,
+                                            "timeSlots": {
+                                                "morning": "booked",
+                                                "afternoon": "booked",
+                                                "evening": "booked"
+                                            },
+                                            "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                                        })
+                                    
+                                    # Cosmos DBに保存
+                                    if self._save_to_cosmos_immediately(date_str, room_results):
+                                        results[date_str] = {
+                                            "status": "success",
+                                            "data": room_results
+                                        }
+                                        self.log_info(f"✅ Saved booked status for {date_str}")
+                                    else:
+                                        results[date_str] = {
+                                            "status": "error",
+                                            "message": "Failed to save to database",
+                                            "error_type": "DATABASE_ERROR"
+                                        }
+                                    continue
+                                
+                                # モーダルから空き状況を抽出
+                                room_availability = self.extract_room_availability(page, date_str)
+                                
+                                if room_availability:
+                                    # Cosmos DBに即座に保存
+                                    if self._save_to_cosmos_immediately(date_str, room_availability):
+                                        results[date_str] = {
+                                            "status": "success",
+                                            "data": room_availability
+                                        }
+                                        self.log_info(f"✅ Successfully saved {len(room_availability)} rooms for {date_str}")
+                                    else:
+                                        results[date_str] = {
+                                            "status": "error",
+                                            "message": "Failed to save to database",
+                                            "error_type": "DATABASE_ERROR"
+                                        }
+                                        self.log_warning(f"⚠️ Failed to save data for {date_str}")
+                                else:
+                                    results[date_str] = {
+                                        "status": "error",
+                                        "message": "No data extracted",
+                                        "error_type": "NO_DATA_FOUND"
+                                    }
+                                    self.log_warning(f"No data found for {date_str}")
+                                
+                                # モーダルを閉じる（重要）
+                                if not self.close_modal(page):
+                                    self.log_warning("Failed to close modal properly")
+                                    # ページをリロードして復旧を試みる
+                                    page.reload(wait_until="networkidle")
+                                    page.wait_for_timeout(3000)
+                                    # 検索結果画面に戻る必要がある場合
+                                    self.navigate_to_search(page)
+                                    self.select_search_criteria(page, target_date)
+                                    self.execute_search(page)
+                                
+                                # 次の日付のために少し待機
+                                page.wait_for_timeout(1000)
+                                
+                            except Exception as e:
+                                self.log_error(f"Error processing date {date_str}: {e}")
+                                results[date_str] = {
+                                    "status": "error",
+                                    "message": f"Processing failed: {str(e)}",
+                                    "error_type": "SCRAPING_ERROR",
+                                    "details": str(e)
+                                }
+                                
+                                # エラー後の復旧を試みる
+                                try:
+                                    self.close_modal(page)
+                                except:
+                                    pass
+                    
+                finally:
+                    browser.close()
+                    
+        except Exception as e:
+            self.log_error(f"Fatal error during multiple dates scraping: {e}")
+            self.log_error(traceback.format_exc())
+            # 処理されていない日付にエラーを設定
+            for date in dates:
+                if date not in results:
+                    results[date] = {
+                        "status": "error",
+                        "message": f"Fatal error: {str(e)}",
+                        "error_type": "FATAL_ERROR",
+                        "details": str(e)
+                    }
+        
+        # 結果をサマリー化（base.pyから継承されたメソッドを使用）
+        summary = self._summarize_results(results)
+        
+        self.log_info(f"\n=== Shibuya multiple dates scraping completed ===")
+        self.log_info(f"Success: {summary['summary']['success']}/{summary['summary']['total']}")
+        if summary['summary']['failed'] > 0:
+            failed_dates = [d for d, r in results.items() if r.get('status') != 'success']
+            self.log_warning(f"Failed dates: {failed_dates}")
+        
+        return summary
