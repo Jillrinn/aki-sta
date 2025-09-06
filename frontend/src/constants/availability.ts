@@ -31,8 +31,8 @@ export const STATUS_COLORS: Record<StatusValue, string> = {
 export const STATUS_LABELS: Record<StatusValue, string> = {
   available: '空き',
   booked: '予約済み',
-  booked_1: '一部予約済み',
-  booked_2: '一部予約済み',
+  booked_1: '前半予約済み',
+  booked_2: '後半予約済み',
   lottery: '抽選',
   unknown: '不明'
 };

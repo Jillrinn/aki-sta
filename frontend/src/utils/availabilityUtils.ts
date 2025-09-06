@@ -26,6 +26,8 @@ export const areTimeSlotsFull = (
   return facilities.every(facility => 
     targetTimeSlots.every(slot => 
       facility.timeSlots[slot] === 'booked' || 
+      facility.timeSlots[slot] === 'booked_1' || 
+      facility.timeSlots[slot] === 'booked_2' || 
       facility.timeSlots[slot] === 'unknown'
     )
   );
@@ -57,6 +59,8 @@ const getFacilityStatus = (facility: Facility, preferredTimeSlots?: string[]): '
   if (preferredTimeSlots && preferredTimeSlots.length > 0) {
     const preferredBooked = preferredTimeSlots.every(slot => 
       facility.timeSlots[slot] === 'booked' || 
+      facility.timeSlots[slot] === 'booked_1' || 
+      facility.timeSlots[slot] === 'booked_2' || 
       facility.timeSlots[slot] === 'unknown'
     );
     
@@ -94,13 +98,13 @@ export const getCategoryStatus = (
     };
   }
   
-  // 全ての施設が「全て空きなし」または「希望時間は空きなし」の場合
+  // 全ての施設が「全て空きなし」または「希望時間は予約済み」の場合
   if (facilityStatuses.every(status => 
     status === 'all-booked' || status === 'preferred-booked'
   )) {
     return {
       status: 'preferred-booked',
-      message: '希望時間は空きなし',
+      message: '希望時間は予約済み',
       shouldExpand: false
     };
   }

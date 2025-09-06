@@ -19,6 +19,8 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
     const statusMap: Record<string, string> = {
       available: '空き',
       booked: '予約済み',
+      booked_1: '前半予約済み',
+      booked_2: '後半予約済み',
       lottery: '抽選'
     };
     return statusMap[status] || '';
@@ -29,26 +31,27 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
   const allBooked = TIME_SLOTS.every(slot => facility.timeSlots[slot] === 'booked');
   const allUnknown = TIME_SLOTS.every(slot => facility.timeSlots[slot] === 'unknown');
   const afternoonBooked = facility.timeSlots['afternoon'] === 'booked';
+  const afternoonPartiallyBooked = facility.timeSlots['afternoon'] === 'booked_1' || facility.timeSlots['afternoon'] === 'booked_2';
   
   // ヘッダーの色を決定
   const getHeaderColorClass = () => {
-    if (allUnknown || allBooked || afternoonBooked) {
+    if (allUnknown || allBooked || afternoonBooked || afternoonPartiallyBooked) {
       return 'bg-gradient-to-r from-gray-400 to-gray-600';
     }
     return 'bg-gradient-to-r from-primary-400 to-primary-700';
   };
 
   // 2つのフラグで展開状態を管理
-  const [isExpandedRoom, setIsExpandedRoom] = useState(hasAvailable && !afternoonBooked);
+  const [isExpandedRoom, setIsExpandedRoom] = useState(hasAvailable && !afternoonBooked && !afternoonPartiallyBooked);
   const [isExpandedCenterName, setIsExpandedCenterName] = useState(false);
 
   useEffect(() => {
     // ユーザーが手動操作していない場合のみ自動制御
     if (!isExpandedCenterName) {
-      // 空きがある場合のみ展開（ただし13-17が予約済みの場合は折りたたむ）
-      setIsExpandedRoom(hasAvailable && !afternoonBooked);
+      // 空きがある場合のみ展開（ただし13-17が予約済みまたは部分的に予約済みの場合は折りたたむ）
+      setIsExpandedRoom(hasAvailable && !afternoonBooked && !afternoonPartiallyBooked);
     }
-  }, [hasAvailable, afternoonBooked, isExpandedCenterName]);
+  }, [hasAvailable, afternoonBooked, afternoonPartiallyBooked, isExpandedCenterName]);
 
   return (
     <div className="bg-white rounded-lg shadow-md mb-4 overflow-hidden border border-gray-200">
@@ -111,10 +114,10 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
           {!isExpandedRoom && !allUnknown && (
             <span className={`font-medium px-2 py-1 rounded whitespace-nowrap text-xs ${
               allBooked ? 'bg-red-100 text-red-700' : 
-              afternoonBooked ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+              (afternoonBooked || afternoonPartiallyBooked) ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
             }`}>
               {allBooked ? '全て空きなし' : 
-               afternoonBooked ? '希望時間は空きなし' : '空きあり'}
+               (afternoonBooked || afternoonPartiallyBooked) ? '希望時間は予約済み' : '空きあり'}
             </span>
           )}
         </div>
