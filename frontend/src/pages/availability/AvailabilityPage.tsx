@@ -4,7 +4,8 @@ import { useAvailabilityData } from '../../hooks/useAvailabilityData';
 import { useTargetDates } from '../../hooks/useTargetDates';
 import { TIME_SLOTS, TIME_SLOT_DISPLAY } from '../../constants/availability';
 import { sortGroupedFacilities } from '../../utils/sortingUtils';
-import { scraperApi } from '../../services/api';
+import { scraperApi, rateLimitsApi } from '../../services/api';
+import { isActuallyRunning } from '../../utils/rateLimits';
 import {
   CommonLoadingState,
   CommonErrorState,
@@ -18,6 +19,7 @@ import Copyright from '../../components/common/Copyright';
 import CheckingModal from '../../components/common/modals/CheckingModal';
 import ScrapeResultModal from '../../components/common/modals/ScrapeResultModal';
 import ConfirmationModal from '../../components/common/modals/ConfirmationModal';
+import RateLimitWarningModal from '../../components/common/modals/RateLimitWarningModal';
 
 const AvailabilityPage: React.FC = () => {
   const { data, loading, error, refetch, isRefreshing } = useAvailabilityData();
@@ -32,6 +34,7 @@ const AvailabilityPage: React.FC = () => {
   // 確認モーダル関連の状態
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingDate, setPendingDate] = useState<string | null>(null);
+  const [showRateLimitWarning, setShowRateLimitWarning] = useState(false);
 
   // 日付とラベル、予約状況、メモのマッピングを作成
   const targetDateMap = useMemo(() => {
@@ -71,10 +74,11 @@ const AvailabilityPage: React.FC = () => {
     setShowCheckingModal(true);
     
     try {
-      const checkResponse = await scraperApi.checkBatchScrapingStatus();
+      const today = new Date().toISOString().split('T')[0];
+      const rateLimitRecord = await rateLimitsApi.getRateLimitByDate(today);
       setShowCheckingModal(false);
       
-      if (checkResponse.isRunning) {
+      if (isActuallyRunning(rateLimitRecord)) {
         // 実行中の場合は警告モーダルを表示
         setShowRateLimitWarning(true);
       } else {
@@ -295,7 +299,7 @@ const AvailabilityPage: React.FC = () => {
         <CheckingModal 
           isOpen={showCheckingModal}
           onClose={() => setShowCheckingModal(false)}
-          taskDescription={`${isScrapingForDate}の空き状況を取得中...`}
+          taskDescription={isScrapingForDate ? `${isScrapingForDate}の空き状況を取得を開始中...` : '実行状況を確認中...'}
         />
       )}
       
@@ -306,6 +310,13 @@ const AvailabilityPage: React.FC = () => {
           message={scrapeResult.message}
           isLoading={false}
           isError={!scrapeResult.success}
+        />
+      )}
+      
+      {showRateLimitWarning && (
+        <RateLimitWarningModal
+          isOpen={showRateLimitWarning}
+          onClose={() => setShowRateLimitWarning(false)}
         />
       )}
     </div>

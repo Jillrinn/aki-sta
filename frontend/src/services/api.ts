@@ -7,7 +7,7 @@ import {
   UpdateTargetDateRequest,
   UpdateTargetDateResponse 
 } from '../types/targetDates';
-import { ScraperResponse, ScrapeBatchResponse, ScrapeDateResponse } from '../types/scraper';
+import { ScraperResponse, ScrapeBatchResponse, ScrapeDateResponse, CheckScrapingStatusResponse } from '../types/scraper';
 import { RateLimitResponse } from '../types/rateLimits';
 import { httpClient, HttpClient } from './httpClient';
 
@@ -149,6 +149,18 @@ export const scraperApi = {
       }
       console.error('Failed to trigger scraping by date:', error);
       throw error;
+    }
+  },
+
+  async checkBatchScrapingStatus(): Promise<CheckScrapingStatusResponse> {
+    try {
+      const response = await httpClient.get<CheckScrapingStatusResponse>(
+        `/scrape/status`
+      );
+      return response.data;
+    } catch (error) {
+      // エラーの場合は実行中でないとみなす
+      return { isRunning: false };
     }
   }
 };

@@ -36,3 +36,8 @@ export interface ScrapeDateResponse {
   message: string;
   date?: string;
 }
+
+export interface CheckScrapingStatusResponse {
+  isRunning: boolean;
+  message?: string;
+}
