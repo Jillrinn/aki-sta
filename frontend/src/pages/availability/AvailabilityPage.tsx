@@ -149,32 +149,26 @@ const AvailabilityPage: React.FC = () => {
             </h2>
             
             {!data || !data[date] ? (
-              <div className={`p-5 text-center rounded-lg border shadow-sm ${
-                targetDateMap[date]?.isbooked 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-gray-50 border-gray-200'
-              }`}>
-                {targetDateMap[date]?.isbooked ? (
-                  <>
-                    <p className="text-gray-800 text-lg font-semibold mb-2">
-                      🎵 この日は予約済みです
-                    </p>
-                    {targetDateMap[date].memo && (
-                      <div className="mt-4 p-4 bg-white rounded-lg border border-gray-300 text-left">
-                        <p className="text-sm text-gray-600 mb-1">メモ:</p>
-                        <p className="text-gray-700">{targetDateMap[date].memo}</p>
-                      </div>
-                    )}
-                  </>
-                ) : (
+              targetDateMap[date]?.isbooked ? (
+                targetDateMap[date].memo ? (
+                  <div className="p-5 bg-green-50 rounded-lg border border-green-200 shadow-sm">
+                    <p className="text-gray-700 text-left">{targetDateMap[date].memo}</p>
+                  </div>
+                ) : null
+              ) : (
+                <div className="p-5 text-center rounded-lg border shadow-sm bg-gray-50 border-gray-200">
                   <button
                     onClick={() => handleScrapeDateClick(date)}
                     className="text-gray-600 text-lg hover:text-blue-600 hover:underline transition-colors duration-200 cursor-pointer"
                   >
-                    空き状況はまだ取得されていません。（クリックで取得）
+                    <>
+                      空き状況はまだ取得されていません。
+                      <br />
+                      （クリックで取得）
+                    </>
                   </button>
-                )}
-              </div>
+                </div>
+              )
             ) : isMobile ? (
               <div className="space-y-4">
                 {(() => {
