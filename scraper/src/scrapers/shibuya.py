@@ -247,8 +247,8 @@ class ShibuyaScraper(BaseScraper):
                         self.log_warning(f"Music option not found, using first option: '{all_options_text[0]}')")
                     
                     if target_index >= 0:
-                        # アローダウンキーで移動（インデックス+1回）
-                        for _ in range(target_index + 1):
+                        # アローダウンキーで移動（インデックス回）
+                        for _ in range(target_index):
                             page.keyboard.press("ArrowDown")
                             page.wait_for_timeout(50)
                         
@@ -355,8 +355,8 @@ class ShibuyaScraper(BaseScraper):
                         # 練習室を優先、なければ文化総合センター大和田を含むものを選択
                         if "文化総合センター大和田" in text and "練習室" in text:
                             self.log_info(f"Found target facility (練習室) at position {i}")
-                            # 矢印キーで移動
-                            for _ in range(i + 1):  # i+1回下矢印キーを押す
+                            # 矢印キーで移動（0番目が空欄の場合、i回だけ押せばよい）
+                            for _ in range(i):  # i回下矢印キーを押す
                                 page.keyboard.press("ArrowDown")
                                 page.wait_for_timeout(100)
                             # Enterキーで確定
@@ -372,7 +372,7 @@ class ShibuyaScraper(BaseScraper):
                             if "文化総合センター大和田" in text:
                                 self.log_info(f"Found alternative facility at position {i}")
                                 # 矢印キーで移動
-                                for _ in range(i + 1):
+                                for _ in range(i):
                                     page.keyboard.press("ArrowDown")
                                     page.wait_for_timeout(100)
                                 # Enterキーで確定
@@ -609,56 +609,78 @@ class ShibuyaScraper(BaseScraper):
             # カレンダーが表示されるまで待つ
             page.wait_for_selector(".calendar, [class*='calendar'], table", timeout=10000)
             
-            # 月が正しいことを確認
-            month_display = page.locator("[class*='month'], [class*='caption'], h2, h3").first
+            # 月が正しいことを確認（#calendar_month または .calendar_month）
+            month_display = page.locator("#calendar_month, .calendar_month").first
             if month_display.count() > 0:
                 month_text = month_display.text_content()
                 self.log_info(f"Current month display: {month_text}")
+                # 月が正しいか確認
+                expected_month = f"{target_date.year}年{target_date.month}月"
+                if expected_month not in month_text:
+                    self.log_warning(f"Month mismatch: expected {expected_month}, got {month_text}")
             
-            # 日付セルを探す（丸がある日付のみクリック可能）
-            # 可能性のあるセレクタ
-            date_selectors = [
-                f"td:has-text('{target_day}')",
-                f"[class*='day']:has-text('{target_day}')",
-                f"[class*='date']:has-text('{target_day}')",
-                f"div:has-text('{target_day}')"
-            ]
-            
+            # 日付セルを探す
             date_cell = None
-            for selector in date_selectors:
-                cells = page.locator(selector).all()
-                for cell in cells:
-                    cell_text = cell.text_content().strip()
-                    # 日付の数字だけを含むセルを探す
-                    if cell_text == str(target_day):
-                        date_cell = cell
-                        break
-                if date_cell:
-                    break
             
-            if not date_cell:
+            # まず日付のIDで直接探す（例：2025/12/19）
+            date_id = target_date.strftime("%Y/%m/%d")
+            # スラッシュをエスケープ
+            escaped_id = date_id.replace("/", "\\/")
+            date_cell = page.locator(f"td#{escaped_id}")
+            
+            if date_cell.count() == 0:
+                # IDが見つからない場合は、日付テキストで探す
+                date_cell = page.locator(f"td:has(div:text-is('{target_day}'))")
+            
+            if date_cell.count() == 0:
+                # それでも見つからない場合は従来の方法
+                date_selectors = [
+                    f"td:has-text('{target_day}')",
+                    f"[class*='day']:has-text('{target_day}')",
+                    f"[class*='date']:has-text('{target_day}')"
+                ]
+                
+                for selector in date_selectors:
+                    cells = page.locator(selector).all()
+                    for cell in cells:
+                        cell_text = cell.text_content().strip()
+                        # 日付の数字だけを含むセルを探す
+                        if str(target_day) in cell_text and "予約" not in cell_text:
+                            date_cell = cell
+                            break
+                    if date_cell:
+                        break
+            
+            if date_cell.count() == 0:
                 self.log_error(f"Could not find date cell for day {target_day}")
                 return False
             
-            # 丸（○）があるか確認
-            parent = date_cell.locator("..")  # 親要素
-            cell_html = parent.inner_html() if parent.count() > 0 else date_cell.inner_html()
-            
-            # 丸の表示パターンを確認
+            # 空き状況があるか確認
             has_availability = False
-            if "○" in cell_html or "◯" in cell_html:
+            
+            # 「予約申込可能」のspan要素を確認
+            vacant_span = date_cell.locator("span.vacant, span:has-text('予約申込可能')")
+            if vacant_span.count() > 0:
                 has_availability = True
-                self.log_info(f"Date {target_day} has availability marker (○)")
-            elif "●" in cell_html or "◉" in cell_html:
-                has_availability = True
-                self.log_info(f"Date {target_day} has availability marker (●)")
-            elif date_cell.locator("img[alt*='空き'], img[alt*='available']").count() > 0:
-                has_availability = True
-                self.log_info(f"Date {target_day} has availability icon")
+                self.log_info(f"Date {target_day} has availability marker (予約申込可能)")
+            else:
+                # role="button"のspan要素も確認
+                button_span = date_cell.locator("span[role='button']")
+                if button_span.count() > 0:
+                    has_availability = True
+                    self.log_info(f"Date {target_day} has clickable button element")
+                else:
+                    # 従来の○マークも念のため確認（後方互換性）
+                    cell_html = date_cell.inner_html()
+                    if "○" in cell_html or "◯" in cell_html:
+                        has_availability = True
+                        self.log_info(f"Date {target_day} has availability marker (○)")
+                    elif "●" in cell_html or "◉" in cell_html:
+                        has_availability = True
+                        self.log_info(f"Date {target_day} has availability marker (●)")
             
             if not has_availability:
                 self.log_warning(f"Date {target_day} does not have availability marker")
-                # 丸がない場合は予約不可
                 return False
             
             # 日付をクリック
