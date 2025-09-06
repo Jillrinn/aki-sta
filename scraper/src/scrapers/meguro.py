@@ -1385,17 +1385,27 @@ class MeguroScraper(BaseScraper):
                                             status = "unknown"
                                     
                                     room_slots[slot_key] = status
-                                    self.log_debug(f"        {slot_key}: {status}")
+                                    self.log_info(f"        Cell {cell_idx}: {slot_key} = {status} (content: '{cell_content}')")
                             
                             # 午後1と午後2を統合
                             if "afternoon_1" in room_slots and "afternoon_2" in room_slots:
+                                self.log_info(f"        Merging afternoon slots: afternoon_1={room_slots['afternoon_1']}, afternoon_2={room_slots['afternoon_2']}")
+                                # 両方空いている場合
                                 if room_slots["afternoon_1"] == "available" and room_slots["afternoon_2"] == "available":
                                     room_slots["afternoon"] = "available"
+                                # 午後1のみ予約済み
+                                elif room_slots["afternoon_1"] == "booked" and room_slots["afternoon_2"] == "available":
+                                    room_slots["afternoon"] = "booked_1"
+                                # 午後2のみ予約済み
+                                elif room_slots["afternoon_1"] == "available" and room_slots["afternoon_2"] == "booked":
+                                    room_slots["afternoon"] = "booked_2"
+                                # 両方予約済み
                                 elif room_slots["afternoon_1"] == "booked" and room_slots["afternoon_2"] == "booked":
                                     room_slots["afternoon"] = "booked"
                                 else:
-                                    room_slots["afternoon"] = "booked"  # 片方でも予約済みなら予約済みとする
+                                    room_slots["afternoon"] = "unknown"
                                 
+                                self.log_info(f"        Result: afternoon={room_slots['afternoon']}")
                                 del room_slots["afternoon_1"]
                                 del room_slots["afternoon_2"]
                             
@@ -1523,18 +1533,9 @@ class MeguroScraper(BaseScraper):
                     for facility_name, rooms in all_time_slots.items():
                         # 各部屋ごとに個別レコードを作成
                         for room_name, room_slots in rooms.items():
-                            # room_slotsを型定義に合わせて検証
-                            # afternoon の特殊処理（booked_1, booked_2 を booked に統一）
-                            normalized_slots = {}
-                            for key, value in room_slots.items():
-                                if key == "afternoon" and value in ["booked_1", "booked_2"]:
-                                    normalized_slots[key] = "booked"
-                                else:
-                                    normalized_slots[key] = value
-                            
-                            # 型検証を実行
+                            # 型検証を実行（booked_1, booked_2 はそのまま保持）
                             try:
-                                validated_slots = validate_time_slots(normalized_slots)
+                                validated_slots = validate_time_slots(room_slots)
                             except ValueError as e:
                                 self.log_warning(f"Invalid time slots for {facility_name} - {room_name}: {e}")
                                 validated_slots = {

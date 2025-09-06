@@ -8,7 +8,9 @@ from typing import Literal, TypedDict, Dict
 TimeSlotKey = Literal["morning", "afternoon", "evening"]
 
 # タイムスロットのステータス
-TimeSlotStatus = Literal["available", "booked", "lottery", "unknown"]
+# booked_1: 午後1のみ予約済み（目黒区）
+# booked_2: 午後2のみ予約済み（目黒区）
+TimeSlotStatus = Literal["available", "booked", "booked_1", "booked_2", "lottery", "unknown"]
 
 # タイムスロットの型定義
 class TimeSlots(TypedDict):
@@ -39,7 +41,7 @@ def validate_time_slots(slots: Dict[str, str]) -> TimeSlots:
         ValueError: 無効なキーまたは値が含まれている場合
     """
     valid_keys = {"morning", "afternoon", "evening"}
-    valid_statuses = {"available", "booked", "lottery", "unknown"}
+    valid_statuses = {"available", "booked", "booked_1", "booked_2", "lottery", "unknown"}
     
     # キーの検証
     if not all(key in valid_keys for key in slots.keys()):
