@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.scrapers.ensemble_studio import EnsembleStudioScraper
 from src.scrapers.meguro import MeguroScraper
+from src.scrapers.shibuya import ShibuyaScraper
 
 
 def main():
@@ -39,8 +40,8 @@ def main():
         '--facility',
         type=str,
         default='ensemble',
-        choices=['ensemble', 'meguro'],
-        help='スクレイピング対象施設 (ensemble: あんさんぶるStudio, meguro: 目黒区施設)'
+        choices=['ensemble', 'meguro', 'shibuya'],
+        help='スクレイピング対象施設 (ensemble: あんさんぶるStudio, meguro: 目黒区施設, shibuya: 渋谷区施設)'
     )
     
     args = parser.parse_args()
@@ -78,6 +79,9 @@ def main():
     if args.facility == 'meguro':
         print("対象施設: 目黒区施設")
         scraper = MeguroScraper()
+    elif args.facility == 'shibuya':
+        print("対象施設: 渋谷区施設")
+        scraper = ShibuyaScraper()
     else:
         print("対象施設: あんさんぶるStudio")
         scraper = EnsembleStudioScraper()
