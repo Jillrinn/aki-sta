@@ -117,11 +117,12 @@ describe('AvailabilityPage', () => {
     // ステータスシンボルが表示されていることを確認
     const availableStatuses = screen.getAllByText('○');
     const bookedStatuses = screen.getAllByText('×');
-    const unknownStatuses = screen.getAllByText('?');
+    // unknownステータスは表示されない
+    const unknownStatuses = screen.queryAllByText('?');
     
     expect(availableStatuses.length).toBeGreaterThan(0);
     expect(bookedStatuses.length).toBeGreaterThan(0);
-    expect(unknownStatuses.length).toBeGreaterThan(0);
+    expect(unknownStatuses.length).toBe(0);
   });
 
   it('renders separate table for each date', async () => {
@@ -206,11 +207,12 @@ describe('AvailabilityPage', () => {
       // 各ステータスが正しく表示されていることを確認（複数の要素がある場合を考慮）
       const availableElements = screen.getAllByText('○');
       const bookedElements = screen.getAllByText('×');
-      const unknownElements = screen.getAllByText('?');
+      // unknownステータスは表示されない
+      const unknownElements = screen.queryAllByText('?');
       
       expect(availableElements.length).toBeGreaterThan(0); // available
       expect(bookedElements.length).toBeGreaterThan(0); // booked
-      expect(unknownElements.length).toBeGreaterThan(0); // unknown
+      expect(unknownElements.length).toBe(0); // unknown is not displayed
     });
   });
 

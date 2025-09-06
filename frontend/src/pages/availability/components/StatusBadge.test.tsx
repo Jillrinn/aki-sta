@@ -49,7 +49,8 @@ describe('StatusBadge', () => {
     rerender(<StatusBadge status="lottery" />);
     expect(screen.getByRole('img', { name: '抽選' })).toHaveTextContent('△');
 
+    // unknownステータスの場合は何も表示しない
     rerender(<StatusBadge status="unknown" />);
-    expect(screen.getByRole('img', { name: '不明' })).toHaveTextContent('?');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 });

@@ -93,7 +93,8 @@ describe('MobileCardView', () => {
     // Check for status symbols
     expect(screen.getByText('○')).toBeInTheDocument(); // available
     expect(screen.getByText('△')).toBeInTheDocument(); // lottery
-    expect(screen.getByText('?')).toBeInTheDocument(); // unknown
+    // unknownステータスは表示されない
+    expect(screen.queryByText('?')).not.toBeInTheDocument();
   });
 
   it('shows collapsed message for afternoon booked', () => {
@@ -248,8 +249,8 @@ describe('MobileCardView', () => {
     expect(screen.queryByText('午前')).not.toBeInTheDocument();
     expect(screen.queryByText('予約済み')).not.toBeInTheDocument();
     
-    // Should show blue header (default color, not red)
-    const header = container.querySelector('[class*="from-primary"]');
+    // Should show gray header when all booked
+    const header = container.querySelector('[class*="from-gray"]');
     expect(header).toBeInTheDocument();
     
     // Should show "全て空きなし" message
@@ -317,8 +318,12 @@ describe('MobileCardView', () => {
     const header = container.querySelector('[class*="from-gray-400"]');
     expect(header).toBeInTheDocument();
     
-    // Should show "全て不明" message
-    expect(screen.getByText('全て不明')).toBeInTheDocument();
+    // "全て不明" message should not be shown anymore
+    expect(screen.queryByText('全て不明')).not.toBeInTheDocument();
+    // No status message should be shown for all unknown
+    expect(screen.queryByText('全て空きなし')).not.toBeInTheDocument();
+    expect(screen.queryByText('希望時間は空きなし')).not.toBeInTheDocument();
+    expect(screen.queryByText('空きあり')).not.toBeInTheDocument();
   });
 
   it('collapses when afternoon slot is booked', () => {

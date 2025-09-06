@@ -14,6 +14,12 @@ interface StatusBadgeProps {
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({ status, onClick, clickable = false }) => {
   const statusValue = status as StatusValue;
+  
+  // unknownステータスの場合は何も表示しない
+  if (statusValue === 'unknown') {
+    return null;
+  }
+  
   const symbol = STATUS_SYMBOLS[statusValue] || STATUS_SYMBOLS.unknown;
   const colorClass = STATUS_COLORS[statusValue] || STATUS_COLORS.unknown;
   const label = STATUS_LABELS[statusValue] || STATUS_LABELS.unknown;

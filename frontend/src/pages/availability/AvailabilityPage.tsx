@@ -196,8 +196,16 @@ const AvailabilityPage: React.FC = () => {
               <div className="space-y-4">
                 {(() => {
                   const facilities = data[date] || [];
-                  const groupedByCenter = facilities.reduce((acc: { [key: string]: Facility[] }, facility: Facility) => {
-                    const center = facility.centerName || 'その他';
+                  // 全時間帯がunknownの施設を除外
+                  const filteredFacilities = facilities.filter(facility => 
+                    !TIME_SLOTS.every(slot => facility.timeSlots[slot] === 'unknown')
+                  );
+                  
+                  const groupedByCenter = filteredFacilities.reduce((acc: { [key: string]: Facility[] }, facility: Facility) => {
+                    // centerNameがnullの場合はスキップ
+                    if (!facility.centerName) return acc;
+                    
+                    const center = facility.centerName;
                     if (!acc[center]) {
                       acc[center] = [];
                     }
@@ -246,8 +254,16 @@ const AvailabilityPage: React.FC = () => {
                 <tbody>
                   {(() => {
                     const facilities = data[date] || [];
-                    const groupedByCenter = facilities.reduce((acc: { [key: string]: Facility[] }, facility: Facility) => {
-                      const center = facility.centerName || 'その他';
+                    // 全時間帯がunknownの施設を除外
+                    const filteredFacilities = facilities.filter(facility => 
+                      !TIME_SLOTS.every(slot => facility.timeSlots[slot] === 'unknown')
+                    );
+                    
+                    const groupedByCenter = filteredFacilities.reduce((acc: { [key: string]: Facility[] }, facility: Facility) => {
+                      // centerNameがnullの場合はスキップ
+                      if (!facility.centerName) return acc;
+                      
+                      const center = facility.centerName;
                       if (!acc[center]) {
                         acc[center] = [];
                       }

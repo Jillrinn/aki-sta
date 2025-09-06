@@ -19,10 +19,9 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
     const statusMap: Record<string, string> = {
       available: '空き',
       booked: '予約済み',
-      lottery: '抽選',
-      unknown: '不明'
+      lottery: '抽選'
     };
-    return statusMap[status] || '不明';
+    return statusMap[status] || '';
   };
 
   // 施設の状態を判定
@@ -33,7 +32,9 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
   
   // ヘッダーの色を決定
   const getHeaderColorClass = () => {
-    if (allUnknown) return 'bg-gradient-to-r from-gray-400 to-gray-600';
+    if (allUnknown || allBooked || afternoonBooked) {
+      return 'bg-gradient-to-r from-gray-400 to-gray-600';
+    }
     return 'bg-gradient-to-r from-primary-400 to-primary-700';
   };
 
@@ -107,14 +108,12 @@ const MobileCardView: React.FC<MobileCardViewProps> = ({ facility, formatUpdateT
             <span className="mr-2">🕐</span>
             <span>{formatUpdateTime(facility.lastUpdated)} 更新</span>
           </div>
-          {!isExpandedRoom && (
+          {!isExpandedRoom && !allUnknown && (
             <span className={`font-medium px-2 py-1 rounded whitespace-nowrap text-xs ${
               allBooked ? 'bg-red-100 text-red-700' : 
-              allUnknown ? 'bg-gray-100 text-gray-700' : 
               afternoonBooked ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
             }`}>
               {allBooked ? '全て空きなし' : 
-               allUnknown ? '全て不明' : 
                afternoonBooked ? '希望時間は空きなし' : '空きあり'}
             </span>
           )}
