@@ -65,10 +65,29 @@ const AvailabilityPage: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 確認モーダルを表示
-  const handleScrapeDateClick = (date: string) => {
-    setPendingDate(date);
-    setShowConfirmationModal(true);
+  // 確認モーダルを表示（実行中チェック付き）
+  const handleScrapeDateClick = async (date: string) => {
+    // まず実行中かどうかをチェック
+    setShowCheckingModal(true);
+    
+    try {
+      const checkResponse = await scraperApi.checkBatchScrapingStatus();
+      setShowCheckingModal(false);
+      
+      if (checkResponse.isRunning) {
+        // 実行中の場合は警告モーダルを表示
+        setShowRateLimitWarning(true);
+      } else {
+        // 実行中でない場合は確認モーダルを表示
+        setPendingDate(date);
+        setShowConfirmationModal(true);
+      }
+    } catch (error) {
+      setShowCheckingModal(false);
+      // エラーの場合も確認モーダルを表示（ユーザーに選択させる）
+      setPendingDate(date);
+      setShowConfirmationModal(true);
+    }
   };
 
   // 確認後、実際にスクレイピングを実行
