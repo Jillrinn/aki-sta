@@ -474,23 +474,18 @@ class ShibuyaScraper(BaseScraper):
         self.log_info("Waiting for loading to complete...")
         
         try:
-            # Ant Designのspinnerを待つ
-            spinner_selectors = [
-                ".ant-spin-spinning",
-                ".ant-spin",
-                ".ant-loading",
-                "[class*='spinner']",
-                "[class*='loading']"
-            ]
-            
-            for selector in spinner_selectors:
-                spinner = page.locator(selector).first
-                if spinner.count() > 0:
-                    self.log_info(f"Found spinner with selector: {selector}")
-                    # spinnerが消えるまで待つ
-                    spinner.wait_for(state="hidden", timeout=30000)
-                    self.log_info("Spinner disappeared")
-                    break
+            # Ant Designのローディングスピナーを待つ
+            # .ant-spin-spinningが実際のローディング状態を示す
+            spinner = page.locator(".ant-spin-spinning").first
+            if spinner.count() > 0:
+                self.log_info("Found loading spinner")
+                # spinnerが消えるまで待つ（最大10秒）
+                try:
+                    spinner.wait_for(state="hidden", timeout=10000)
+                    self.log_info("Loading completed")
+                except:
+                    # タイムアウトした場合も処理を続行
+                    self.log_info("Loading timeout, continuing anyway")
             
             # 追加の待機
             page.wait_for_timeout(1000)
